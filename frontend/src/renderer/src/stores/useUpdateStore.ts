@@ -4,6 +4,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { ReleaseInfo, UpdateCheckResult } from '@renderer/services/updateService'
+import { i18n } from '@renderer/i18n'
 import { autoCheckForUpdates, manualCheckForUpdates, getCurrentVersion } from '@renderer/services/updateService'
 
 export const useUpdateStore = defineStore('update', () => {
@@ -62,7 +63,7 @@ export const useUpdateStore = defineStore('update', () => {
       
       return result
     } catch (error: any) {
-      lastCheckError.value = error.message || '检测失败'
+      lastCheckError.value = error.message || String(i18n.global.t('update.errors.check_failed'))
       throw error
     } finally {
       isChecking.value = false

@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { i18n } from '@renderer/i18n'
 import { ref, computed } from 'vue'
 import { 
     getRun, 
@@ -110,7 +111,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
             id,
             workflow_id: 0,
             status: 'running',
-            workflow_name: workflowName || '加载中...',
+            workflow_name: workflowName || String(i18n.global.t('workflow_store.loading')),
             progress: 0
         })
 
@@ -160,7 +161,7 @@ export const useWorkflowStore = defineStore('workflow', () => {
                 runs.value.set(id, {
                     id: run.id,
                     workflow_id: run.workflow_id,
-                    workflow_name: run.workflow?.name || '未命名工作流',
+                    workflow_name: run.workflow?.name || String(i18n.global.t('workflow_store.unnamed')),
                     status: run.status,
                     created_at: run.created_at || undefined,
                     error: errorMessage,

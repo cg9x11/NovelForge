@@ -1335,6 +1335,7 @@
   },
   "workflow_store": {
     "loading": "Đang tải...",
+    "unnamed": "Workflow chưa đặt tên",
     "trigger_workflow": "Workflow kích hoạt"
   },
   "workflow_execution": {
@@ -1909,6 +1910,22 @@
       "pass": "Cơ bản đạt",
       "revise": "Nên chỉnh sửa",
       "block": "Chặn rủi ro cao"
+    }
+  },
+  "agent_stream": {
+    "tool": "công cụ",
+    "calling_tool": "⏳ Đang gọi công cụ: {tool}...",
+    "tool_failed": "Gọi công cụ thất bại",
+    "tool_retrying": "🔄 Gọi công cụ thất bại, {reason}, đang thử lại ({current}/{max})...",
+    "execution_failed": "Thực thi thất bại",
+    "tool_failed_message": "❌ Gọi công cụ thất bại: {message}"
+  },
+  "update": {
+    "errors": {
+      "github_rate_limited": "GitHub API bị giới hạn (403). Vui lòng thử lại sau.",
+      "github_status": "GitHub API trả lỗi: {status}",
+      "timeout": "Yêu cầu quá thời gian",
+      "check_failed": "Kiểm tra cập nhật thất bại"
     }
   }
 }

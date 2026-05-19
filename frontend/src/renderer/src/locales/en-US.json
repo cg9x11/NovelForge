@@ -1335,7 +1335,8 @@
   },
   "workflow_store": {
     "loading": "Loading...",
-    "trigger_workflow": "Trigger Workflow"
+    "unnamed": "Untitled workflow",
+    "trigger_workflow": "Trigger workflow"
   },
   "workflow_execution": {
     "invalid_transition": "Invalid state transition: {from} -> {to}. Allowed transitions: {allowed}"
@@ -1909,6 +1910,22 @@
       "pass": "Mostly passed",
       "revise": "Needs revision",
       "block": "High-risk block"
+    }
+  },
+  "agent_stream": {
+    "tool": "tool",
+    "calling_tool": "⏳ Calling tool: {tool}...",
+    "tool_failed": "Tool call failed",
+    "tool_retrying": "🔄 Tool call failed, {reason}, retrying ({current}/{max})...",
+    "execution_failed": "Execution failed",
+    "tool_failed_message": "❌ Tool call failed: {message}"
+  },
+  "update": {
+    "errors": {
+      "github_rate_limited": "GitHub API rate limited (403). Please try again later.",
+      "github_status": "GitHub API returned error: {status}",
+      "timeout": "Request timed out",
+      "check_failed": "Update check failed"
     }
   }
 }

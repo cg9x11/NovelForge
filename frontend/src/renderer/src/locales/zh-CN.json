@@ -1328,8 +1328,9 @@
     }
   },
   "workflow_store": {
-    "loading": "Loading...",
-    "trigger_workflow": "Trigger Workflow"
+    "loading": "加载中...",
+    "unnamed": "未命名工作流",
+    "trigger_workflow": "触发器工作流"
   },
   "workflow_execution": {
     "invalid_transition": "Invalid state transition: {from} -> {to}. Allowed transitions: {allowed}"
@@ -1870,6 +1871,22 @@
       "pass": "基本通过",
       "revise": "建议修改",
       "block": "高风险拦截"
+    }
+  },
+  "agent_stream": {
+    "tool": "工具",
+    "calling_tool": "⏳ 正在调用工具: {tool}...",
+    "tool_failed": "工具调用失败",
+    "tool_retrying": "🔄 工具调用失败，{reason}，正在重试 ({current}/{max})...",
+    "execution_failed": "执行失败",
+    "tool_failed_message": "❌ 工具调用失败: {message}"
+  },
+  "update": {
+    "errors": {
+      "github_rate_limited": "GitHub API 访问受限 (403)，请稍后重试",
+      "github_status": "GitHub API 返回错误: {status}",
+      "timeout": "请求超时",
+      "check_failed": "更新检测失败"
     }
   }
 }

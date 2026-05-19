@@ -1,4 +1,5 @@
 import type { AgentChatMessage, AgentStreamEvent, AgentTimelineItem, AgentToolTrace } from '@/types/agentChat'
+import { i18n } from '@renderer/i18n'
 
 interface ApplyAgentEventOptions {
   onToolEnd?: (toolName: string, result: any) => void
@@ -164,7 +165,7 @@ export function applyAgentStreamEvent(
       target.tools = target.tools || []
       target.tools.push({ tool_name: data.tool_name || 'tool', args: data.args })
     }
-    target.toolsInProgress = `⏳ 正在调用工具: ${data.tool_name || '工具'}...`
+    target.toolsInProgress = String(i18n.global.t('agent_stream.calling_tool', { tool: data.tool_name || i18n.global.t('agent_stream.tool') }))
     return
   }
 
