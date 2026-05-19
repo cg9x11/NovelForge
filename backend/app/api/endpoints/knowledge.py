@@ -19,9 +19,9 @@ def list_knowledge(session: Session = Depends(get_session)):
 def create_knowledge(body: KnowledgeCreate, session: Session = Depends(get_session)):
     svc = KnowledgeService(session)
     if svc.get_by_name(body.name):
-        raise HTTPException(status_code=400, detail='同名知识库已存在')
+        raise HTTPException(status_code=400, detail='Knowledge with same name already exists')
     if body.key and svc.get_by_key(body.key):
-        raise HTTPException(status_code=400, detail='同 key 知识库已存在')
+        raise HTTPException(status_code=400, detail='Knowledge with same key already exists')
     item = svc.create(key=body.key, name=body.name, description=body.description, content=body.content)
     return ApiResponse(data=item)
 
@@ -30,7 +30,7 @@ def get_knowledge(kid: int, session: Session = Depends(get_session)):
     svc = KnowledgeService(session)
     item = svc.get_by_id(kid)
     if not item:
-        raise HTTPException(status_code=404, detail='知识库不存在')
+        raise HTTPException(status_code=404, detail='Knowledge not found')
     return ApiResponse(data=item)
 
 @router.put('/{kid}', response_model=ApiResponse[KnowledgeRead], summary='更新知识库')
@@ -42,7 +42,7 @@ def update_knowledge(kid: int, body: KnowledgeUpdate, session: Session = Depends
             raise HTTPException(status_code=400, detail='Duplicate knowledge key')
     item = svc.update(kid, key=body.key, name=body.name, description=body.description, content=body.content)
     if not item:
-        raise HTTPException(status_code=404, detail='知识库不存在')
+        raise HTTPException(status_code=404, detail='Knowledge not found')
     return ApiResponse(data=item)
 
 @router.delete('/{kid}', response_model=ApiResponse, summary='删除知识库')
@@ -50,10 +50,10 @@ def delete_knowledge(kid: int, session: Session = Depends(get_session)):
     svc = KnowledgeService(session)
     item = svc.get_by_id(kid)
     if not item:
-        raise HTTPException(status_code=404, detail='知识库不存在')
+        raise HTTPException(status_code=404, detail='Knowledge not found')
     if getattr(item, 'built_in', False):
-        raise HTTPException(status_code=400, detail='系统内置知识库不可删除')
+        raise HTTPException(status_code=400, detail='Built-in knowledge cannot be deleted')
     ok = svc.delete(kid)
     if not ok:
-        raise HTTPException(status_code=404, detail='知识库不存在')
-    return ApiResponse(message='删除成功')
+        raise HTTPException(status_code=404, detail='Knowledge not found')
+    return ApiResponse(message='Deleted successfully')

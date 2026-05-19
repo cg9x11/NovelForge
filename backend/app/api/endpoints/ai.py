@@ -120,7 +120,7 @@ async def get_ai_config_options(session: Session = Depends(get_session)):
             "response_models": response_models
         })
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"获取配置选项失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get config options: {str(e)}")
 
 @router.get("/prompts/render", summary="渲染并注入知识库的提示词模板")
 async def render_prompt_with_knowledge(name: str, session: Session = Depends(get_session)):
@@ -131,7 +131,7 @@ async def render_prompt_with_knowledge(name: str, session: Session = Depends(get
         text = prompt_service.inject_knowledge(session, str(p.template))
         return ApiResponse(data={"text": text})
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"渲染失败: {e}")
+        raise HTTPException(status_code=500, detail=f"Render failed: {e}")
 
 @router.post("/generate", summary="通用AI生成接口")
 async def generate_ai_content(
@@ -143,9 +143,9 @@ async def generate_ai_content(
     """
     # 基本参数校验：input/llm_config_id/prompt_name/response_model_schema 必填
     if not request.input or not request.llm_config_id or not request.prompt_name:
-        raise HTTPException(status_code=400, detail="缺少必要的生成参数: input, llm_config_id 或 prompt_name")
+        raise HTTPException(status_code=400, detail="Missing required generation parameters: input, llm_config_id, or prompt_name")
     if request.response_model_schema is None:
-        raise HTTPException(status_code=400, detail="请提供 response_model_schema")
+        raise HTTPException(status_code=400, detail="Please provide response_model_schema")
 
     # 解析响应模型（仅动态 schema）
     try:
@@ -156,7 +156,7 @@ async def generate_ai_content(
         # 动态构建 Pydantic 模型
         resp_model = build_model_from_json_schema('DynamicResponseModel', schema_for_prompt or composed)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"动态创建模型失败: {e}")
+        raise HTTPException(status_code=400, detail=f"Failed to create dynamic model: {e}")
 
     # 获取提示词
     prompt = prompt_service.get_prompt_by_identifier(session, request.prompt_name)
@@ -182,7 +182,7 @@ async def generate_ai_content(
             user_prompt=user_prompt,
             system_prompt=system_prompt,
             output_type=resp_model,
-            llm_config_id=request.llm_config_id, 
+            llm_config_id=request.llm_config_id,
             max_tokens=request.max_tokens,
             temperature=request.temperature,
             timeout=request.timeout,
@@ -210,8 +210,8 @@ async def generate_ai_content(
         pass
     return ApiResponse(data=result)
 
-@router.post("/generate/continuation", 
-             response_model=ApiResponse[ContinuationResponse], 
+@router.post("/generate/continuation",
+             response_model=ApiResponse[ContinuationResponse],
              summary="续写正文",
              responses={
                  200: {
@@ -229,7 +229,7 @@ async def generate_continuation(
     try:
         # 强制从 prompt_name 读取模板作为 system prompt
         if not request.prompt_name:
-            raise HTTPException(status_code=400, detail="续写必须指定 prompt_name")
+            raise HTTPException(status_code=400, detail="Continuation requires prompt_name")
         p = prompt_service.get_prompt_by_identifier(session, request.prompt_name)
         if not p or not p.template:
             raise HTTPException(status_code=400, detail={"error_code": "PROMPT_NAME_NOT_FOUND", "prompt_name": request.prompt_name})
@@ -238,14 +238,14 @@ async def generate_continuation(
 
 
         request.context_info = enrich_continuation_context_info(session, request)
-        
+
 
         if request.stream:
             # 先做一次配额预检，避免流式过程中才抛错
             expected_calls = estimate_required_call_count(request)
             ok, reason = llm_config_service.can_consume(session, request.llm_config_id, 0, 0, expected_calls)
             if not ok:
-                raise HTTPException(status_code=400, detail=f"LLM 配额不足：{reason}")
+                raise HTTPException(status_code=400, detail=f"Insufficient LLM quota: {reason}")
             async def _stream_and_trigger():
                 content_acc = []
                 async for chunk in llm_service.generate_continuation_streaming(session, request, system_prompt):
@@ -296,7 +296,7 @@ async def generate_with_instruction_stream(
 ):
     """
     指令流式生成端点
-    
+
     实时返回 LLM 生成的指令流，前端逐条执行并更新 UI。
     支持自动校验和修复，用户可以在生成过程中与 AI 交互。
     """
@@ -304,7 +304,7 @@ async def generate_with_instruction_stream(
         try:
             # 1. 组装完整 Schema（注入 $defs）
             full_schema = compose_full_schema(session, request.response_model_schema)
-            
+
             # 2. 加载卡片任务提示词（如果提供了名称）
             card_prompt_content = None
             if request.prompt_template:
@@ -316,14 +316,14 @@ async def generate_with_instruction_stream(
                     logger.info(f"[卡片生成] 加载提示词模板: {request.prompt_template}, 长度: {len(card_prompt_content)}")
                 else:
                     logger.warning(f"[卡片生成] 未找到提示词模板: {request.prompt_template}")
-            
+
             # 3. 构建 System Prompt（卡片任务 + 指令规范 + Schema）
             system_prompt = build_instruction_system_prompt(
                 session=session,
                 schema=full_schema,
                 card_prompt=card_prompt_content
             )
-            
+
             # 4. 调用指令流生成服务
             async for event in generate_instruction_stream(
                 session=session,
@@ -340,7 +340,7 @@ async def generate_with_instruction_stream(
             ):
                 # 5. 发送 SSE 事件（格式：data: {json}\n\n）
                 yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
-        
+
         except Exception as e:
             logger.error(f"指令流生成失败: {e}", exc_info=True)
             error_event = {
@@ -349,7 +349,7 @@ async def generate_with_instruction_stream(
                 "message": str(e)
             }
             yield f"data: {json.dumps(error_event, ensure_ascii=False)}\n\n"
-    
+
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
@@ -358,4 +358,4 @@ async def generate_with_instruction_stream(
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no"
         }
-    ) 
+    )

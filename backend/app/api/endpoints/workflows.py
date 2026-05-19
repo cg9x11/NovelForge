@@ -28,13 +28,13 @@ from app.services.workflow.patcher import (
 
 def _clean_dollar_prefix(value: Any) -> Any:
     """递归清理值中的 $ 前缀
-    
+
     $ 前缀是后端内部用来标记变量引用的，前端不需要知道。
     在返回给前端时，需要去掉 $ 前缀。
-    
+
     Args:
         value: 任意值（字符串、列表、字典等）
-        
+
     Returns:
         清理后的值
     """
@@ -73,12 +73,12 @@ router = APIRouter()
 @router.get("/nodes/types", response_model=NodeTypesResponse)
 def get_node_types_api():
     """获取所有已注册的工作流节点类型（含完整元数据）
-    
+
     用于前端动态生成节点库和属性面板。
     包含了基于 Pydantic 生成的 JSON Schema。
     """
     all_metadata = get_all_node_metadata()
-    
+
     node_info = []
     for meta in all_metadata:
         node_info.append({
@@ -90,7 +90,7 @@ def get_node_types_api():
             "input_schema": meta.input_schema,
             "output_schema": meta.output_schema
         })
-    
+
     return {"node_types": node_info}
 
 
@@ -133,12 +133,12 @@ def get_node_metadata_api(node_type: str):
         - outputs: 输出字段列表（从 output_schema 提取）
     """
     from app.services.workflow.registry import get_node_metadata as get_registry_metadata
-    
+
     # 从注册表获取节点元数据
     registry_meta = get_registry_metadata(node_type)
     if not registry_meta:
-        raise HTTPException(status_code=404, detail=f"节点类型不存在: {node_type}")
-    
+        raise HTTPException(status_code=404, detail=f"Node type not found: {node_type}")
+
     # 从 output_schema 提取输出字段列表
     outputs = []
     if registry_meta.output_schema and "properties" in registry_meta.output_schema:
@@ -148,7 +148,7 @@ def get_node_metadata_api(node_type: str):
                 "type": field_def.get("type", "any"),
                 "description": field_def.get("description", "")
             })
-    
+
     # 返回元数据
     metadata = {
         "type": registry_meta.type,
@@ -160,7 +160,7 @@ def get_node_metadata_api(node_type: str):
         "output_schema": registry_meta.output_schema,
         "outputs": outputs  # 添加输出字段列表
     }
-    
+
     return metadata
 
 
@@ -178,49 +178,49 @@ def create_workflow(payload: WorkflowCreate, session: Session = Depends(get_sess
     session.add(wf)
     session.commit()
     session.refresh(wf)
-    
+
     # 同步触发器缓存（优化性能）
     from app.services.workflow.trigger_extractor import sync_triggers_cache
     sync_triggers_cache(wf, session)
-    
+
     session.commit()
-    
+
     return wf
 
 
 @router.get("/workflows/project-templates")
 def get_project_templates(session: Session = Depends(get_session)):
     """获取项目创建模板列表
-    
+
     返回所有包含 Trigger.ProjectCreated 触发器的工作流，
     以及它们的模板标识（template 参数）。
-    
+
     前端可以根据这些信息渲染项目创建对话框的模板选择下拉框。
     """
     # 查询所有激活的工作流
     stmt = select(Workflow).where(Workflow.is_active == True)
     workflows = session.exec(stmt).all()
-    
+
     templates = []
-    
+
     for wf in workflows:
         if not wf.triggers_cache:
             continue
-        
+
         # 查找项目创建触发器
         for trigger in wf.triggers_cache:
             if trigger.get("event") == "project.created":
                 # 提取 template 参数
                 match = trigger.get("match") or {}
                 template_id = match.get("template")
-                
+
                 templates.append({
                     "workflow_id": wf.id,
                     "workflow_name": wf.name,
                     "template": template_id,  # 模板标识（如 "snowflake"）
                     "description": wf.description
                 })
-    
+
     logger.info(f"[API] 找到 {len(templates)} 个项目创建模板")
     return {"templates": templates}
 
@@ -239,20 +239,20 @@ def update_workflow(workflow_id: int, payload: WorkflowUpdate, session: Session 
     wf = session.get(Workflow, workflow_id)
     if not wf:
         raise HTTPException(status_code=404, detail="Workflow not found")
-    
+
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(wf, k, v)
-    
+
     wf.updated_at = datetime.utcnow()
     session.add(wf)
     session.commit()
     session.refresh(wf)
-    
+
     # 同步触发器缓存（新方式 - 优化性能）
     from app.services.workflow.trigger_extractor import sync_triggers_cache
     sync_triggers_cache(wf, session)
     session.commit()
-    
+
     return wf
 
 
@@ -283,30 +283,30 @@ def list_workflow_runs(
     session: Session = Depends(get_session)
 ):
     """获取指定工作流的运行列表
-    
+
     Args:
         workflow_id: 工作流 ID
         limit: 返回数量限制（默认 50）
         offset: 偏移量（默认 0）
         status: 过滤状态（可选）：running, paused, succeeded, failed, cancelled
-    
+
     Returns:
         运行列表，按创建时间倒序
     """
     from sqlmodel import select, desc
-    
+
     stmt = select(WorkflowRun).where(
         WorkflowRun.workflow_id == workflow_id
     )
-    
+
     # 添加状态筛选
     if status:
         stmt = stmt.where(WorkflowRun.status == status)
-    
+
     stmt = stmt.order_by(
         desc(WorkflowRun.created_at)
     ).limit(limit).offset(offset)
-    
+
     runs = session.exec(stmt).all()
     return runs
 
@@ -319,39 +319,39 @@ def list_all_runs(
     session: Session = Depends(get_session)
 ):
     """获取所有工作流的运行列表
-    
+
     Args:
         limit: 返回数量限制（默认 50）
         offset: 偏移量（默认 0）
         status: 过滤状态（可选）：running, paused, succeeded, failed, cancelled
-    
+
     Returns:
         运行列表，按创建时间倒序
     """
     from sqlmodel import select, desc
     import logging
     logger = logging.getLogger(__name__)
-    
+
     stmt = select(WorkflowRun).order_by(desc(WorkflowRun.created_at))
-    
+
     if status:
         stmt = stmt.where(WorkflowRun.status == status)
-    
+
     stmt = stmt.limit(limit).offset(offset)
-    
+
     runs = session.exec(stmt).all()
-    
+
     # 调试：打印第一个运行的时间
     if runs:
         logger.info(f"[list_all_runs] 第一个运行: id={runs[0].id}, created_at={runs[0].created_at}, type={type(runs[0].created_at)}")
-    
+
     return runs
 
 
 @router.post("/workflows/{workflow_id}/validate")
 def validate_workflow_endpoint(workflow_id: int, session: Session = Depends(get_session)):
     """验证工作流定义（完整静态检查）
-    
+
     检查内容：
     - 语法错误
     - 节点类型错误
@@ -361,13 +361,13 @@ def validate_workflow_endpoint(workflow_id: int, session: Session = Depends(get_
     - Expression 节点特殊规则
     """
     from app.services.workflow.validator import validate_workflow
-    
+
     wf = session.get(Workflow, workflow_id)
     if not wf:
         raise HTTPException(status_code=404, detail="Workflow not found")
-    
+
     code = wf.definition_code or ""
-    
+
     if not code:
         return {
             "is_valid": False,
@@ -380,10 +380,10 @@ def validate_workflow_endpoint(workflow_id: int, session: Session = Depends(get_
             }],
             "warnings": []
         }
-    
+
     # 执行完整校验
     result = validate_workflow(code, session=session)
-    
+
     return result.to_dict()
 
 
@@ -398,17 +398,17 @@ async def cancel_run(run_id: int, session: Session = Depends(get_session)):
 @router.post("/workflows/runs/{run_id}/pause")
 async def pause_run(run_id: int, session: Session = Depends(get_session)):
     """暂停运行中的工作流
-    
+
     通过共享运行时请求暂停，并更新数据库状态。
     """
     logger.info(f"[API] 收到暂停请求: run_id={run_id}")
-    
+
     # 获取运行记录
     run = session.get(WorkflowRun, run_id)
     if not run:
         logger.warning(f"[API] 运行不存在: run_id={run_id}")
         raise HTTPException(status_code=404, detail="Run not found")
-    
+
     if run.status == "paused":
         logger.info(f"[API] 运行已处于暂停状态: run_id={run_id}")
         return {"ok": True, "message": "paused"}
@@ -416,16 +416,16 @@ async def pause_run(run_id: int, session: Session = Depends(get_session)):
     # 检查状态
     if run.status not in ["running", "queued"]:
         logger.warning(f"[API] 运行状态不是 running 或 queued: run_id={run_id}, status={run.status}")
-        raise HTTPException(status_code=400, detail=f"无法暂停状态为 {run.status} 的运行")
-    
+        raise HTTPException(status_code=400, detail=f"Cannot pause run with status {run.status}")
+
     if not workflow_runtime.request_pause(run_id):
         logger.warning(f"[API] 未找到进程内执行器，仍将运行标记为暂停: run_id={run_id}")
-    
+
     # 更新状态为暂停
     run.status = "paused"
     session.add(run)
     session.commit()
-    
+
     logger.info(f"[API] 暂停成功: run_id={run_id}")
     return {"ok": True, "message": "paused"}
 
@@ -433,13 +433,13 @@ async def pause_run(run_id: int, session: Session = Depends(get_session)):
 @router.post("/workflows/runs/{run_id}/resume")
 async def resume_run(run_id: int, session: Session = Depends(get_session)):
     """恢复暂停的工作流
-    
+
     如果服务器重启，会重新启动运行并自动恢复状态。
     """
     run_manager = RunManager(session)
     ok = await run_manager.resume_run(run_id)
     if not ok:
-        raise HTTPException(status_code=400, detail="无法恢复运行（运行不存在或状态不是暂停）")
+        raise HTTPException(status_code=400, detail="Cannot resume run: run not found or not paused")
     return {"ok": True, "message": "resumed"}
 
 
@@ -453,7 +453,7 @@ async def execute_code_workflow_stream(
     """执行代码式工作流（流式SSE推送）
 
     实时推送执行事件，同时创建 run 记录并保存状态（支持暂停/恢复）。
-    
+
     Args:
         workflow_id: 工作流 ID
         resume: 是否恢复执行（默认 False，从头开始）
@@ -479,19 +479,19 @@ async def execute_code_workflow_stream(
 
     # 处理 run 记录
     run_manager = RunManager(session)
-    
+
     if resume:
         # 恢复执行：必须提供 run_id
         if not run_id:
-            raise HTTPException(status_code=400, detail="resume=True 时必须提供 run_id")
-        
+            raise HTTPException(status_code=400, detail="run_id is required when resume=True")
+
         run = session.get(WorkflowRun, run_id)
         if not run:
             raise HTTPException(status_code=404, detail="Run not found")
-        
+
         if run.workflow_id != workflow_id:
-            raise HTTPException(status_code=400, detail="Run 不属于该工作流")
-        
+            raise HTTPException(status_code=400, detail="Run does not belong to this workflow")
+
         workflow_runtime.request_resume(run_id)
         logger.info(f"[CodeWorkflow] 准备恢复运行: run_id={run_id}, workflow_id={workflow_id}")
     else:
@@ -500,13 +500,13 @@ async def execute_code_workflow_stream(
         from datetime import datetime
         time_window = int(datetime.utcnow().timestamp() / 5)  # 5秒时间窗口
         idempotency_key = f"manual_exec:{workflow_id}:{time_window}"
-        
+
         run = run_manager.create_run(
             workflow_id=workflow_id,
             idempotency_key=idempotency_key
         )
         run_id = run.id
-        
+
         # 如果是复用的运行记录，检查状态
         if run.status == "running":
             logger.warning(f"[CodeWorkflow] 复用现有运行记录（幂等性保护）: run_id={run_id}, workflow_id={workflow_id}")
@@ -545,13 +545,13 @@ async def execute_code_workflow_stream(
                 from app.services.workflow.engine.execution_state import ExecutionState
                 exec_state = ExecutionState(run_id)
                 exec_state.clear_node_states(session)
-            
+
             executor = AsyncExecutor(
                 session=session,
                 state_manager=state_manager,
                 run_id=run_id
             )
-            
+
             # 保存执行器引用（用于暂停）
             workflow_runtime.register_executor(run_id, executor)
             logger.info(f"[CodeWorkflow] 执行器已注册: run_id={run_id}")
@@ -568,7 +568,7 @@ async def execute_code_workflow_stream(
                     # 推送暂停事件
                     yield f"data: {json.dumps({'type': 'paused', 'message': '工作流已暂停'}, ensure_ascii=False)}\n\n"
                     return  # 停止生成器
-                
+
                 # 构造SSE事件
                 event_data = {
                     "type": event.type,
@@ -620,24 +620,24 @@ async def execute_code_workflow_stream(
             except:
                 pass
             raise  # 重新抛出以正确关闭连接
-            
+
         except Exception as e:
             logger.exception(f"[CodeWorkflow] 流式执行失败: run_id={run_id}")
-            
+
             # 更新 run 状态为失败
             try:
                 state_manager = StateManager(session)
                 state_manager.update_run_status(run_id, "failed")
             except:
                 pass
-            
+
             error_data = {
                 "type": "error",
                 "error": str(e),
                 "message": "工作流执行失败"
             }
             yield f"data: {json.dumps(error_data, ensure_ascii=False)}\n\n"
-        
+
         finally:
             if executor is not None:
                 workflow_runtime.unregister_executor(run_id, executor)
@@ -653,29 +653,29 @@ async def execute_code_workflow_stream(
 @router.delete("/workflows/runs/{run_id}")
 def delete_run(run_id: int, session: Session = Depends(get_session)):
     """删除运行记录
-    
+
     删除指定的运行记录及其相关的节点状态。
     """
     # 获取运行记录
     run = session.get(WorkflowRun, run_id)
     if not run:
         raise HTTPException(status_code=404, detail="Run not found")
-    
+
     # 检查状态：不允许删除正在运行的记录
     if run.status == "running":
-        raise HTTPException(status_code=400, detail="无法删除正在运行的记录，请先暂停或取消")
-    
+        raise HTTPException(status_code=400, detail="Cannot delete a running record; pause or cancel it first")
+
     # 删除相关的节点状态
     from app.db.models import NodeExecutionState
     stmt = select(NodeExecutionState).where(NodeExecutionState.run_id == run_id)
     node_states = session.exec(stmt).all()
     for node_state in node_states:
         session.delete(node_state)
-    
+
     # 删除运行记录
     session.delete(run)
     session.commit()
-    
+
     logger.info(f"[API] 运行记录已删除: run_id={run_id}")
     return {"ok": True, "message": "deleted"}
 
@@ -685,10 +685,10 @@ def get_run_status(run_id: int, session: Session = Depends(get_session)):
     """获取运行状态（包含节点状态）"""
     run_manager = RunManager(session)
     status = run_manager.get_run_status(run_id)
-    
+
     if not status:
         raise HTTPException(status_code=404, detail="Run not found")
-    
+
     return status
 
 
@@ -710,10 +710,10 @@ def create_from_template(
     template = session.get(Workflow, template_id)
     if not template:
         raise HTTPException(status_code=404, detail="Template not found")
-    
+
     if not template.is_template:
-        raise HTTPException(status_code=400, detail="不是模板")
-    
+        raise HTTPException(status_code=400, detail="Not a template")
+
     new_workflow = Workflow(
         name=name,
         description=f"基于模板「{template.name}」创建",
@@ -721,16 +721,16 @@ def create_from_template(
         dsl_version=template.dsl_version,
         is_template=False
     )
-    
+
     session.add(new_workflow)
     session.commit()
     session.refresh(new_workflow)
-    
+
     # 同步触发器缓存
     from app.services.workflow.trigger_extractor import sync_triggers_cache
     sync_triggers_cache(new_workflow, session)
     session.commit()
-    
+
     return new_workflow
 
 
@@ -741,10 +741,10 @@ def create_from_template(
 @router.post("/workflows/parse")
 def parse_workflow_code(payload: Dict[str, Any]):
     """解析工作流代码（验证语法）
-    
+
     Args:
         payload: 包含 code 字段的字典（注释标记 DSL）
-        
+
     Returns:
         解析结果
     """
@@ -785,30 +785,30 @@ def parse_workflow_code(payload: Dict[str, Any]):
 @router.post("/workflows/rename-variable")
 def rename_variable(payload: Dict[str, Any]):
     """重命名变量并更新所有引用
-    
+
     Args:
         payload: 包含 code, old_name, new_name 的字典
-        
+
     Returns:
         重命名结果
     """
     from app.services.workflow.parser.marker_renamer import rename_variable as marker_rename
-    
+
     code = payload.get("code", "")
     old_name = payload.get("old_name", "")
     new_name = payload.get("new_name", "")
-    
+
     logger.info(f"[重命名] 开始重命名变量: {old_name} -> {new_name}")
-    
+
     if not code or not old_name or not new_name:
         return {"success": False, "error": "缺少必要参数"}
-    
+
     try:
         # 使用注释标记 DSL 重命名器
         new_code = marker_rename(code, old_name, new_name)
-        
+
         logger.info(f"[重命名] 新代码:\n{new_code}")
-        
+
         return {
             "success": True,
             "new_code": new_code
@@ -830,7 +830,7 @@ def save_code_workflow(payload: Dict[str, Any], session: Session = Depends(get_s
     code = payload.get("code")
 
     if not name or not code:
-        raise HTTPException(status_code=400, detail="name和code不能为空")
+        raise HTTPException(status_code=400, detail="name and code cannot be empty")
 
     # 创建工作流，将代码存储在 definition_code 字段
     wf = Workflow(
@@ -843,7 +843,7 @@ def save_code_workflow(payload: Dict[str, Any], session: Session = Depends(get_s
     session.add(wf)
     session.commit()
     session.refresh(wf)
-    
+
     # 同步触发器缓存
     from app.services.workflow.trigger_extractor import sync_triggers_cache
     sync_triggers_cache(wf, session)

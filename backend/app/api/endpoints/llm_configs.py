@@ -65,7 +65,7 @@ async def get_models_endpoint(request: LLMGetModelsRequest):
                 user_agent=request.user_agent,
             )
             if not transport["models_url"]:
-                raise ValueError("缺少 api_base，无法获取模型列表")
+                raise ValueError("Missing api_base; cannot fetch model list")
 
             headers = {
                 "Authorization": f"Bearer {request.api_key}",
@@ -93,7 +93,7 @@ async def get_models_endpoint(request: LLMGetModelsRequest):
 
         return ApiResponse(data=models)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"获取模型列表失败: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Failed to fetch model list: {str(e)}")
 
 
 @router.post("/test", response_model=ApiResponse, summary="测试 LLM 连接")
@@ -112,7 +112,7 @@ async def test_llm_connection_endpoint(connection_data: LLMConnectionTest):
         await model.ainvoke("ping")
         return ApiResponse(message="Connection successful")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"连接测试失败: {e}")
+        raise HTTPException(status_code=400, detail=f"Connection test failed: {e}")
 
 
 @router.post("/{config_id}/reset-usage", response_model=ApiResponse, summary="重置统计（输入/输出 token 与调用次数）")

@@ -55,9 +55,9 @@ async def extract_preview(req: ExtractPreviewRequest, session: Session = Depends
 		)
 		return ExtractPreviewResponse(**result)
 	except KeyError:
-		raise HTTPException(status_code=404, detail=f"未知抽取器: {req.extractor_code}")
+		raise HTTPException(status_code=404, detail=f"Unknown extractor: {req.extractor_code}")
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=f"记忆提取预览失败: {e}")
+		raise HTTPException(status_code=500, detail=f"Memory extraction preview failed: {e}")
 
 
 @router.post("/apply-preview", response_model=ApplyPreviewResponse, summary="通用记忆提取确认写入")
@@ -75,9 +75,9 @@ def apply_preview(req: ApplyPreviewRequest, session: Session = Depends(get_sessi
 		)
 		return ApplyPreviewResponse(**result)
 	except KeyError:
-		raise HTTPException(status_code=404, detail=f"未知抽取器: {req.extractor_code}")
+		raise HTTPException(status_code=404, detail=f"Unknown extractor: {req.extractor_code}")
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=f"记忆写入失败: {e}")
+		raise HTTPException(status_code=500, detail=f"Memory write failed: {e}")
 
 
 @router.post("/query", response_model=QueryResponse, summary="检索子图快照")
@@ -113,7 +113,7 @@ async def ingest_relations_llm(req: IngestRelationsLLMRequest, session: Session 
 		)
 		return IngestRelationsLLMResponse(written=res.get("written", 0))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=f"LLM 关系抽取或写入失败: {e}")
+		raise HTTPException(status_code=500, detail=f"LLM relation extraction or write failed: {e}")
 
 
 @router.post("/extract-relations-llm", response_model=RelationExtraction, summary="仅抽取实体关系（不入图）")
@@ -134,7 +134,7 @@ async def extract_relations_only(req: ExtractRelationsRequest, session: Session 
 		)
 		return RelationExtraction.model_validate(result["preview_data"])
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=f"LLM 关系抽取失败: {e}")
+		raise HTTPException(status_code=500, detail=f"LLM relation extraction failed: {e}")
 
 
 @router.post("/extract-dynamic-info", response_model=UpdateDynamicInfo, summary="仅提取角色动态信息（不更新）")
@@ -154,7 +154,7 @@ async def extract_dynamic_info_only(req: ExtractOnlyRequest, session: Session = 
 		)
 		return UpdateDynamicInfo.model_validate(result["preview_data"])
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=f"动态信息提取失败: {e}")
+		raise HTTPException(status_code=500, detail=f"Dynamic info extraction failed: {e}")
 
 
 @router.post("/ingest-relations", response_model=IngestRelationsFromPreviewResponse, summary="根据 RelationExtraction 结果入图")
@@ -170,7 +170,7 @@ def ingest_relations_from_preview(req: IngestRelationsFromPreviewRequest, sessio
 		)
 		return IngestRelationsFromPreviewResponse(written=res.get("written", 0))
 	except Exception as e:
-		raise HTTPException(status_code=500, detail=f"关系入图失败: {e}")
+		raise HTTPException(status_code=500, detail=f"Relationship graph import failed: {e}")
 
 
 @router.post("/update-dynamic-info", response_model=UpdateDynamicInfoResponse, summary="根据预览结果写入角色动态信息")

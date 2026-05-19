@@ -49,8 +49,8 @@ def create_prompt(session: Session, prompt_create: PromptCreate) -> Prompt:
     # 检查名称是否已存在
     existing_prompt = get_prompt_by_name(session, prompt_create.name)
     if existing_prompt:
-        raise ValueError(f"提示词名称 '{prompt_create.name}' 已存在")
-    
+        raise ValueError(f"Prompt name '{prompt_create.name}' already exists")
+
     payload = prompt_create.model_dump()
     payload["key"] = payload.get("key") or resolve_builtin_key(prompt_create.name, PROMPT_NAME_TO_KEY)
     if payload.get("key") and get_prompt_by_key(session, payload["key"]):
@@ -93,7 +93,7 @@ def delete_prompt(session: Session, prompt_id: int) -> bool:
 def render_prompt(prompt_template: str, context: Dict[str, Any]) -> str:
     """
     使用上下文渲染提示词模板。
-    
+
     :param prompt_template: 带有占位符的字符串模板 (e.g., "你好, ${name}")
     :param context: 包含要填充到模板中的值的字典 (e.g., {"name": "世界"})
     :return: 渲染后的字符串 ("你好, 世界")
@@ -102,9 +102,9 @@ def render_prompt(prompt_template: str, context: Dict[str, Any]) -> str:
     try:
         return template.substitute(context)
     except KeyError as e:
-        raise ValueError(f"渲染提示词失败：上下文中缺少变量 '{e.args[0]}'")
+        raise ValueError(f"Failed to render prompt: missing variable '{e.args[0]}' in context")
     except Exception as e:
-        raise ValueError(f"渲染提示词时发生未知错误: {e}")
+        raise ValueError(f"Unexpected error while rendering prompt: {e}")
 
 
 # 知识库占位符解析
@@ -114,22 +114,22 @@ _KB_NAME_PATTERN = re.compile(r"@KB\{\s*name\s*=\s*([^}]+)\}")
 
 def inject_knowledge(session: Session, template: str) -> str:
     """将模板中的知识库占位符注入为实际内容
-    
+
     规则：
     1) 对 "- knowledge:" 段落内的多个占位符，按顺序注入并以编号分隔：
        - knowledge:\n1.\n<KB1>\n\n2.\n<KB2> ...
     2) knowledge 段之外若出现占位符，做就地替换为知识全文。
     3) 若找不到对应知识库，保留提示注释，避免中断。
-    
+
     Args:
         session: 数据库会话
         template: 提示词模板
-        
+
     Returns:
         注入知识库后的模板
     """
     from app.services.knowledge_service import KnowledgeService
-    
+
     svc = KnowledgeService(session)
 
     def fetch_kb_by_id(kid: int) -> str:
@@ -200,4 +200,4 @@ def inject_knowledge(session: Session, template: str) -> str:
 
     result = _KB_ID_PATTERN.sub(repl_id, enumerated_text)
     result = _KB_NAME_PATTERN.sub(repl_name, result)
-    return result 
+    return result

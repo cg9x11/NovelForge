@@ -47,7 +47,7 @@ def read_prompt(
     """
     db_prompt = prompt_service.get_prompt(session=session, prompt_id=prompt_id)
     if not db_prompt:
-        raise HTTPException(status_code=404, detail="提示词未找到")
+        raise HTTPException(status_code=404, detail="Prompt not found")
     return ApiResponse(data=db_prompt)
 
 @router.put("/{prompt_id}", response_model=ApiResponse[PromptRead], summary="更新提示词")
@@ -65,7 +65,7 @@ def update_prompt(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     if not updated_prompt:
-        raise HTTPException(status_code=404, detail="提示词未找到")
+        raise HTTPException(status_code=404, detail="Prompt not found")
     return ApiResponse(data=updated_prompt)
 
 @router.delete("/{prompt_id}", response_model=ApiResponse, summary="删除提示词")
@@ -79,9 +79,9 @@ def delete_prompt(
     """
     db_prompt = prompt_service.get_prompt(session=session, prompt_id=prompt_id)
     if not db_prompt:
-        raise HTTPException(status_code=404, detail="提示词未找到")
+        raise HTTPException(status_code=404, detail="Prompt not found")
     if getattr(db_prompt, 'built_in', False):
-        raise HTTPException(status_code=400, detail="系统内置提示词不可删除")
+        raise HTTPException(status_code=400, detail="Built-in prompt cannot be deleted")
     if not prompt_service.delete_prompt(session=session, prompt_id=prompt_id):
-        raise HTTPException(status_code=404, detail="提示词未找到")
-    return ApiResponse(message="提示词删除成功") 
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    return ApiResponse(message="Prompt deleted successfully")

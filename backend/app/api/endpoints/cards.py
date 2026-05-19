@@ -9,7 +9,7 @@ from app.services.card_export_service import CardExportService
 from app.services.schema_service import compose_schema_with_card_types, localize_schema_titles
 from app.services.card_params_service import merge_effective_ai_params
 from app.schemas.card import (
-    CardRead, CardCreate, CardUpdate, 
+    CardRead, CardCreate, CardUpdate,
     CardTypeRead, CardTypeCreate, CardTypeUpdate,
     CardBatchReorderRequest,
     CardExportRequest,
@@ -94,7 +94,7 @@ def delete_card_type(card_type_id: int, db: Session = Depends(get_session)):
     if not db_card_type:
         raise HTTPException(status_code=404, detail="CardType not found")
     if getattr(db_card_type, 'built_in', False):
-        raise HTTPException(status_code=400, detail="系统内置卡片类型不可删除")
+        raise HTTPException(status_code=400, detail="Built-in card type cannot be deleted")
     if not service.delete(card_type_id):
         raise HTTPException(status_code=404, detail="CardType not found")
     return {"ok": True}
@@ -160,9 +160,9 @@ def create_card_for_project(project_id: int, card: CardCreate, db: Session = Dep
             triggered_run_ids = event_data.get("triggered_run_ids", [])
         except Exception:
             logger.exception("OnSave workflow trigger failed")
-        
+
         # Header is managed by Middleware
-        
+
         return created
     except BusinessException as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
@@ -210,15 +210,15 @@ def update_card(card_id: int, card: CardUpdate, db: Session = Depends(get_sessio
         old_content = copy.deepcopy(old_card.content)
 
     was_needs_confirmation = getattr(old_card, 'needs_confirmation', False) if old_card else False
-    
+
     service = CardService(db)
     db_card = service.update(card_id, card)
     if db_card is None:
         raise HTTPException(status_code=404, detail="Card not found")
-    
+
     # 检查是否从"需要确认"状态变为"已确认"状态
     is_now_confirmed = was_needs_confirmation and not getattr(db_card, 'needs_confirmation', False)
-    
+
     # 用户保存时的处理
     if is_now_confirmed:
         # 场景1：用户确认了 AI 修改的卡片
@@ -235,26 +235,26 @@ def update_card(card_id: int, card: CardUpdate, db: Session = Depends(get_sessio
         db.add(db_card)
         db.commit()
         db.refresh(db_card)
-    
+
     triggered_run_ids = []
     try:
         event_data = {
-            "session": db, 
-            "card": db_card, 
+            "session": db,
+            "card": db_card,
             "is_created": False,
             "old_content": old_content,
             "card_type": _resolve_card_type_name(db, db_card),
         }
         emit_event("card.saved", event_data)
         triggered_run_ids = event_data.get("triggered_run_ids", [])
-        
+
         if is_now_confirmed and triggered_run_ids:
             logger.info(f"🎯 AI修改卡片确认后触发了 {len(triggered_run_ids)} 个工作流")
     except Exception:
         logger.exception("OnSave workflow trigger failed")
-    
+
     # Header is managed by Middleware
-    
+
     return db_card
 
 
@@ -262,45 +262,45 @@ def update_card(card_id: int, card: CardUpdate, db: Session = Depends(get_sessio
 def batch_reorder_cards(request: CardBatchReorderRequest, db: Session = Depends(get_session)):
     """
     批量更新卡片排序
-    
+
     Args:
         request: 包含要更新的卡片列表，每个卡片包含 card_id, display_order, parent_id
-        
+
     Returns:
         更新的卡片数量和成功状态
     """
     try:
         updated_count = 0
-        
+
         # 批量更新所有卡片
         for item in request.updates:
             card = db.get(Card, item.card_id)
             if card:
                 # 更新 display_order
                 card.display_order = item.display_order
-                
+
                 # 更新 parent_id（无论是否变化都更新，因为前端已经明确传递了值）
                 # 这样可以正确处理：设置为根级(null)、设置为子卡片(有值)、保持不变(传递当前值)
                 card.parent_id = item.parent_id
-                    
+
                 db.add(card)
                 updated_count += 1
-        
+
         # 一次性提交所有更新
         db.commit()
-        
+
         logger.info(f"批量更新排序完成，共更新 {updated_count} 张卡片")
-        
+
         return {
             "success": True,
             "updated_count": updated_count,
             "message": f"成功更新 {updated_count} 张卡片的排序"
         }
-        
+
     except Exception as e:
         db.rollback()
         logger.error(f"批量更新排序失败: {e}")
-        raise HTTPException(status_code=500, detail=f"批量更新失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Batch update failed: {str(e)}")
 
 
 @router.delete("/cards/{card_id}", status_code=204)
@@ -330,7 +330,7 @@ def move_card_endpoint(card_id: int, payload: CardCopyOrMoveRequest, db: Session
             raise HTTPException(status_code=404, detail="Card not found")
         return moved
     except BusinessException as e:
-        raise HTTPException(status_code=e.status_code, detail=e.message) 
+        raise HTTPException(status_code=e.status_code, detail=e.message)
 
 # --- Card Schema Endpoints ---
 
@@ -373,7 +373,7 @@ def apply_card_schema_to_type(card_id: int, db: Session = Depends(get_session)) 
     db.add(c.card_type)
     db.commit()
     db.refresh(c.card_type)
-    return {"json_schema": c.card_type.json_schema} 
+    return {"json_schema": c.card_type.json_schema}
 
 # --- Card AI Params Endpoints ---
 
@@ -411,4 +411,4 @@ def apply_card_ai_params_to_type(card_id: int, db: Session = Depends(get_session
     db.add(c.card_type)
     db.commit()
     db.refresh(c.card_type)
-    return {"ai_params": c.card_type.ai_params} 
+    return {"ai_params": c.card_type.ai_params}
