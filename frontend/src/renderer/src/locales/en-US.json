@@ -731,6 +731,10 @@
       "started": "Starting generation...",
       "completed_check": "? Generation completed",
       "failed": "Generation failed"
+    },
+    "errors": {
+      "empty_response": "Response body is empty",
+      "failed": "Generation failed"
     }
   },
   "llm_config": {

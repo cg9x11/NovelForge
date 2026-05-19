@@ -731,6 +731,10 @@
       "started": "Bắt đầu sinh nội dung...",
       "completed_check": "Đã sinh nội dung hoàn tất",
       "failed": "Sinh nội dung thất bại"
+    },
+    "errors": {
+      "empty_response": "Nội dung phản hồi trống",
+      "failed": "Sinh nội dung thất bại"
     }
   },
   "llm_config": {

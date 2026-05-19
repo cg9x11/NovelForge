@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './request'
+import { i18n } from '@renderer/i18n'
 
 import type {
   InstructionGenerateRequest,
@@ -55,7 +56,7 @@ export async function generateWithInstructionStream(
     }
 
     if (!response.body) {
-      throw new Error('响应体为空')
+      throw new Error(String(i18n.global.t('generation.errors.empty_response')))
     }
 
     // 读取 SSE 流
@@ -104,7 +105,7 @@ export async function generateWithInstructionStream(
     }
 
     console.error('生成失败:', error)
-    callbacks.onError?.(error.message || '生成失败')
+    callbacks.onError?.(error.message || String(i18n.global.t('generation.errors.failed')))
   }
 }
 

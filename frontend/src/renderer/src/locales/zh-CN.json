@@ -725,6 +725,10 @@
       "started": "Starting generation...",
       "completed_check": "? Generation completed",
       "failed": "Generation failed"
+    },
+    "errors": {
+      "empty_response": "响应体为空",
+      "failed": "生成失败"
     }
   },
   "llm_config": {
