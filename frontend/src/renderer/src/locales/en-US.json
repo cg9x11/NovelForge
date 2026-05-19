@@ -223,7 +223,8 @@
       "prompts": "Prompts",
       "prompts_title": "AI Prompts",
       "interrupt": "Interrupt",
-      "review_default_prompt": "Chapter Review"
+      "review_default_prompt": "Chapter Review",
+      "generation": "AI generation"
     },
     "status": {
       "model": "Model",

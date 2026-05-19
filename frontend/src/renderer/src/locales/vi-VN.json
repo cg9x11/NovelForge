@@ -223,7 +223,8 @@
       "prompts": "Prompt",
       "prompts_title": "Prompt AI",
       "interrupt": "Dừng",
-      "review_default_prompt": "Duyệt chương"
+      "review_default_prompt": "Duyệt chương",
+      "generation": "AI sinh n?i dung"
     },
     "status": {
       "model": "Model",
