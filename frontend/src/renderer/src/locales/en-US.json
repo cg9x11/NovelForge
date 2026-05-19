@@ -1931,5 +1931,9 @@
       "timeout": "Request timed out",
       "check_failed": "Update check failed"
     }
+  },
+  "ui_layout": {
+    "section": "Section",
+    "basic_info": "Basic information"
   }
 }

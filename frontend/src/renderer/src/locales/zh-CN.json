@@ -1892,5 +1892,9 @@
       "timeout": "请求超时",
       "check_failed": "更新检测失败"
     }
+  },
+  "ui_layout": {
+    "section": "分区",
+    "basic_info": "基础信息"
   }
 }

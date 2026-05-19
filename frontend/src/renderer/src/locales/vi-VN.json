@@ -1931,5 +1931,9 @@
       "timeout": "Yêu cầu quá thời gian",
       "check_failed": "Kiểm tra cập nhật thất bại"
     }
+  },
+  "ui_layout": {
+    "section": "Phân khu",
+    "basic_info": "Thông tin cơ bản"
   }
 }
