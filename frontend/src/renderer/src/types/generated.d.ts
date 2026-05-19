@@ -2261,6 +2261,8 @@ export interface components {
         };
         /** CardTypeCreate */
         CardTypeCreate: {
+            /** Key */
+            key?: string | null;
             /** Name */
             name: string;
             /** Model Name */
@@ -2298,6 +2300,8 @@ export interface components {
         };
         /** CardTypeRead */
         CardTypeRead: {
+            /** Key */
+            key?: string | null;
             /** Name */
             name: string;
             /** Model Name */
@@ -2342,6 +2346,8 @@ export interface components {
         };
         /** CardTypeUpdate */
         CardTypeUpdate: {
+            /** Key */
+            key?: string | null;
             /** Name */
             name?: string | null;
             /** Model Name */
@@ -3371,6 +3377,8 @@ export interface components {
         };
         /** PromptCreate */
         PromptCreate: {
+            /** Key */
+            key?: string | null;
             /** Name */
             name: string;
             /** Description */
@@ -3380,6 +3388,8 @@ export interface components {
         };
         /** PromptRead */
         PromptRead: {
+            /** Key */
+            key?: string | null;
             /** Name */
             name: string;
             /** Description */
@@ -3396,6 +3406,8 @@ export interface components {
         };
         /** PromptUpdate */
         PromptUpdate: {
+            /** Key */
+            key?: string | null;
             /** Name */
             name?: string | null;
             /** Description */
