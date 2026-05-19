@@ -51,7 +51,7 @@ def _resolve_review_profile_code(review_profile: str | None) -> str:
 def _build_system_prompt(session: Session, prompt_name: str) -> str:
     prompt = prompt_service.get_prompt_by_name(session, prompt_name)
     if not prompt or not prompt.template:
-        raise HTTPException(status_code=400, detail={"error_code": "PROMPT_NAME_NOT_FOUND", "prompt_name": prompt_name})
+        raise HTTPException(status_code=400, detail=f"未找到提示词名称: {prompt_name}")
     return prompt_service.inject_knowledge(session, str(prompt.template))
 
 
