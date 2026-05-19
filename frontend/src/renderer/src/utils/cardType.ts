@@ -38,6 +38,27 @@ const CARD_TYPE_NAME_TO_KEY: Record<string, string> = {
   'Thẻ khái niệm': 'concept_card'
 }
 
+const CARD_TYPE_KEYS = new Set([
+  'general_text',
+  'work_tags',
+  'special_ability',
+  'one_sentence',
+  'story_outline',
+  'world_building',
+  'blueprint',
+  'volume_outline',
+  'writing_guide',
+  'stage_outline',
+  'chapter_outline',
+  'chapter_body',
+  'review_result_card',
+  'character_card',
+  'scene_card',
+  'organization_card',
+  'item_card',
+  'concept_card'
+])
+
 const CARD_TYPE_MODEL_TO_KEY: Record<string, string> = {
   Chapter: 'chapter_body',
   ReviewResultCardContent: 'review_result_card',
@@ -53,7 +74,7 @@ const CARD_TYPE_MODEL_TO_KEY: Record<string, string> = {
 
 export function getCardTypeKey(cardType: any): string | null {
   if (!cardType) return null
-  return cardType.key || CARD_TYPE_MODEL_TO_KEY[cardType.output_model_name] || CARD_TYPE_NAME_TO_KEY[cardType.name] || null
+  return cardType.key || CARD_TYPE_MODEL_TO_KEY[cardType.output_model_name] || (CARD_TYPE_KEYS.has(cardType.name) ? cardType.name : null) || CARD_TYPE_NAME_TO_KEY[cardType.name] || null
 }
 
 export function isCardType(cardType: any, expectedKey: string): boolean {

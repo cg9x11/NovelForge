@@ -117,7 +117,7 @@
 
 					<AIPerCardParams
 						:card-id="props.card.id"
-						:card-type-name="props.card.card_type?.name"
+						:card-type-name="(props.card.card_type as any)?.key || props.card.card_type?.name"
 						class="ai-config-entry"
 					/>
 
@@ -1334,7 +1334,7 @@ watch(() => props.card, async (newCard) => {
 	const saved = perCardStore.getByCardId(newCard.id)
 	if (saved) editingParams.value = { ...saved }
 	else {
-		const preset = getPresetForType(newCard.card_type?.name) || {}
+		const preset = getPresetForType((newCard.card_type as any)?.key || newCard.card_type?.name) || {}
 		if (!preset.llm_config_id) { const first = aiOptions.value?.llm_configs?.[0]; if (first) preset.llm_config_id = first.id }
 		editingParams.value = { ...preset }
 		perCardStore.setForCard(newCard.id, editingParams.value)
@@ -1398,19 +1398,21 @@ function applyAndSavePerCardParams() {
 	try { perCardStore.setForCard(props.card.id, { ...editingParams.value }); ElMessage.success(t('codemirror.messages.saved_to_card_settings')) } catch { ElMessage.error(t('codemirror.messages.save_failed')) }
 }
 function resetToPreset() {
-	const preset = getPresetForType(props.card.card_type?.name)
+	const preset = getPresetForType((props.card.card_type as any)?.key || props.card.card_type?.name)
 	editingParams.value = { ...(preset || {}) }
 	perCardStore.setForCard(props.card.id, editingParams.value)
 }
 function getPresetForType(typeName?: string) : PerCardAIParams | undefined {
-	if (typeName === '????') {
-		return { prompt_name: t('codemirror.chapter.outline_prompt'), llm_config_id: 1, temperature: 0.6, max_tokens: 4096, timeout: 60 }
+	const key = getCardTypeKey({ name: typeName }) || typeName
+	if (key === 'chapter_outline') {
+		return { prompt_name: 'chapter_outline', llm_config_id: 1, temperature: 0.6, max_tokens: 4096, timeout: 60 }
 	}
-	if (typeName === '????' || typeName === '????') {
-		return { prompt_name: t('generation.defaults.prompt_name'), llm_config_id: 1, temperature: 0.7, max_tokens: 8192, timeout: 60 }
+	if (key === 'chapter_body' || key === 'stage_outline') {
+		return { prompt_name: 'content_generation', llm_config_id: 1, temperature: 0.7, max_tokens: 8192, timeout: 60 }
 	}
 	return undefined
 }
+
 
 watch(() => props.chapter, (ch) => {
 	if (!ch) return

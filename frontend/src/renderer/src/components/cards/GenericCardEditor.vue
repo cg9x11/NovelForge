@@ -70,7 +70,7 @@
               </el-dropdown-menu>
             </template>
           </el-dropdown>
-          <AIPerCardParams :card-id="props.card.id" :card-type-name="props.card.card_type?.name" />
+          <AIPerCardParams :card-id="props.card.id" :card-type-name="(props.card.card_type as any)?.key || props.card.card_type?.name" />
           <el-button size="small" type="primary" plain @click="schemaStudioVisible = true">{{ t('generic_card.structure') }}</el-button>
         </div>
       </div>
@@ -124,7 +124,7 @@
     <!-- 初始提示对话框 -->
     <InitialPromptDialog
       v-model:visible="showInitialPromptDialog"
-      :card-type-name="props.card.card_type?.name"
+      :card-type-name="(props.card.card_type as any)?.key || props.card.card_type?.name"
       @confirm="handleStartGeneration"
       @cancel="showInitialPromptDialog = false"
     />
@@ -443,7 +443,7 @@ watch(
         if (eff) editingParams.value = { ...eff }
       } catch {}
       if (!editingParams.value || Object.keys(editingParams.value).length === 0) {
-        const preset = getPresetForType(newCard.card_type?.name) || {}
+        const preset = getPresetForType((newCard.card_type as any)?.key || newCard.card_type?.name) || {}
         editingParams.value = { ...preset }
       }
       if (!editingParams.value.llm_config_id) {
@@ -679,7 +679,7 @@ async function applyParamsToType() {
 }
 
 function resetToPreset() {
-  const preset = getPresetForType(props.card.card_type?.name) || {}
+  const preset = getPresetForType((props.card.card_type as any)?.key || props.card.card_type?.name) || {}
   if (!preset.llm_config_id) {
     const first = aiOptions.value?.llm_configs?.[0]
     if (first) preset.llm_config_id = first.id
