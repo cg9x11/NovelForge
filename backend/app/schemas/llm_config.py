@@ -55,6 +55,7 @@ class LLMConnectionTest(SQLModel):
     api_key: str
     api_protocol: LLMApiProtocol = "chat_completions"
     custom_request_path: Optional[str] = None
+    models_path: Optional[str] = None
     user_agent: Optional[str] = None
 
 class LLMGetModelsRequest(SQLModel):

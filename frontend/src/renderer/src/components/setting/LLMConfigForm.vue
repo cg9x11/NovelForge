@@ -239,11 +239,11 @@ watch(
   { immediate: true },
 )
 
-function buildTransportPayload() {
+function buildTransportPayload(options: { includeModelsPath?: boolean } = {}) {
   return {
     api_protocol: form.api_protocol || 'chat_completions',
     custom_request_path: form.custom_request_path.trim() || undefined,
-    models_path: form.models_path.trim() || undefined,
+    ...(options.includeModelsPath ? { models_path: form.models_path.trim() || undefined } : {}),
     user_agent: form.user_agent.trim() || undefined,
   }
 }
@@ -275,7 +275,7 @@ async function handleFetchModels() {
       provider: form.provider,
       api_base: form.api_base.trim() || undefined,
       api_key: form.api_key,
-      ...buildTransportPayload(),
+      ...buildTransportPayload({ includeModelsPath: true }),
     } as any)
     fetchedModels.value = models
     if (models.length > 0) {
@@ -301,7 +301,7 @@ async function handleTest() {
       model_name: form.model_name,
       api_base: form.api_base.trim() || undefined,
       api_key: form.api_key,
-      ...buildTransportPayload(),
+      ...buildTransportPayload({ includeModelsPath: true }),
     } as any)
     ElMessage.success(t('llm_form.messages.test_success'))
   } catch (e: any) {

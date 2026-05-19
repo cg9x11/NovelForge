@@ -26,6 +26,14 @@ from app.services.workflow.patcher import (
 )
 
 
+PROJECT_TEMPLATE_LABELS = {
+    "snowflake": {
+        "name": "Tạo dự án - Phương pháp bông tuyết",
+        "description": "Workflow tích hợp để tạo dự án bằng phương pháp bông tuyết",
+    },
+}
+
+
 def _clean_dollar_prefix(value: Any) -> Any:
     """递归清理值中的 $ 前缀
 
@@ -214,11 +222,12 @@ def get_project_templates(session: Session = Depends(get_session)):
                 match = trigger.get("match") or {}
                 template_id = match.get("template")
 
+                label = PROJECT_TEMPLATE_LABELS.get(template_id or "", {})
                 templates.append({
                     "workflow_id": wf.id,
-                    "workflow_name": wf.name,
-                    "template": template_id,  # 模板标识（如 "snowflake"）
-                    "description": wf.description
+                    "workflow_name": label.get("name", wf.name),
+                    "template": template_id,
+                    "description": label.get("description", wf.description)
                 })
 
     logger.info(f"[API] 找到 {len(templates)} 个项目创建模板")

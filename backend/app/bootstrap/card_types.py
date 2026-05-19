@@ -301,6 +301,28 @@ def create_default_card_types(session: Session) -> None:
         "文件夹": "Text",
     }
 
+    CARD_TYPE_KEY_TO_VI_NAME = {
+        "general_text": "Văn bản chung",
+        "work_tags": "Tags tác phẩm",
+        "special_ability": "Bàn tay vàng",
+        "one_sentence": "Tóm tắt một câu",
+        "story_outline": "Đại cương cốt truyện",
+        "world_building": "Thiết lập thế giới quan",
+        "blueprint": "Bản thiết kế cốt lõi",
+        "volume_outline": "Đề cương phân quyển",
+        "writing_guide": "Hướng dẫn viết",
+        "stage_outline": "Đề cương giai đoạn",
+        "chapter_outline": "Đề cương chương",
+        "chapter_body": "Chính văn chương",
+        "review_result_card": "Thẻ duyệt nội dung",
+        "character_card": "Thẻ nhân vật",
+        "scene_card": "Thẻ bối cảnh",
+        "organization_card": "Thẻ tổ chức",
+        "item_card": "Thẻ vật phẩm",
+        "concept_card": "Thẻ khái niệm",
+        "folder": "Thư mục",
+    }
+
     overwrite_card_schemas = settings.bootstrap.should_overwrite_card_schemas
 
     existing_types = session.exec(select(CardType)).all()
@@ -334,9 +356,9 @@ def create_default_card_types(session: Session) -> None:
                 ai_params = {**ai_params, "llm_config_id": (default_llm.id if default_llm else None)}
             card_type = CardType(
                 key=card_type_key,
-                name=name,
+                name=CARD_TYPE_KEY_TO_VI_NAME.get(card_type_key, name),
                 model_name=TYPE_TO_MODEL_KEY.get(name, name),
-                description=details.get("description", f"{name}的默认卡片类型"),
+                description=details.get("description", f"{CARD_TYPE_KEY_TO_VI_NAME.get(card_type_key, name)} mặc định"),
                 json_schema=schema,
                 ai_params=ai_params,
                 editor_component=details.get("editor_component"),
@@ -351,7 +373,7 @@ def create_default_card_types(session: Session) -> None:
         else:
             # 增量更新：刷新类型结构与元信息
             ct = existing_type
-            ct.name = name
+            ct.name = CARD_TYPE_KEY_TO_VI_NAME.get(card_type_key, name)
             ct.key = card_type_key
             try:
                 model_class = RESPONSE_MODEL_MAP.get(TYPE_TO_MODEL_KEY.get(name))
@@ -373,7 +395,7 @@ def create_default_card_types(session: Session) -> None:
             ct.editor_component = details.get("editor_component")
             ct.is_ai_enabled = details.get("is_ai_enabled", True)
             ct.is_singleton = details.get("is_singleton", False)
-            ct.description = details.get("description", f"{name}的默认卡片类型")
+            ct.description = details.get("description", f"{CARD_TYPE_KEY_TO_VI_NAME.get(card_type_key, name)} mặc định")
             ct.default_ai_context_template = details.get("default_ai_context_template")
             ct.default_ai_context_template_review = details.get("default_ai_context_template_review")
             ct.built_in = True

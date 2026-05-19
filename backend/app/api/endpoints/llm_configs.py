@@ -96,10 +96,35 @@ async def get_models_endpoint(request: LLMGetModelsRequest):
         raise HTTPException(status_code=400, detail=f"Failed to fetch model list: {str(e)}")
 
 
-@router.post("/test", response_model=ApiResponse, summary="测试 LLM 连接")
+@router.post("/test", response_model=ApiResponse, summary="Test LLM connection")
 async def test_llm_connection_endpoint(connection_data: LLMConnectionTest):
-    """使用临时传输配置构建 ChatModel 并执行最小调用。"""
+    """Validate transport and credentials without forcing a token-consuming chat call when /models is available."""
     try:
+        provider = (connection_data.provider or "").lower()
+        if provider in {"openai_compatible", "openai"}:
+            transport = llm_config_service.resolve_transport_settings(
+                provider=connection_data.provider,
+                api_base=connection_data.api_base,
+                api_protocol=connection_data.api_protocol,
+                custom_request_path=connection_data.custom_request_path,
+                models_path=connection_data.models_path,
+                user_agent=connection_data.user_agent,
+            )
+            if transport["models_url"]:
+                headers = {
+                    "Authorization": f"Bearer {connection_data.api_key}",
+                    "Content-Type": "application/json",
+                    **transport["default_headers"],
+                }
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(transport["models_url"], headers=headers, timeout=10.0)
+                    response.raise_for_status()
+                    data = response.json()
+                model_ids = [item.get("id") for item in data.get("data", []) if isinstance(item, dict)]
+                if model_ids and connection_data.model_name not in model_ids:
+                    raise ValueError(f"Model '{connection_data.model_name}' not found in model list")
+                return ApiResponse(message="Connection successful")
+
         model = build_chat_model_from_payload(
             provider=connection_data.provider,
             model_name=connection_data.model_name,
@@ -109,11 +134,10 @@ async def test_llm_connection_endpoint(connection_data: LLMConnectionTest):
             custom_request_path=connection_data.custom_request_path,
             user_agent=connection_data.user_agent,
         )
-        await model.ainvoke("ping")
+        await model.ainvoke("Reply with OK.")
         return ApiResponse(message="Connection successful")
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Connection test failed: {e}")
-
 
 @router.post("/{config_id}/reset-usage", response_model=ApiResponse, summary="重置统计（输入/输出 token 与调用次数）")
 def reset_llm_usage(config_id: int, session: Session = Depends(get_session)):
