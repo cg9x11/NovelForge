@@ -7,7 +7,7 @@ from app.db.session import get_session
 from app.services.card_service import CardService, CardTypeService
 from app.services.card_export_service import CardExportService
 from app.services.schema_service import compose_schema_with_card_types, localize_schema_titles
-from app.services.card_params_service import merge_effective_ai_params, normalize_ai_params
+from app.services.card_params_service import merge_effective_ai_params
 from app.schemas.card import (
     CardRead, CardCreate, CardUpdate, 
     CardTypeRead, CardTypeCreate, CardTypeUpdate,
@@ -129,7 +129,7 @@ def update_card_type_ai_params(card_type_id: int, payload: Dict[str, Any], db: S
     ct = db.get(CardType, card_type_id)
     if not ct:
         raise HTTPException(status_code=404, detail="CardType not found")
-    ct.ai_params = normalize_ai_params(payload.get("ai_params"))
+    ct.ai_params = payload.get("ai_params")
     db.add(ct)
     db.commit()
     db.refresh(ct)
@@ -384,7 +384,7 @@ def update_card_ai_params(card_id: int, payload: Dict[str, Any], db: Session = D
     c = db.get(Card, card_id)
     if not c:
         raise HTTPException(status_code=404, detail="Card not found")
-    c.ai_params = normalize_ai_params(payload.get("ai_params", None))
+    c.ai_params = payload.get("ai_params", None)
     db.add(c)
     db.commit()
     db.refresh(c)

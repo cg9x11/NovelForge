@@ -48,7 +48,7 @@ class AssistantChatRequest(BaseModel):
     # 必需字段
     project_id: int = Field(description="项目ID（用于工具调用作用域）")
     llm_config_id: int = Field(description="LLM配置ID")
-    prompt_name: str = Field(default="idea_chat", description="系统提示词标识（建议使用稳定 key）")
+    prompt_name: str = Field(default="灵感对话", description="系统提示词名称")
     
     # 可选参数
     temperature: Optional[float] = Field(default=None, description="采样温度 0-2")

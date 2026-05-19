@@ -69,21 +69,6 @@ def resolve_prompt_name(identifier: str) -> str:
     return normalized
 
 
-def resolve_prompt_key(identifier: str) -> str:
-    if not identifier:
-        return identifier
-    normalized = identifier.strip()
-    lowered = normalized.lower()
-    if lowered in PROMPT_KEY_TO_NAME:
-        return lowered
-    if lowered in PROMPT_ALIAS_TO_KEY:
-        return PROMPT_ALIAS_TO_KEY[lowered]
-    for key, name in PROMPT_KEY_TO_NAME.items():
-        if name == normalized:
-            return key
-    return normalized
-
-
 def get_prompt_by_identifier(session: Session, identifier: str) -> Optional[Prompt]:
     resolved_name = resolve_prompt_name(identifier)
     prompt = get_prompt_by_name(session, resolved_name)

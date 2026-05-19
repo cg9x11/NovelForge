@@ -54,7 +54,6 @@ from .registry import initializer, discover_and_run_initializers
 
 # 导入所有初始化器模块以触发装饰器注册
 from . import prompts
-from . import prompt_keys_migration
 from . import card_types
 from . import workflows
 from . import knowledge
