@@ -2,275 +2,272 @@
 
 # NovelForge
 
-<p><strong>新一代 AI 长篇小说创作引擎</strong></p>
+<p><strong>Công cụ sáng tạo tiểu thuyết AI thế hệ mới</strong></p>
 
 <p>
-  <a href="#目录">目录</a> •
-  <a href="#核心特性">核心特性</a> •
-  <a href="#更新日志">更新日志</a> •
-  <a href="#运行指南">运行指南</a> •
-  <a href="#创作流程">创作流程</a>
+  <a href="#catalogue">Mục lục</a> •
+  <a href="#corefeature">Tính năng cốt lõi</a> •
+  <a href="#Updatelog">Nhật ký cập nhật</a> •
+  <a href="#Run Guide">Hướng dẫn chạy</a> •
+  <a href="#creative process">quy trình sáng tạo</a>
 </p>
 
 <p>
-  <a href="#高级功能与配置">高级功能</a> •
-  <a href="#工作流系统代码式工作流--workflow-agent">工作流系统</a> •
-  <a href="#项目结构">项目结构</a> •
-  <a href="./贡献指南.md">贡献指南</a> •
-  <a href="./后续规划.md">后续规划</a> •
-  <a href="#交流群">交流群</a>
+  <a href="#Cấu hình và tính năng nâng cao">Tính năng nâng cao</a> •
+  <a href="#workflow hệ thống quy trình làm việc được mã hóa--workflow-agent">hệ thống quy trình làm việc</a> •
+  <a href="#project Structure">Cấu trúc dự án</a> •
+  <a href="./Contribution Guide.md">Hướng dẫn đóng góp</a> •
+  <a href="./Follow-up Planning.md">Lập kế hoạch tiếp theo</a> •
+  <a href="#Nhóm giao tiếp">Nhóm giao tiếp</a>
 </p>
 
 
 </div>
 
-**NovelForge** 是一款具备数百万字级长篇创作潜力的 AI 辅助写作工具。它不仅是编辑器，更是一套集世界观构建、结构化内容生成于一体的解决方案。
+**NovelForge** là một công cụ viết được hỗ trợ bởi AI với tiềm năng tạo ra những cuốn tiểu thuyết nhiều triệu từ. Nó không chỉ là một trình soạn thảo mà còn là một giải pháp tích hợp xây dựng thế giới quan và tạo nội dung có cấu trúc.
 
-长篇创作中，维持一致性、保证可控性、激发持续灵感是最大的挑战。为此，NovelForge 围绕四大核心理念构建：模块化的 **“卡片”**、可自定义的 **“动态输出模型”**、灵活的 **“上下文注入”** 与保证一致性的 **“知识图谱”**。
-
----
-
-<a id="目录"></a>
-## 📑 目录
-
-### 快速导航
-
-- [✨ 核心特性](#核心特性)
-- [📅 更新日志](#更新日志)
-- [🛠️ 技术栈](#技术栈)
-- [🚀 运行指南](#运行指南)
-- [✍️ 创作流程](#创作流程)
-- [⚙️ 高级功能与配置](#高级功能与配置)
-- [📂 项目结构](#项目结构)
-- [🔭 展望](#展望)
-
-### 按功能跳转
-
-- [Schema-first：类型/实例结构与参数](#schema-first)
-- [提示词工坊（Prompt Workshop）](#prompt-workshop)
-- [上下文注入（@DSL）详解](#context-dsl)
-- [工作流系统（代码式工作流 + Workflow Agent）](#workflow-system)
-  - [工作流工作室](#workflow-studio)
-  - [触发器配置](#workflow-triggers)
-  - [工作流状态栏（全局后台运行）](#workflow-status-bar)
-  - [节点级进度与中断恢复（Beta）](#workflow-progress-recovery)
-  - [持久化工作流 vs 临时工作流](#workflow-persistent-vs-temporary)
-  - [内置工作流模板](#workflow-builtins)
-  - [项目初始化工作流](#workflow-project-init)
-  - [工作流 Agent（自然语言编写工作流）](#workflow-agent)
-  - [工作流使用示例（拆书工作流）](#workflow-examples)
-
-### 协作与规划
-
-- [贡献指南](./贡献指南.md)
-- [后续规划](./后续规划.md)
+Trong quá trình sáng tạo dạng dài, việc duy trì tính nhất quán, đảm bảo khả năng kiểm soát và kích thích nguồn cảm hứng liên tục là những thách thức lớn nhất. Để đạt được mục tiêu này, NovelForge được xây dựng dựa trên bốn khái niệm cốt lõi: **thẻ** mô-đun, **mô hình đầu ra động** có thể tùy chỉnh, **chèn ngữ cảnh** linh hoạt và **biểu đồ kiến ​​thức** đảm bảo tính nhất quán.
 
 ---
 
-<a id="核心特性"></a>
-## ✨ 核心特性
+<a id="thư mục"></a>
+## 📑 Mục lục
 
-*   **📚 Schema 驱动的卡片创作**
-    *   每种卡片都可定义结构（Schema），AI 生成会按结构校验，减少“看起来能用、落地却混乱”的输出。
+### Điều hướng nhanh
 
-*   **⚡ 指令流式 AI 卡片生成**
-    *   不再是“一次性整段生成”。现在是“输入要求 → 字段粒度流式填充 → 你确认或反馈继续生成”，更可控、更容易修正。生成过程更加丝滑，避免长时间等待生成结果。
-    *   该能力聚焦于“当前这张卡片”的生成与完善，关闭生成对话框后本次会话即结束。
+- [✨Tính năng cốt lõi](#corefeatures)
+- [📅Nhật ký cập nhật](#UpdateLog)
+- [🛠️Ngăn xếp công nghệ](#Ngăn xếp công nghệ)
+- [🚀Hướng dẫn chạy](#Hướng dẫn chạy)
+- [✍️Quy trình sáng tạo](#CreativeProcess)
+- [⚙️ Chức năng và cấu hình nâng cao](#Chức năng và cấu hình nâng cao)
+- [📂Cấu trúc dự án](#projectstructure)
+- [🔭 Outlook](# Outlook)
 
-*   **📝 章节正文字数控制**
-    *   章节正文续写支持两种模式：`提示词约束` 与 `控制模式`。
-    *   `提示词约束` 更自然、成本更低；`控制模式` 会按目标总字数切分多轮预算，控制更稳，但会消耗更多 token。
+### Nhảy theo chức năng
 
-*   **✅ 通用审核与审核结果卡片**
-    *   审核统一采用“草稿预览 → 确认保存为审核结果卡片”的流程。
-    *   不同卡片类型可切换不同审核提示词，但结果卡片结构保持一致，便于统一查看与引用。
+- [Lược đồ-đầu tiên: loại/cấu trúc thể hiện và tham số](#schema-first)
+- [Prompt Workshop](#prompt-workshop)
+- [Giải thích chi tiết về chèn ngữ cảnh (@DSL)](#context-dsl)
+- [Hệ thống quy trình làm việc (quy trình làm việc được mã hóa + Tác nhân quy trình làm việc)](#workflow-system)
+  - [Workflow Studio](#workflow-studio)
+  - [Cấu hình kích hoạt](#workflow-triggers)
+  - [Thanh trạng thái quy trình làm việc (chạy nền chung)](#workflow-status-bar)
+  - [Tiến trình cấp nút và khôi phục gián đoạn (Beta)](#workflow-progress-recovery)
+  - [Quy trình làm việc liên tục và Quy trình làm việc tạm thời](#workflow-persistent-vs-temporary)
+  - [Mẫu quy trình công việc tích hợp sẵn](#workflow-buildins)
+  - [Quy trình khởi tạo dự án](#workflow-project-init)
+  - [Workflow Agent (quy trình viết ngôn ngữ tự nhiên)](#workflow-agent)
+  - [Ví dụ về cách sử dụng quy trình làm việc (quy trình mở sách)](#workflow-examples)
 
-*   **🧠 上下文注入 + 知识图谱一致性**
-    *   通过 `@DSL` 精准引用项目数据；结合 关系图谱与动态信息，让后续生成更贴近已写内容与角色关系。
+### Hợp tác và lập kế hoạch
 
-*   **🔮 灵感助手（Agent）**
-    *   可持续对话、引用卡片、调用工具修改内容。你可以像和搭档协作一样打磨设定，而不是反复整卡重生成。
-
-*   **🧩 代码式工作流系统**
-    *   已重构为代码式工作流主线（去掉旧 DAG 方案），支持可视化编辑、触发执行与复用，适合把常用创作流程自动化。
-
-*   **🤖 工作流 Agent**
-    *   你可以直接用自然语言描述需求，让 Agent 帮你写/改工作流代码、做校验并应用变更。
-
-*   **💡 灵感工作台 (Ideas Workbench)**
-    *   支持自由卡片、跨项目引用、移动/复制回正式项目，适合专门做脑暴和素材沉淀。
+- [Hướng dẫn đóng góp](./Contribution Guide.md)
+- [Lập kế hoạch tiếp theo](./Follow-up Planning.md)
 
 ---
 
-<a id="更新日志"></a>
+<a id="Tính năng cốt lõi"></a>
+## ✨ Tính năng cốt lõi
 
-## 📅 更新日志
-<details>
-<summary>v0.9.5</summary>
+* **📚 Tạo thẻ dựa trên lược đồ**
+    * Mỗi thẻ có thể xác định một cấu trúc (Schema) và việc tạo AI sẽ được xác minh theo cấu trúc đó, làm giảm kết quả đầu ra "trông có thể sử dụng được nhưng lại gây nhầm lẫn khi triển khai".
 
-- 修复工作流bug
-- 将拆书工作流改为默认指令流模式，提高成功率
-- 修复部分UI在不同分辨率显示问题
-</details>
+* **⚡ Truyền lệnh tạo thẻ AI**
+    * Không còn "tạo toàn bộ phần cùng một lúc". Bây giờ là "yêu cầu đầu vào → điền vào luồng chi tiết của trường → xác nhận hoặc phản hồi của bạn tiếp tục được tạo", điều này dễ kiểm soát hơn và dễ sửa hơn. Quá trình tạo diễn ra suôn sẻ hơn và tránh phải chờ đợi kết quả tạo lâu.
+    * Khả năng này tập trung vào việc tạo và cải thiện "thẻ hiện tại". Phiên này sẽ kết thúc sau khi đóng hộp thoại tạo.
+
+* **📝 Kiểm soát số văn bản chương **
+    * Tiếp tục văn bản chương hỗ trợ hai chế độ: `ràng buộc từ nhắc` và `chế độ điều khiển`.
+    * `Ràng buộc từ nhắc nhở` tự nhiên hơn và chi phí thấp hơn; `Chế độ kiểm soát` sẽ chia ngân sách thành nhiều vòng theo tổng số từ mục tiêu, giúp việc kiểm soát ổn định hơn nhưng sẽ tiêu tốn nhiều token hơn.
+
+* ****** Thẻ kết quả đánh giá và đánh giá chung**
+    * Quá trình đánh giá áp dụng thống nhất quy trình "Xem trước bản nháp → Xác nhận và lưu dưới dạng thẻ kết quả đánh giá".
+    * Các loại thẻ khác nhau có thể chuyển sang các từ nhắc đánh giá khác nhau, nhưng cấu trúc thẻ kết quả vẫn nhất quán để dễ dàng xem và tham khảo thống nhất.
+
+* **🧠 Chèn ngữ cảnh + Tính nhất quán của Sơ đồ tri thức**
+    * Tham chiếu chính xác dữ liệu dự án thông qua `@DSL`; kết hợp bản đồ mối quan hệ và thông tin động để làm cho thế hệ tiếp theo gần gũi hơn với nội dung văn bản và mối quan hệ vai trò.
+
+* **🔮Trợ lý truyền cảm hứng (Đại lý)**
+    * Đối thoại liên tục, thẻ tham khảo và công cụ gọi để sửa đổi nội dung. Bạn có thể tinh chỉnh cài đặt như thể bạn đang làm việc với đối tác, thay vì phải tạo lại toàn bộ thẻ nhiều lần.
+
+* **🧩 Hệ thống quy trình làm việc dựa trên mã**
+    * Đã được cơ cấu lại thành dòng chính của quy trình làm việc dựa trên mã (loại bỏ giải pháp DAG cũ), hỗ trợ chỉnh sửa trực quan, kích hoạt thực thi và tái sử dụng, đồng thời phù hợp để tự động hóa các quy trình sáng tạo phổ biến.
+
+* **🤖 Tác nhân quy trình làm việc**
+    * Bạn có thể mô tả trực tiếp các yêu cầu của mình bằng ngôn ngữ tự nhiên và để Tác nhân giúp bạn viết/sửa đổi mã quy trình công việc, xác minh và áp dụng các thay đổi.
+
+* **💡 Bàn làm việc ý tưởng**
+    * Hỗ trợ thẻ miễn phí, tài liệu tham khảo giữa các dự án và di chuyển/sao chép trở lại các dự án chính thức, phù hợp cho việc động não và kết tủa tài liệu.
+
+---
+
+<a id="Nhật ký cập nhật"></a>
+
+## 📅 Nhật ký cập nhật
+<chi tiết>
+<tóm tắt>v0.9.5</tóm tắt>
+
+- Sửa lỗi quy trình làm việc
+- Thay đổi quy trình mở sách sang chế độ luồng lệnh mặc định để nâng cao tỷ lệ thành công
+- Đã sửa một số vấn đề hiển thị UI ở các độ phân giải khác nhau
+</ chi tiết>
 
 <details>
 <summary>v0.9.4</summary>
 
-- **记忆层信息增强(角色/关系/场景/组织/物品/概念)**
-  - 统一提取预览 / 确认写入流程
-    章节编辑器中，以下能力已统一到“先预览、后确认”的流程：
+- **Nâng cao thông tin lớp bộ nhớ (vai trò/mối quan hệ/cảnh/tổ chức/mục/khái niệm)**
+  - Xem trước trích xuất thống nhất/xác nhận quá trình viết
+    Trong trình chỉnh sửa chương, các khả năng sau đã được hợp nhất thành quy trình "xem trước trước, sau đó xác nhận":
 
-    - 角色动态信息
-    - 关系提取入图
-    - 场景状态
-    - 组织状态
-    - 物品状态
-    - 概念掌握
-  - 统一交互方式为：
-    - 基于当前章节正文发起提取
-    - 先展示预览结果
-    - 支持用户在预览中手动调整
-    - 确认后再写回卡片或图谱
-  - 本次新增并补齐了以下实体类型的轻量状态 / 记忆能力 （按需使用，不一定全部都要用上，避免增加上下文复杂度）：
-    - 场景卡
-    - 组织卡
-    - 物品卡
-    - 概念卡
-- 优化移动端css排版，增加左下角导航显隐功能
+- Thông tin động nhân vật
+    - Trích xuất các mối quan hệ thành đồ thị
+    - Trạng thái cảnh
+    - Tình trạng tổ chức
+    - Tình trạng mặt hàng
+    - Làm chủ khái niệm
+  - Phương thức tương tác thống nhất là:
+    - Bắt đầu trích xuất dựa trên văn bản chương hiện tại
+    - Hiển thị kết quả xem trước trước
+    -Hỗ trợ người dùng điều chỉnh thủ công trong bản xem trước
+    - Xác nhận rồi ghi lại vào thẻ hoặc bản đồ
+  - Lần này, khả năng trạng thái/bộ nhớ nhẹ của các loại thực thể sau đã được thêm và hoàn thiện (được sử dụng theo yêu cầu, không phải sử dụng tất cả để tránh làm tăng độ phức tạp của ngữ cảnh):
+    - thẻ cảnh
+    -Thẻ tổ chức
+    - Thẻ vật phẩm
+    - thẻ khái niệm
+- Tối ưu hóa bố cục CSS trên thiết bị đầu cuối di động và thêm chức năng điều hướng ở góc dưới bên trái để hiển thị và ẩn.
 
-- 其它优化、修复若干 bug
+- Các tối ưu hóa và sửa lỗi khác
 
 </details>
 
 <details>
 <summary>v0.9.3</summary>
 
-- **章节正文字数控制重构**
-  - 章节正文续写的字数控制收敛为两种模式：
-    - `提示词约束`：只做提示词层面的字数约束，文本更自然，适合对字数要求不特别严格的场景
-    - `控制模式`：按目标总字数切分为多轮并分配预算，字数控制更稳，但会消耗更多 token
-  - 控制模式当前采用固定多轮预算策略，提升长章节续写时的稳定性与可控性
+- **Tái cấu trúc điều khiển số văn bản chương**
+  - Điều khiển đếm từ để tiếp tục văn bản chương hội tụ về hai chế độ:
+    - `Ràng buộc từ nhắc`: chỉ giới hạn số từ ở cấp độ từ nhắc, giúp văn bản trở nên tự nhiên hơn và phù hợp với những tình huống yêu cầu số từ không đặc biệt khắt khe.
+    - `Chế độ điều khiển`: Chia thành nhiều vòng và phân bổ ngân sách theo tổng số từ mục tiêu. Việc kiểm soát số từ ổn định hơn nhưng sẽ tiêu tốn nhiều mã thông báo hơn.
+  - Chế độ kiểm soát hiện sử dụng chiến lược ngân sách nhiều vòng cố định để cải thiện tính ổn định và khả năng kiểm soát của các phần tiếp theo của chương dài.
 
-- **审核功能重构**
-  - 审核流程统一为“先生成审核草稿，再确认创建/更新审核结果卡片”
-  - 审核结果不再依赖旧记录模型，统一沉淀为 `内容审核卡片`
-  - 审核结果卡片会自动归档到根级 `审核结果` 文件夹，便于集中查看与复用
-  - 章节正文与通用卡片编辑器的审核入口统一为“审核按钮 + 提示词切换”
+- **Tái cấu trúc chức năng kiểm toán**
+  - Quy trình xem xét được thống nhất là "đầu tiên tạo bản nháp đánh giá, sau đó xác nhận để tạo/cập nhật thẻ kết quả đánh giá"
+  - Kết quả kiểm tra không còn dựa vào mô hình hồ sơ cũ mà được thống nhất thành `thẻ kiểm tra nội dung`
+  - Thẻ kết quả kiểm toán sẽ được tự động lưu trữ vào thư mục `Kết quả kiểm toán` cấp cơ sở để xem và sử dụng lại tập trung.
+  - Các lối vào ôn tập văn bản chương và trình soạn thảo thẻ chung được hợp nhất thành "nút ôn tập + chuyển từ nhắc nhở"
 
-- **其它优化**
-  - 对 LLM 配置、Responses 模式兼容（灵感助手仍不兼容）、导出排序、章节编辑器与若干 UI 细节进行了优化
-  - 修复若干 bug，提升整体稳定性
+- **Các tối ưu hóa khác**
+  - Cấu hình LLM được tối ưu hóa, khả năng tương thích chế độ Phản hồi (Trợ lý truyền cảm hứng vẫn chưa tương thích), sắp xếp xuất, trình chỉnh sửa chương và một số chi tiết giao diện người dùng
+  - Đã sửa một số lỗi và cải thiện độ ổn định tổng thể
 
 </details>
 
 <details>
 <summary>v0.9.2</summary>
 
-- 增加章节审核、阶段审核，查看审核历史
-  - 点击阶段/章节正文卡片顶部的审核按钮即可，审核完成后会弹出审核结果。
-  - 在右栏中可以查看审核历史记录
-- 新增卡片搜索、文件夹类型卡片及前后端一键启动，修复树状结构保存折叠问题 
-- 自动检查模型元数据与数据库现有表结构的差异检测并补齐“可安全追加”的缺失列
-- 其它优化
-  
+- Đã thêm đánh giá chương, đánh giá giai đoạn và xem lịch sử đánh giá
+  - Chỉ cần nhấp vào nút xem lại ở đầu thẻ văn bản của giai đoạn/chương. Sau khi xem xét hoàn tất, kết quả đánh giá sẽ bật lên.
+  - Bạn có thể xem lịch sử kiểm tra ở cột bên phải
+- Đã thêm tìm kiếm thẻ, thẻ loại thư mục và bắt đầu giao diện người dùng và mặt sau bằng một cú nhấp chuột, đồng thời khắc phục sự cố lưu và gấp cấu trúc cây
+- Tự động kiểm tra sự khác biệt giữa siêu dữ liệu mô hình và cấu trúc bảng hiện có của cơ sở dữ liệu để phát hiện và hoàn thiện các cột còn thiếu để có thể “nối thêm một cách an toàn”
+- Các tối ưu hóa khác
 
 </details>
 
 <details>
 <summary>v0.9.1</summary>
 
-- **关系图支持 SQLite 存储**
-  - 关系图存储新增 SQLite 支持（并兼容 Neo4j）
-  - 增加关系图管理能力：筛选、批量修改、导入导出等操作
+- **Sơ đồ quan hệ hỗ trợ lưu trữ SQLite**
+  - Hỗ trợ SQLite mới để lưu trữ biểu đồ mối quan hệ (và tương thích với Neo4j)
+  - Đã thêm khả năng quản lý sơ đồ mối quan hệ: lọc, sửa đổi hàng loạt, nhập và xuất, v.v.
 
-- **优化章节正文生成与润色相关提示词**
-  - 优化“内容生成/润色/扩写”等提示词表现，提升输出稳定性与可用性
-  - 将文风约束相关内容拆分为知识库注入，便于独立维护与快速调整
+- **Tối ưu hóa các từ gợi ý liên quan đến việc tạo và đánh bóng văn bản chương**
+  - Tối ưu hóa hiệu suất của các từ nhắc nhở như "tạo/đánh bóng/mở rộng nội dung" để cải thiện độ ổn định đầu ra và khả năng sử dụng
+  - Tách nội dung liên quan đến các ràng buộc về kiểu dáng thành các phần cơ sở kiến thức để tạo điều kiện bảo trì độc lập và điều chỉnh nhanh chóng
 
-- **增加章节正文润色/修改后的接受/拒绝功能**
-  - 润色替换支持“接受并替换 / 拒绝并还原”操作，降低误替换风险
-- 增加复制 LLM 配置功能：可基于现有配置快速复制并微调，减少重复配置成本
-- 修复若干bug，提升整体稳定性与交互体验
-  
-  
+- **Thêm chức năng đánh bóng/từ chối văn bản chương đã được sửa đổi**
+  - Dịch vụ thay thế Ba Lan hỗ trợ các hoạt động "chấp nhận và thay thế/từ chối và khôi phục" để giảm nguy cơ thay thế nhầm
+- Đã thêm chức năng sao chép cấu hình LLM: có thể sao chép và tinh chỉnh nhanh chóng dựa trên cấu hình hiện có, giảm chi phí cấu hình lặp lại
+- Đã sửa một số lỗi và cải thiện độ ổn định tổng thể và trải nghiệm tương tác
 
 </details>
 
 <details>
 <summary>v0.9.0</summary>
 
-- 🚀 **重大更新：0.9.0**
+- 🚀 **Cập nhật đột phá: 0.9.0**
 
-- ✨ **重构AI 卡片生成流程**
-  - 从“点击后等待整段结果”升级为“输入要求 → 对话框内字段粒度生成 → 确认/反馈继续生成”，显著增强可用性，更加丝滑~
-  - 生成过程更可控，修改成本更低。
+- ✨ **Xây dựng lại quy trình tạo thẻ AI**
+  - Đã nâng cấp từ "Nhấp và chờ toàn bộ kết quả" thành "Yêu cầu đầu vào → Tạo độ chi tiết trường trong hộp thoại → Tiếp tục tạo xác nhận/phản hồi", giúp tăng cường đáng kể khả năng sử dụng và làm cho nó mượt mà hơn~
+  - Quá trình phát điện dễ kiểm soát hơn và chi phí sửa đổi thấp hơn.
 
-- 🧱 **工作流系统重构（探索性）**
-  - 我们探索性地将工作流从旧的 **DAG 式编辑器** 迁移到新的 **代码式工作流（Python 风格语句 + 特殊标记 DSL）**，并逐步移除了旧的 DAG 方案。
-  - 目前更多是基于对可维护性与 AI 友好程度的综合权衡。
-  - **代码式工作流的优点（当前体感）：**
-    - 逻辑更线性、更清晰：顺序、等待（`Logic.Wait`）、异步（`async=true`）等语义更贴近真实执行过程。
-    - 进度处理与异步操作更自然：执行器可按语句计划调度，不需要在图上绕来绕去。
-    - 对 AI 更友好：同一个功能，代码式往往几十行就能表达；而 DAG 配置经常需要几百行的节点与连线描述。
-  - **代码式工作流的缺点（需要持续打磨）：**
-    - 不如 DAG 直观
-    - 对字符串/代码格式更敏感：参数序列化、字典字段类型、变量引用等细节更容易引发校验或运行错误，需要更强的校验与提示词约束。
+- 🧱 **Tái thiết hệ thống quy trình làm việc (khám phá)**
+  - Chúng tôi đã di chuyển một cách thăm dò quy trình làm việc từ **trình soạn thảo kiểu DAG** cũ sang **quy trình làm việc dựa trên mã mới (câu lệnh kiểu Python + DSL thẻ đặc biệt)** và dần dần loại bỏ sơ đồ DAG cũ.
+  - Hiện tại nó dựa nhiều hơn vào sự cân bằng toàn diện giữa khả năng bảo trì và tính thân thiện với AI.
+  - **Ưu điểm của quy trình làm việc dựa trên mã (trải nghiệm hiện tại):**
+    - Logic tuyến tính và rõ ràng hơn: các ngữ nghĩa như trình tự, chờ đợi (`Logic.Wait`), không đồng bộ (`async=true`) gần với quy trình thực thi thực tế hơn.
+    - Quá trình xử lý tiến trình và các hoạt động không đồng bộ diễn ra tự nhiên hơn: người thực thi có thể được lên lịch theo kế hoạch câu lệnh mà không cần phải đi vòng quanh biểu đồ.
+    - Thân thiện hơn với AI: cùng một chức năng thường có thể được thể hiện bằng hàng chục dòng mã; trong khi cấu hình DAG thường yêu cầu hàng trăm dòng mô tả nút và kết nối.
+  - **Nhược điểm của quy trình làm việc dựa trên mã (cần trau chuốt liên tục):**
+    - Không trực quan như DAG
+    - Nhạy cảm hơn với định dạng chuỗi/mã: Các chi tiết như tuần tự hóa tham số, loại trường từ điển, tham chiếu biến, v.v. có nhiều khả năng gây ra lỗi xác minh hoặc lỗi chạy hơn, yêu cầu xác minh mạnh mẽ hơn và ràng buộc từ nhanh chóng.
 
-- 🤖 **新增工作流 Agent**
-  - 可通过自然语言描述目标，由 Agent 生成/修改工作流代码并做校验。
-  - 支持“先预览再应用”的安全变更体验。
-  - 可能还有些bug
+- 🤖 **Đại lý quy trình làm việc mới**
+  - Mục tiêu có thể được mô tả thông qua ngôn ngữ tự nhiên và mã quy trình làm việc có thể được Tác nhân tạo/sửa đổi và xác minh.
+  - Hỗ trợ trải nghiệm thay đổi bảo mật "xem trước rồi áp dụng".
+  - Có thể có một số lỗi
 
-- 📚 **内置工作流增强**
-  - 增加“拆书工作流”等实用流程模板，便于开箱使用和二次改造。
+- 📚 **Cải tiến quy trình làm việc tích hợp**
+  - Đã thêm các mẫu quy trình thực tế như "Quy trình giải nén sách" để tạo điều kiện thuận lợi cho việc giải nén và chuyển đổi thứ cấp.
 
-- 🎨 **灵感助手 UI 与交互优化**
-  - 对话渲染、输入区交互、工具调用显示等体验优化。
+- 🎨 **Tối ưu hóa giao diện người dùng và tương tác của Trợ lý truyền cảm hứng**
+  - Kết xuất hội thoại, tương tác khu vực đầu vào, hiển thị lệnh gọi công cụ và tối ưu hóa trải nghiệm khác.
 
-- 🧹 **工程重构与稳定性提升**
-  - 前后端目录结构和模块边界大幅改动、整理，代码可维护性提升。
-  - 修复一批工作流、可视化参数编辑、Agent 交互相关问题。
+- 🧹 **Tái thiết dự án và cải thiện độ ổn định**
+  - Cấu trúc thư mục front-end và back-end cũng như ranh giới mô-đun đã được thay đổi và tổ chức đáng kể, đồng thời cải thiện khả năng bảo trì mã.
+  - Đã khắc phục một loạt vấn đề liên quan đến quy trình làm việc, chỉnh sửa tham số trực quan và tương tác với Tác nhân.
 
-- ⚠️ 由于该版本更新变动较大，旧版本数据库可能无法直接使用，请尝试用发布的迁移脚本进行迁移（不保证成功，建议提前做好数据库db文件备份！）
+- ⚠️ Do phiên bản này có nhiều thay đổi lớn nên phiên bản cũ của cơ sở dữ liệu có thể không được sử dụng trực tiếp. Vui lòng thử di chuyển bằng cách sử dụng tập lệnh di chuyển đã xuất bản (không đảm bảo thành công, bạn nên sao lưu trước tệp db cơ sở dữ liệu!)
 
 </details>
 
 <details>
 <summary>v0.8.6</summary>
 
-- 增加了版本更新检测功能，默认自动检测（当有新版本时会在设置-关于处出现小红点）
-- 优化了LLM配置界面，增加了获取可用模型列表功能
-- 增加了Web版本适配
-- 代码优化与修复bug
+- Thêm chức năng phát hiện cập nhật phiên bản, mặc định được tự động phát hiện (khi có phiên bản mới, một chấm đỏ nhỏ sẽ xuất hiện trong Cài đặt-Giới thiệu)
+- Tối ưu hóa giao diện cấu hình LLM và thêm chức năng lấy danh sách các model có sẵn
+- Đã thêm phiên bản Web thích ứng
+- Tối ưu hóa mã và sửa lỗi
 
 </details>
 
 <details>
 <summary>v0.8.5</summary>
 
-- 使用新的agent框架进行了全面替换；优化灵感助手功能、UI
-- 增加了灵感助手相关设置
-- 重新实现了React模式来为模型实现文本格式工具调用，适用工具调用能力不强的模型。可在设置-灵感助手处开启（默认关闭）
-- 兼容了推理模型，增加了thinking模式
-- 建议将DeepSeek、Qwen之类的模型选择/修改提供商为OpenAI兼容，而OpenAI则仅设置为GPT 5等官方模型。
-- 其它若干优化
-- 代码优化与修复bug
+- Thay thế hoàn toàn khung đại lý mới; chức năng trợ lý cảm hứng được tối ưu hóa và giao diện người dùng
+- Đã thêm cài đặt liên quan đến trợ lý cảm hứng
+- Chế độ React được triển khai lại để triển khai công cụ định dạng văn bản gọi cho các mô hình, phù hợp với các mô hình có khả năng gọi công cụ kém. Có thể bật trong Cài đặt-Trợ lý cảm hứng (mặc định tắt)
+- Tương thích với mô hình suy luận và thêm chế độ tư duy
+- Khuyến nghị các nhà cung cấp lựa chọn/sửa đổi mô hình như DeepSeek và Qwen phải tương thích với OpenAI, trong khi OpenAI chỉ được đặt thành các mô hình chính thức như GPT 5.
+- Một số tối ưu hóa khác
+- Tối ưu hóa mã và sửa lỗi
 
 </details>
 
 <details>
 <summary>v0.8.3</summary>
 
-- 灵感助手功能增强
-  - 新增 ReAct 模式：兼容更多 LLM 模型（文本格式工具调用），可在设置中切换标准/ReAct 模式  
-    (注意：由于时间关系，ReAct 模式实现较为粗糙，可能存在些bug，还是建议优先使用原生工具调用支持比较好的模型)
-  - 上下文智能增强：工具返回值增加父卡片信息，AI 可更准确理解卡片层级关系
+- Tăng cường chức năng trợ lý cảm hứng
+  - Đã thêm chế độ ReAct: tương thích với nhiều mô hình LLM hơn (gọi công cụ định dạng văn bản), chế độ tiêu chuẩn/ReAct có thể được chuyển đổi trong cài đặt
+    (Lưu ý: Do hạn chế về thời gian nên việc triển khai chế độ ReAct tương đối khó khăn và có thể mắc một số lỗi. Nên ưu tiên sử dụng các công cụ gốc để gọi các mô hình có hỗ trợ tốt hơn)
+  - Nâng cao trí thông minh theo ngữ cảnh: Giá trị trả về của công cụ bổ sung thêm thông tin thẻ gốc và AI có thể hiểu chính xác hơn mối quan hệ phân cấp thẻ.
 
-- UI 与体验优化
-  - 引用卡片区域重构：固定布局、始终可见的 `...(N)` 按钮，使用 Popover 替代 Modal
-  - 优化工具调用结果展示：显示成功/失败状态、支持跳转卡片、可折叠查看完整 JSON
-  - 修复引用卡片与模型选择重叠问题，调整输入框高度
-- 代码优化与修复bug
+- Tối ưu hóa giao diện người dùng và trải nghiệm
+  - Tái tạo vùng thẻ tham khảo: bố cục cố định, nút `...(N)` luôn hiển thị, sử dụng Popover thay vì Modal
+  - Công cụ tối ưu hóa hiển thị kết quả cuộc gọi: hiển thị trạng thái thành công/thất bại, hỗ trợ thẻ nhảy, có thể gập lại để xem JSON hoàn chỉnh
+  - Đã khắc phục sự cố chồng chéo giữa thẻ tham chiếu và lựa chọn mô hình, đồng thời điều chỉnh độ cao của hộp nhập liệu
+- Tối ưu hóa mã và sửa lỗi
 
 </details>
 
@@ -278,10 +275,10 @@
 
 <summary>v0.8.2</summary>
 
-- 优化灵感助手工具调用，增加自动重试功能。可通过.env文件配置最大重试次数
-- 增强卡片拖拽功能，可自由排序
-- 优化灵感助手UI、支持markdown显示
-- 修复bug、清理代码
+- Tối ưu hóa lệnh gọi công cụ trợ lý cảm hứng và thêm chức năng thử lại tự động. Số lần thử lại tối đa có thể được cấu hình thông qua tệp .env
+- Chức năng kéo và thả thẻ nâng cao, cho phép sắp xếp miễn phí
+- Tối ưu hóa giao diện người dùng trợ lý cảm hứng và hỗ trợ hiển thị đánh dấu
+- Sửa lỗi và dọn sạch mã
 
 </details>
 
@@ -289,28 +286,28 @@
 
 <summary>v0.8.0</summary>
 
-- 章节编辑器重构
-  - 从独立窗口迁移到主编辑器中栏，统一编辑体验
-  - 新增右键快速编辑：选中文本后右键，可输入要求进行润色/扩写
-  - 优化上下文组装：润色/扩写时自动包含上下文，衔接更自然
-  - 动态高亮显示 AI 生成内容
+- Tái cấu trúc trình soạn thảo chương
+  - Đã di chuyển từ cửa sổ riêng sang cột giữa của trình chỉnh sửa chính để thống nhất trải nghiệm chỉnh sửa
+  - Đã thêm chỉnh sửa nhanh bằng nhấp chuột phải: nhấp chuột phải sau khi chọn văn bản để nhập yêu cầu đánh bóng/mở rộng
+  - Tối ưu hóa việc lắp ráp bối cảnh: tự động bao gồm bối cảnh khi đánh bóng/mở rộng, giúp kết nối tự nhiên hơn
+  - Làm nổi bật động nội dung do AI tạo
 
-- 灵感助手增强
-  - 新增工具调用能力（实验性）：可直接在对话中创建/修改卡片，支持搜索、查看类型结构等操作
-  - 历史对话管理：按项目存储对话历史，支持新增/加载/删除会话
-  - 实时工具调用反馈：显示"正在调用工具..."，完成后自动刷新卡片树
-  - 优化上下文构建：自动注入项目结构树、统计信息、操作历史
+- Trợ lý cảm hứng nâng cao
+  - Khả năng gọi công cụ mới (thử nghiệm): thẻ có thể được tạo/sửa đổi trực tiếp trong cuộc trò chuyện và hỗ trợ các thao tác như tìm kiếm và xem cấu trúc loại.
+  - Quản lý lịch sử hội thoại: Lưu trữ lịch sử hội thoại theo dự án, hỗ trợ thêm/tải/xóa hội thoại
+  - Phản hồi gọi công cụ thời gian thực: "Công cụ gọi ..." được hiển thị và cây thẻ sẽ tự động được làm mới sau khi hoàn thành
+  - Tối ưu hóa việc xây dựng bối cảnh: tự động đưa cây cấu trúc dự án, thông tin thống kê và lịch sử hoạt động
 
-- 工作流系统优化
-  - 节点自动注册机制：新增节点只需一行装饰器，前端自动同步
-  - 动态节点库：从后端动态加载节点列表，零配置扩展
+- Tối ưu hóa hệ thống quy trình làm việc
+  - Cơ chế đăng ký tự động nút: việc thêm một nút chỉ cần một dòng trang trí và giao diện người dùng được tự động đồng bộ hóa
+  - Thư viện nút động: tải động danh sách nút từ phần phụ trợ, mở rộng cấu hình bằng không
 
-- UI 与体验优化
-  - 修复暗黑模式下多处显示问题
-  - 优化卡片编辑器布局与交互细节
-  - 改进流式输出的视觉反馈
+- Tối ưu hóa giao diện người dùng và trải nghiệm
+  - Đã khắc phục nhiều sự cố hiển thị ở chế độ tối
+  - Tối ưu hóa bố cục trình chỉnh sửa thẻ và chi tiết tương tác
+  - Cải thiện phản hồi trực quan cho đầu ra phát trực tuyến
 
-注意：如果之前选择本地开发，则当前版本更新需重新安装一下后端requirements
+Lưu ý: Nếu trước đây bạn chọn phát triển cục bộ, bạn cần cài đặt lại các yêu cầu phụ trợ khi cập nhật phiên bản hiện tại.
 
 </details>
 
@@ -318,14 +315,14 @@
 
 <summary>v0.7.8</summary>
 
-- 工作流系统（实验性）继续推进
-  - 新增“项目创建时触发（onprojectcreate）”，用工作流替代旧项目模板
-  - 画布交互优化：拖拽创建节点、删除连接线、坐标定位更准确
-  - 工作流工作室与节点参数面板的若干易用性优化
-  - 注：工作流仍处于实验阶段，当前主要用于逐步替换原有硬编码逻辑，扩展新能力仍有较大提升空间
+- Hệ thống quy trình làm việc (thử nghiệm) tiếp tục phát triển
+  - Đã thêm "Kích hoạt tạo dự án (onprojectcreate)" để thay thế mẫu dự án cũ bằng quy trình làm việc
+  - Tối ưu hóa tương tác canvas: kéo và thả để tạo nút, xóa đường kết nối và định vị tọa độ chính xác hơn
+  - Một số tối ưu hóa khả năng sử dụng trong studio quy trình công việc và bảng thông số nút
+  - Lưu ý: Quy trình làm việc vẫn đang trong giai đoạn thử nghiệm và hiện chủ yếu được sử dụng để thay thế dần logic mã hóa cứng ban đầu. Vẫn còn nhiều chỗ cần cải thiện trong việc mở rộng các khả năng mới.
 
-- 优化代码
-  - 清理旧项目模板相关代码与界面，统一到工作流体系
+- Tối ưu hóa mã
+  - Dọn dẹp code và giao diện liên quan đến mẫu dự án cũ và thống nhất vào hệ thống quy trình làm việc
 
 </details>
 
@@ -333,11 +330,11 @@
 
 <summary>v0.7.7</summary>
 
-- 优化作品标签卡片
-  - 增加标签项、选项数据
-  - 将标签项类别数据抽离出来，设置为知识库文件存储，可在设置-知识库中编辑作品标签，自由的修改标签项类别
-- 增加卡片AI生成时中断功能  
-- 优化代码、修复bug，可通过.env配置是否在启动时重置知识库、提示词等内容
+- Tối ưu thẻ tag công việc
+  - Thêm mục nhãn và dữ liệu tùy chọn
+  - Trích xuất dữ liệu danh mục mục thẻ và đặt nó làm kho lưu trữ tệp cơ sở kiến thức. Bạn có thể chỉnh sửa thẻ công việc trong Cài đặt-Cơ sở Kiến thức và tự do sửa đổi danh mục mục thẻ.
+- Đã thêm chức năng ngắt khi thẻ AI được tạo
+- Tối ưu hóa mã, sửa lỗi và định cấu hình xem có đặt lại cơ sở kiến thức, lời nhắc, v.v. khi khởi động thông qua .env hay không
 
 </details>
 
@@ -345,477 +342,470 @@
 
 <summary>v0.7.6</summary>
 
-- 增强LLM 管理
-  - LLM 配置支持“测试连接”。
-  - 支持用量设置：可设定 Token 上限、调用次数上限（-1 表示不限）。
-  - 列表展示“已用（输入/输出/调用）”，并提供“一键重置统计”。（目前统计的token用量是粗略统计，不同模型计算方式可能不同，仅供参考）
+- Tăng cường quản lý LLM
+  - Cấu hình LLM hỗ trợ "kết nối thử nghiệm".
+  - Hỗ trợ cài đặt sử dụng: Bạn có thể đặt giới hạn trên của Token và giới hạn trên của cuộc gọi (-1 nghĩa là không giới hạn).
+  - Danh sách hiển thị "đã sử dụng (đầu vào/đầu ra/cuộc gọi)" và cung cấp "thống kê đặt lại bằng một cú nhấp chuột". (Số liệu thống kê hiện tại về việc sử dụng mã thông báo là số liệu thống kê sơ bộ và phương pháp tính toán của các mô hình khác nhau có thể khác nhau, chỉ mang tính chất tham khảo)
   
-- 优化代码、体验
+- Tối ưu hóa code và trải nghiệm
 
 </details>
 
 <details>
 <summary>v0.7.5</summary>
 
-- 优化：灵感助手
-  - 支持自由引用多个卡片数据（跨项目、去重与来源标记）。
-  - 可在对话中选择 LLM 模型（可覆盖卡片配置）。
-  - 对话历史按项目保存与恢复，重载不丢失。
-  - 若干 UI 与交互细节优化。
+- Tối ưu hóa: Trợ lý truyền cảm hứng
+  - Hỗ trợ tham chiếu miễn phí tới nhiều dữ liệu thẻ (dự án chéo, sao chép và gắn thẻ nguồn).
+  - Có thể chọn mô hình LLM trong hộp thoại (có thể ghi đè cấu hình thẻ).
+  - Lịch sử hội thoại được dự án lưu và khôi phục, không bị mất khi tải lại.
+  - Một số chi tiết giao diện người dùng và tương tác được tối ưu hóa.
 
-- 初步：工作流（实验性）
-  - 新增“工作流工作室”：画布（Vue Flow）、参数侧栏、节点库与触发器基础 CRUD。
-  - 运行与事件：支持 SSE，`run_completed` 携带 `affected_card_ids`，前端按卡片粒度精确刷新。
-  - 重要说明：当前为实验性功能，UI交互/DSL/校验/Runner/触发器等功能仍在完善。
+- Sơ bộ: Workflow (Thử nghiệm)
+  - Đã thêm "Workflow Studio": canvas (Vue Flow), thanh bên tham số, thư viện nút và kích hoạt CRUD cơ bản.
+  - Chạy và sự kiện: Hỗ trợ SSE, `run_completed` mang `affected_card_ids` và giao diện người dùng được làm mới chính xác theo độ chi tiết của thẻ.
+  - Lưu ý quan trọng: Đây hiện là chức năng thử nghiệm và các chức năng như tương tác UI/DSL/xác minh/Runner/trình kích hoạt vẫn đang được cải thiện.
 
 </details>
 
 <details>
 <summary>v0.7.0</summary>
 
-- 新增：灵感助手（Inspiration Assistant）
-  - 右侧面板中的对话式协作工具，支持实时讨论和迭代优化卡片内容。
-  - 跨项目卡片引用功能，可将任意项目的卡片数据注入对话，激发创意碰撞。
-  - 自动引用当前选中卡片，实现无缝上下文切换。
-  - 一键“定稿生成”，将对话成果直接应用到卡片内容。
-  - 重置对话功能，便于开启新的创意讨论。
+- Mới: Trợ lý truyền cảm hứng
+  - Các công cụ cộng tác đàm thoại ở bảng bên phải hỗ trợ thảo luận theo thời gian thực và tối ưu hóa lặp đi lặp lại nội dung thẻ.
+  - Chức năng tham chiếu thẻ liên dự án có thể đưa dữ liệu thẻ từ bất kỳ dự án nào vào các cuộc hội thoại để kích thích sự va chạm sáng tạo.
+  - Tự động tham chiếu thẻ hiện được chọn để chuyển đổi ngữ cảnh liền mạch.
+  - "Tạo quyết toán" chỉ bằng một cú nhấp chuột để áp dụng trực tiếp kết quả hội thoại vào nội dung thẻ.
+  - Đặt lại chức năng hội thoại để thuận tiện cho việc mở ra những cuộc thảo luận sáng tạo mới.
 
-- 新增：灵感工作台（Ideas Workbench）
-  - 独立窗口模式，提供专注的创意探索环境。
-  - 自由卡片系统，不受项目结构约束。
-  - 跨项目引用与创意融合能力。
-  - 一键将自由卡片移动/复制到正式项目。
+- Mới: Bàn làm việc ý tưởng
+  - Chế độ cửa sổ độc lập cung cấp một môi trường tập trung để khám phá sáng tạo.
+  - Hệ thống thẻ miễn phí, không bị ràng buộc bởi cấu trúc dự án.
+  - Khả năng trích dẫn liên dự án và tích hợp sáng tạo.
+  - Di chuyển/sao chép thẻ miễn phí vào các dự án chính thức chỉ bằng một cú nhấp chuột.
 
-- 优化：导入卡片功能
-  - 将“导入自由卡”升级为“导入卡片”，支持从任意项目导入。
-  - 改进卡片选择器，按类型分组并支持折叠/展开。
-  - 优化引用数据缓存，提升性能与响应速度。
+- Tối ưu hóa: Chức năng nhập thẻ
+  - Nâng cấp "Nhập thẻ miễn phí" thành "Nhập thẻ" để hỗ trợ nhập từ bất kỳ dự án nào.
+  - Cải thiện bộ chọn thẻ, nhóm theo loại và hỗ trợ gấp/mở rộng.
+  - Tối ưu hóa bộ đệm dữ liệu tham chiếu để cải thiện hiệu suất và tốc độ phản hồi.
 
 </details>
 
 <details>
 <summary>v0.6.5</summary>
 
-- 新增：项目模板（Project Templates）- 已在 v0.7.8 中迁移至工作流系统
-  - 设置页新增"项目模板"管理，支持配置新建项目时自动创建的卡片类型与顺序，形成可复用的创作管线；可维护多个模板。
-  - 新建项目支持选择模板。
-  - 后端新增模板数据模型与 CRUD 接口，应用启动自动写默认项目模板。
+- Mới: Mẫu dự án - Đã di chuyển sang hệ thống quy trình công việc trong v0.7.8
+  - Đã thêm quản lý "Mẫu dự án" vào trang cài đặt, hỗ trợ định cấu hình các loại thẻ và trình tự được tạo tự động khi tạo dự án mới, hình thành một quy trình sáng tạo có thể tái sử dụng; nhiều mẫu có thể được duy trì.
+  - Dự án mới hỗ trợ lựa chọn mẫu.
+  - Mô hình dữ liệu mẫu mới và giao diện CRUD được thêm vào phần phụ trợ và mẫu dự án mặc định sẽ tự động được ghi khi ứng dụng khởi động.
 
 </details>
 
 ---  
 
-<a id="技术栈"></a>
-## 🛠️ 技术栈
+<a id="Chồng công nghệ"></a>
+## 🛠️ Ngăn xếp công nghệ
 
-*   **前端 (Frontend):** Electron, Vue 3, TypeScript, Pinia, Element Plus
-*   **后端 (Backend):** FastAPI, SQLModel (Pydantic + SQLAlchemy), Uvicorn
-*   **数据库 (Database):** SQLite (核心数据), Neo4j (知识图谱)
+* **Giao diện người dùng:** Electron, Vue 3, TypeScript, Pinia, Element Plus
+* **Phần cuối:** FastAPI, SQLModel (Pydantic + SQLAlchemy), Uvicorn
+* **Cơ sở dữ liệu:** SQLite (Dữ liệu cốt lõi), Neo4j (Sơ đồ tri thức)
 
 ---
 
-<a id="运行指南"></a>
-## 🚀 运行指南
+<a id="Hướng dẫn vận hành"></a>
+## 🚀 Hướng dẫn sử dụng
 
-无论你是想直接体验，还是参与开发，都可以轻松开始。
+Cho dù bạn muốn trải nghiệm trực tiếp hay tham gia phát triển, bạn đều có thể bắt đầu một cách dễ dàng.
 
-### 0. Neo4j Desktop（可选，非必须）
+### 0. Neo4j Desktop (tùy chọn, không bắt buộc)
 
-项目已默认使用sqlite代替实现关系图谱存储，但也可以切换为neo4j来存储，步骤如下
+Dự án đã sử dụng sqlite theo mặc định để triển khai lưu trữ biểu đồ mối quan hệ, nhưng nó cũng có thể được chuyển sang neo4j để lưu trữ. Các bước thực hiện như sau
 
-*   请下载并安装 **Neo4j Desktop**，推荐版本 **5.16** 或更高。
-*   下载地址: [Neo4j Desktop](https://neo4j.com/download/)
-*   安装后，创建一个本地数据库实例，并确保其处于**运行状态**。默认连接信息可在 `.env` 文件中配置。
-![alt text](docImgs/README/image-6.png)
+* Vui lòng tải xuống và cài đặt **Neo4j Desktop**, phiên bản được đề xuất **5.16** trở lên.
+* Địa chỉ tải xuống: [Neo4j Desktop](https://neo4j.com/download/)
+* Sau khi cài đặt, hãy tạo một phiên bản cơ sở dữ liệu cục bộ và đảm bảo nó ở **trạng thái chạy**. Thông tin kết nối mặc định có thể được định cấu hình trong tệp `.env`.
+![văn bản thay thế](docImgs/README/image-6.png)
 
-### 方式一：从源码运行 (开发者/最新功能)（非开发者建议用方式二）
+### Cách 1: Chạy từ mã nguồn (nhà phát triển/tính năng mới nhất) (người không phải nhà phát triển nên sử dụng cách 2)
 
-**1. 后端 (Python / FastAPI)**
-```bash
-# 克隆仓库
-git clone https://github.com/RhythmicWave/NovelForge.git
-cd NovelForge/backend
+**1. Phần cuối (Python / FastAPI)**
+``` bash
+# Sao chép kho lưu trữ
+bản sao git https://github.com/RhythmicWave/NovelForge.git
+cd NovelForge/phụ trợ
 
 conda create -n NovelForge python=3.11
 conda activate NovelForge
 
-# 安装依赖
-pip install -r requirements.txt
+# Cài đặt phụ thuộc
+cài đặt pip -r require.txt
 
-将backend/.env.example文件修改为.env
+Sửa đổi tệp phụ trợ/.env.example thành .env
 
-# 运行后端服务
+#Chạy dịch vụ phụ trợ
 python main.py
 ```
 
-**2. 前端 (Node.js / Electron)**
-```bash
-# 进入前端目录
+**2. Giao diện người dùng (Node.js / Electron)**
+``` bash
+# Nhập thư mục front-end
 cd ../frontend
 
-# 安装依赖
-npm install
+# Cài đặt phụ thuộc
+cài đặt npm
 
-# 启动开发服务器
-npm run dev
-# 也可以用下面命令启动web页面
-// npm run dev:web
+# Khởi động máy chủ phát triển
+npm rundev
+# Bạn cũng có thể sử dụng lệnh sau để khởi động trang web
+// npm chạy dev:web
 ```
 
-**3. 一行命令同时启动前后端（npm）**
-```bash
-npm run dev
+**3. Bắt đầu đồng thời mặt trước và mặt sau (npm) bằng một dòng lệnh**
+``` bash
+npm rundev
 ```
 
-#### 重要：.env 的 BOOTSTRAP_OVERWRITE
+#### QUAN TRỌNG: BOOTSTRAP_OVERWRITE cho .env
 
-> 启动后端时，系统会按需初始化/更新内置资源（知识库、提示词、工作流等）。是否覆盖更新由 `.env` 中的 `BOOTSTRAP_OVERWRITE` 控制。
+> Khi khởi động backend, hệ thống sẽ khởi tạo/cập nhật các tài nguyên tích hợp (cơ sở kiến ​​thức, lời nhắc, quy trình làm việc, v.v.) nếu cần. Liệu các bản cập nhật ghi đè có được kiểm soát bởi `BOOTSTRAP_OVERWRITE` trong `.env` hay không.
 
-- 建议设置：
-  - 如果你没有直接修改过内置资源，建议设置为：
-    ```ini
+- Cài đặt được đề xuất:
+  - Nếu bạn chưa trực tiếp sửa đổi các tài nguyên tích hợp thì nên đặt thành:
+    ``` tôi
     BOOTSTRAP_OVERWRITE=true
     ```
-    这样可以在升级版本或重启时自动同步最新的内置知识库/提示词/工作流。
-  - 如果你曾直接修改过“内置”资源，建议设置为 `false`，以避免被覆盖。
+    Điều này sẽ tự động đồng bộ hóa cơ sở kiến thức/từ nhắc nhở/quy trình làm việc tích hợp mới nhất khi nâng cấp phiên bản hoặc khởi động lại.
+  - Nếu bạn đã trực tiếp sửa đổi tài nguyên "tích hợp" thì nên đặt thành `false` để tránh bị ghi đè.
 
-- 建议（避免被覆盖）：
-  - 不要直接编辑“内置”资源。
-  - 如需定制，请新建一个副本（复制知识库/提示词/工作流后重命名），在副本上修改。这样即使将来设置 `BOOTSTRAP_OVERWRITE=true`，你的自定义副本也不会被更新逻辑覆盖。
+- Khuyến nghị (để tránh bị ghi đè):
+  - Không chỉnh sửa trực tiếp tài nguyên "tích hợp".
+  - Nếu bạn cần tùy chỉnh, vui lòng tạo một bản sao mới (sao chép cơ sở kiến ​​thức/từ nhắc/quy trình công việc và đổi tên) và sửa đổi nó trên bản sao. Bằng cách này, ngay cả khi `BOOTSTRAP_OVERWRITE=true` được đặt trong tương lai, bản sao tùy chỉnh của bạn sẽ không bị ghi đè bởi logic cập nhật.
 
+### Cách 2: Sử dụng phiên bản phân phối (bắt đầu nhanh)
 
-### 方式二：使用发行版 (快速上手)
+Các phiên bản phát hành đôi khi được đóng gói, không cần định cấu hình môi trường phát triển và có thể sử dụng ngay.
 
-不定期打包发布版本，无需配置开发环境，开箱即用。
+1. Đi đến trang **Bản phát hành** của dự án để tải xuống gói nén phiên bản di động mới nhất (`.zip` hoặc `.7z`).
+2. Giải nén nó vào bất kỳ vị trí nào.
+3. **(Quan trọng)** Trước khi chạy, vui lòng đảm bảo rằng phiên bản cơ sở dữ liệu trong Neo4j Desktop đã được khởi động.
+4. Nhập thư mục đã giải nén, tìm thư mục `backend` và chỉnh sửa tệp `.env` nếu cần để định cấu hình kết nối cơ sở dữ liệu.
+5. Chạy `backend/NovelForgeBackend.exe` để khởi động dịch vụ phụ trợ.
+6. Trở lại cấp độ trước đó và chạy `NovelForge.exe` để khởi động chương trình chính.
 
-1.  前往项目的 **Releases** 页面下载最新的便携版压缩包 (`.zip` 或 `.7z`)。
-2.  解压到任意位置。
-3.  **（重要）** 运行前，请先确保 Neo4j Desktop 中的数据库实例已启动。
-4.  进入解压后的文件夹，找到 `backend` 目录，按需编辑 `.env` 文件以配置数据库连接。
-5.  运行 `backend/NovelForgeBackend.exe` 启动后端服务。
-6.  返回上一级，运行 `NovelForge.exe` 启动主程序。
-
-> 大部分数据都存储在backend/novelforge.db数据库中，当版本更新/迁移时，将该数据库文件复制到对应位置即可。
+> Hầu hết dữ liệu được lưu trữ trong cơ sở dữ liệu backend/novelforge.db. Khi phiên bản được cập nhật/di chuyển, chỉ cần sao chép tệp cơ sở dữ liệu vào vị trí tương ứng.
 ---
 
-## ✍️ 创作流程
+## ✍️Quy trình sáng tạo
 
-1.  **配置大语言模型 (LLM)**
-    *   首次启动后，在设置中添加你的 AI 模型配置，如 API Key、Base URL 等。
-    ![alt text](docImgs/README/image.png)
-    推荐使用Gemini 2.5Pro级别以上的LLM进行创作
+1. **Định cấu hình Mô hình ngôn ngữ lớn (LLM)**
+    * Sau lần khởi động đầu tiên, hãy thêm cấu hình mô hình AI của bạn vào cài đặt, chẳng hạn như Khóa API, URL cơ sở, v.v.
+    ![văn bản thay thế](docImgs/README/image.png)
+    Bạn nên sử dụng cấp độ Gemini 2.5Pro trở lên LLM để tạo.
 
-2.  **创建项目与初始化工作流**
-    *   新建项目时，可以选择一个初始化工作流（通常是 `onprojectcreate` 类型）来自动创建预设卡片。系统内置了"项目创建·雪花创作法"工作流，会按照雪花创作法自动创建一套完整的卡片树。
-    ![alt text](docImgs/README/image-1.png)
+2. **Tạo dự án và khởi tạo quy trình làm việc**
+    * Khi tạo một dự án mới, bạn có thể chọn quy trình khởi tạo (thường là loại `onprojectcreate`) để tự động tạo các thẻ cài sẵn. Hệ thống có quy trình làm việc "Tạo dự án·Phương pháp tạo bông tuyết" tích hợp sẵn, quy trình này sẽ tự động tạo một bộ cây thẻ hoàn chỉnh theo Phương pháp tạo bông tuyết.
+    ![văn bản thay thế](docImgs/README/image-1.png)
 
-3.  **自顶向下，填充核心设定**
-    *   从最高层卡片开始逐步推进（一句话梗概 → 故事大纲 → 世界观 → 核心蓝图）。
-    *   每张卡片都可以打开 AI 生成对话框，输入本次要求，系统会按字段粒度流式生成。
-    *   你可以在生成后选择“确认”直接落库，或提交反馈意见继续迭代，不满意不必整卡重来。
-    完成核心蓝图卡片创作后，点击保存，会自动根据分卷数量创建对应分卷卡片。
-    继续完成分卷大纲创作即可，从第1卷开始。
-    完成之后，会自动根据阶段数创建阶段大纲子卡片、写作指南卡片。建议先生成写作指南卡片，生成写作指导信息，再进行阶段大纲卡片创作。
-    ![alt text](docImgs/README/image-2.png)
-    AI生成卡片示例流程：
-    ![alt text](docImgs/README/image-28.png)
-    ![alt text](docImgs/README/image-29.png)
-    生成完成后点击完成，再保存卡片即可。或者对某些字段不满意，则输入指导意见进行反馈。
-  
+3. **Từ trên xuống, điền cài đặt cốt lõi**
+    * Bắt đầu từ thẻ trên cùng và tiến hành từng bước (tóm tắt một câu → dàn ý câu chuyện → thế giới quan → bản thiết kế cốt lõi).
+    * Mỗi thẻ có thể mở hộp thoại tạo AI, nhập các yêu cầu và hệ thống sẽ tạo thẻ đó theo cách phát trực tuyến theo mức độ chi tiết của trường.
+    * Bạn có thể chọn "Xác nhận" sau khi tạo để thả trực tiếp vào thư viện hoặc gửi phản hồi để tiếp tục lặp lại. Nếu bạn không hài lòng, bạn không cần phải bắt đầu lại.
+    Sau khi hoàn thành việc tạo thẻ bản thiết kế cốt lõi, hãy nhấp vào Lưu và các thẻ tập tương ứng sẽ được tạo tự động dựa trên số lượng tập.
+    Chỉ cần tiếp tục hoàn thành việc tạo đề cương tập, bắt đầu từ Tập 1.
+    Sau khi hoàn thành, các thẻ phụ dàn ý công đoạn và thẻ hướng dẫn viết sẽ được tạo tự động dựa trên số lượng công đoạn. Bạn nên tạo thẻ hướng dẫn viết trước, tạo thông tin hướng dẫn viết và sau đó tạo thẻ phác thảo giai đoạn.
+    ![văn bản thay thế](docImgs/README/image-2.png)
+    Quy trình ví dụ về thẻ do AI tạo:
+    ![văn bản thay thế](docImgs/README/image-28.png)
+    ![văn bản thay thế](docImgs/README/image-29.png)
+    Sau khi tạo xong, nhấp vào Kết thúc và lưu thẻ. Hoặc nếu bạn không hài lòng ở một số lĩnh vực, vui lòng nhập hướng dẫn để phản hồi.
 
-4.  **借助灵感助手完善内容**
-    *   在写作过程中，如果你想进一步打磨或优化卡片内容，可以随时使用右侧的灵感助手。
-    *   选中任意卡片后，灵感助手会自动读取该卡片的内容，方便你参考和思考。
-    *   你可以直接向助手提出具体问题，比如“这个角色的动机是否合理？”、“怎样让这个场景更有张力？”等。
-    *   灵感助手会结合当前卡片内容，给出针对性的建议，你可以与助手反复交流，逐步完善想法。
-    *   通过“添加引用”按钮，还能把当前项目或其他项目的相关卡片内容加入对话，激发更多创意火花。
-    *   灵感助手具备感知上下文、调用工具修改/创建卡片内容的能力（实验性）
-    ![Alt text](docImgs/README/image-20.png)
+4. **Cải thiện nội dung với sự trợ giúp của trợ lý truyền cảm hứng**
+    * Trong quá trình viết, nếu bạn muốn trau chuốt hoặc tối ưu hóa thêm nội dung thẻ, bạn có thể sử dụng trợ lý cảm hứng ở bên phải bất cứ lúc nào.
+    * Sau khi chọn thẻ bất kỳ, trợ lý truyền cảm hứng sẽ tự động đọc nội dung thẻ để bạn tham khảo và suy nghĩ dễ dàng hơn.
+    * Bạn có thể trực tiếp hỏi trợ lý những câu hỏi cụ thể như “Động cơ của nhân vật này có hợp lý không?”, “Làm thế nào để cảnh này căng thẳng hơn?”, v.v.
+    * Trợ lý truyền cảm hứng sẽ đưa ra các đề xuất có mục tiêu dựa trên nội dung thẻ hiện tại. Bạn có thể liên lạc nhiều lần với trợ lý để dần dần cải thiện ý tưởng của mình.
+    * Thông qua nút "Thêm tài liệu tham khảo", bạn cũng có thể thêm nội dung thẻ có liên quan của dự án hiện tại hoặc các dự án khác vào cuộc trò chuyện để khơi dậy nhiều tia sáng tạo hơn.
+    * Trợ lý truyền cảm hứng có khả năng nhận biết ngữ cảnh và gọi các công cụ để sửa đổi/tạo nội dung thẻ (thử nghiệm)
+    ![Văn bản thay thế](docImgs/README/image-20.png)
 
-#### AI 生成对话框 vs 灵感助手（如何选择）
+#### Hộp thoại do AI tạo ra và trợ lý truyền cảm hứng (cách chọn)
 
-- **AI 生成对话框**：聚焦当前单张卡片，用于快速生成与迭代该卡片内容；会话仅持续到本次生成流程结束，关闭对话框后会话清空。
-- **灵感助手**：用于跨卡片、跨项目的持续对话与创作；可引用多个卡片进行分析与联动创作，并且对话历史可持久保存。
-- **建议用法**：
-  - 目标是“把这张卡片写好” → 用 AI 生成对话框。
-  - 目标是“跨设定联动思考/长期讨论/多卡片协作” → 用灵感助手。
+- **Hộp thoại tạo AI**: Tập trung vào thẻ đơn hiện tại, được sử dụng để tạo và lặp lại nhanh chóng nội dung của thẻ; phiên chỉ kéo dài cho đến khi kết thúc quá trình tạo này và phiên sẽ bị xóa sau khi đóng hộp thoại.
+- **Trợ lý truyền cảm hứng**: Được sử dụng để đối thoại và sáng tạo liên tục trên các thẻ và dự án; nhiều thẻ có thể được tham chiếu để phân tích và tạo liên kết, đồng thời lịch sử hội thoại có thể được lưu liên tục.
+- **Cách sử dụng được đề xuất**:
+  - Mục tiêu là “viết thiệp này hay” → Sử dụng AI để tạo hộp thoại.
+  - Mục tiêu là "tư duy liên kết xuyên suốt/thảo luận lâu dài/hợp tác nhiều thẻ" → Sử dụng trợ lý truyền cảm hứng.
 
-5.  **完成阶段大纲创作后，自动生成章节大纲、章节正文卡片，并自动注入每章需要参与的实体。**
-    ![alt text](docImgs/README/image-3.png)
+5. **Sau khi hoàn thành việc tạo phác thảo giai đoạn, phác thảo chương và thẻ văn bản chương sẽ tự động được tạo và các thực thể cần tham gia vào mỗi chương sẽ tự động được thêm vào. **
+    ![văn bản thay thế](docImgs/README/image-3.png)
 
-6.  **进入章节创作**
-    *   完成上述步骤后，点击对应的章节正文卡片，打开章节编辑器，进入核心的写作界面。右侧的上下文面板会自动为你准备好当前章节所需的全部背景资料。
-    ![Alt text](docImgs/README/image-27.png)
+6. **Vào Tạo chương**
+    * Sau khi hoàn thành các bước trên, bấm vào thẻ văn bản chương tương ứng để mở trình soạn thảo chương và vào giao diện viết cốt lõi. Bảng ngữ cảnh ở bên phải tự động chuẩn bị tất cả thông tin cơ bản bạn cần cho chương hiện tại.
+    ![Văn bản thay thế](docImgs/README/image-27.png)
     
-    *    可点击续写进行AI生成（如果没有任何内容，则自动从头开始写）。
-    *    续写时可选择两种字数控制模式：
-         - **提示词约束**：只做提示词层面的字数约束，文本更自然，也更省 token。
-         - **控制模式**：按目标总字数切分为多轮预算，适合对章节总字数要求更严格的情况，但会消耗更多 token。
-    *    若对生成内容不满意，可选中内容点击右键进行快速编辑，然后输入要求，点击润色/扩写，可以重写这部分内容。
-    ![Alt text](docImgs/README/image-8.png)
+    * Bạn có thể nhấn Continue để viết cho thế hệ AI (nếu chưa có nội dung sẽ tự động viết lại từ đầu).
+    * Có thể chọn hai chế độ kiểm soát số từ khi tiếp tục viết:
+         - **Ràng buộc từ nhắc**: Chỉ hạn chế số lượng từ ở cấp độ từ nhắc, giúp văn bản trở nên tự nhiên hơn và tiết kiệm mã thông báo.
+         - **Chế độ kiểm soát**: Chia ngân sách thành nhiều vòng theo tổng số từ mục tiêu, phù hợp với tình huống tổng số từ của các chương nghiêm ngặt hơn nhưng sẽ tiêu tốn nhiều token hơn.
+    * Nếu bạn không hài lòng với nội dung được tạo, bạn có thể chọn nội dung và nhấp chuột phải để chỉnh sửa nhanh, sau đó nhập yêu cầu và nhấp vào Ba Lan/Mở rộng để viết lại phần nội dung này.
+    ![Văn bản thay thế](docImgs/README/image-8.png)
 
-    *    章节正文也支持直接审核：
-         - 点击顶部 **审核** 按钮即可运行审核
-         - 可通过按钮右侧下拉切换审核提示词
-         - 审核会先返回草稿，确认后再保存为审核结果卡片
-         - 保存后的结果会自动放入根级 **审核结果** 文件夹，并可在右侧面板中查看
+* Văn bản chương cũng hỗ trợ ôn tập trực tiếp:
+         - Nhấp vào nút **Kiểm tra** ở trên cùng để thực hiện kiểm tra
+         - Bạn có thể chuyển đổi các từ nhắc ôn tập thông qua nút thả xuống ở bên phải nút
+         - Việc xem xét sẽ quay lại bản nháp trước, sau đó lưu dưới dạng thẻ kết quả xem xét sau khi xác nhận.
+         - Các kết quả đã lưu sẽ tự động được đặt vào thư mục **Kết quả kiểm toán** cấp cơ sở và có thể được xem ở bảng bên phải
 
-    *   内容创作完成后，点击入图关系，解析出角色之间的关系存入知识图谱，供后续写作时参考。
-    ![Alt text](docImgs/README/image-7.png)
-    提取完成后，点击确认即可存入neo4j数据库。
-    ![alt text](docImgs/README/image-5.png)
+* Sau khi tạo nội dung xong click vào mối quan hệ trong hình để phân tích mối quan hệ giữa các nhân vật và lưu vào bản đồ kiến ​​thức để tham khảo ở những lần viết tiếp theo.
+    ![Văn bản thay thế](docImgs/README/image-7.png)
+    Sau khi giải nén xong nhấn vào Xác nhận để lưu vào cơ sở dữ liệu neo4j.
+    ![văn bản thay thế](docImgs/README/image-5.png)
 
-    *    建议再提取角色动态信息，可用成本更低的模型进行提取。
-  
+* Nên trích xuất lại thông tin động của ký tự và sử dụng mô hình chi phí thấp hơn để trích xuất nó.
 
-    *    以上步骤完成后，进行下一章创作时，自动注入相关参与实体的信息
-    ![alt text](docImgs/README/image-9.png)
+* Sau khi hoàn thành các bước trên, thông tin của các đơn vị tham gia có liên quan sẽ tự động được đưa vào khi tạo chương tiếp theo.
+    ![văn bản thay thế](docImgs/README/image-9.png)
 
-7.  **灵感工作台：捕捉创意火花**
-    *   有了新点子却一时不知道归属哪个项目？点击页面顶部的“灵感”按钮，即可打开独立的灵感工作台窗口。
-    *   在这里，你可以随手记录各种想法，自由创建不同类型的卡片，无需考虑项目结构，专注于把灵感落到实处。
-    *   右侧的灵感助手支持引用任意项目的卡片内容，方便你跨项目查阅、对比和组合，激发更多创意。
-    *   当某个想法逐渐成型，只需用顶部的“移动/复制到项目”功能，就能把自由卡片一键归入正式项目，创意自然衔接到后续创作中。
-    ![Alt text](docImgs/README/image-21.png)
-    ![Alt text](docImgs/README/image-22.png)
+7. **Bàn làm việc đầy cảm hứng: Nắm bắt tia sáng sáng tạo**
+    * Có ý tưởng mới nhưng chưa biết nên thuộc dự án nào? Nhấp vào nút "Cảm hứng" ở đầu trang để mở cửa sổ bàn làm việc truyền cảm hứng độc lập.
+    * Tại đây, bạn có thể ghi lại nhiều ý tưởng khác nhau và tạo các loại thẻ khác nhau một cách thoải mái mà không cần phải xem xét cấu trúc dự án và tập trung vào việc đưa cảm hứng của mình vào thực tế.
+    * Trợ lý truyền cảm hứng bên phải hỗ trợ tham khảo nội dung thẻ của bất kỳ dự án nào, giúp bạn dễ dàng kiểm tra, so sánh, tổng hợp giữa các dự án để truyền cảm hứng sáng tạo hơn.
+    * Khi một ý tưởng dần hình thành, chỉ cần sử dụng chức năng "Di chuyển/Sao chép vào dự án" ở trên cùng để thêm thẻ miễn phí vào dự án chính thức chỉ bằng một cú nhấp chuột, và sự sáng tạo sẽ được kết nối một cách tự nhiên với những sáng tạo tiếp theo.
+    ![Văn bản thay thế](docImgs/README/image-21.png)
+    ![Văn bản thay thế](docImgs/README/image-22.png)
 ---
 
-## ⚙️ 高级功能与配置
+## ⚙️ Chức năng và cấu hình nâng cao
 
-虽然 NovelForge 提供了一套推荐的创作流程，但其真正的强大之处在于高度的灵活性。你可以完全抛开预设，利用以下工具，组合出专属于你自己的创作体系。
+Mặc dù NovelForge cung cấp quy trình làm việc sáng tạo được đề xuất nhưng sức mạnh thực sự của nó nằm ở mức độ linh hoạt cao. Bạn hoàn toàn có thể từ bỏ các cài đặt trước và sử dụng các công cụ sau để lắp ráp hệ thống sáng tạo của riêng mình.
 
 <a id="schema-first"></a>
-### Schema-first：类型/实例结构与参数
+### Schema-first: cấu trúc kiểu/thể hiện và các tham số
 
-*   在 `设置 -> 卡片类型` 中，使用结构构建器为类型定义 `json_schema`（支持基础类型、relation(embed)、tuple 等）。类型 Schema 将作为该类型卡片的默认结构。
-    ![alt text](docImgs/README/image-10.png)
-    ![alt text](docImgs/README/image-11.png)
+* Trong `Cài đặt -> Loại thẻ`, hãy sử dụng trình tạo lược đồ để xác định `json_schema` cho loại (hỗ trợ các loại cơ sở, quan hệ (nhúng), bộ dữ liệu, v.v.). Lược đồ loại sẽ được sử dụng làm cấu trúc mặc định cho các thẻ loại này.
+    ![văn bản thay thế](docImgs/README/image-10.png)
+    ![văn bản thay thế](docImgs/README/image-11.png)
 
-*   在具体卡片中，可打开 `结构`（Schema Studio）对该卡片实例的结构进行覆写，或一键"应用到类型"。
-    ![alt text](docImgs/README/image-12.png)
+* Trong một thẻ cụ thể, bạn có thể mở `Structure` (Schema Studio) để ghi đè cấu trúc của phiên bản thẻ hoặc "Áp dụng để nhập" chỉ bằng một cú nhấp chuột.
+    ![văn bản thay thế](docImgs/README/image-12.png)
 
     ![alt text](docImgs/README/image-13.png)
 
-    应用到类型之后，后续再创建该类型卡片将使用新的结构。
+Sau khi được áp dụng cho một loại, các thẻ tiếp theo thuộc loại đó sẽ sử dụng cấu trúc mới.
 
-*   卡片 AI 参数：通过编辑器工具栏设置模型、提示词与温度等参数（`llm_config_id`、`prompt_name`、`temperature`、`max_tokens`、`timeout`）。
-    ![alt text](docImgs/README/image-14.png)
+* Thông số AI của thẻ: Đặt mô hình, từ nhắc nhở, nhiệt độ và các thông số khác thông qua thanh công cụ soạn thảo (`llm_config_id`, `prompt_name`, `nhiệt độ`, `max_tokens`, `timeout`).
+    ![văn bản thay thế](docImgs/README/image-14.png)
 
-*  完成以上设置后，即可在项目中创建该类型卡片并进行 AI 生成。系统会将该卡片的"有效 Schema"一并用于结构化校验与输出。
-    ![alt text](docImgs/README/image-15.png)
-    新建卡片时也可以直接从已有卡片中拖动到下方，自动创建
-    ![alt text](docImgs/README/image-16.png)
+* Sau khi hoàn thành các cài đặt trên, bạn có thể tạo loại thẻ này trong dự án và thực hiện tạo AI. Hệ thống sẽ sử dụng "Lược đồ hợp lệ" của thẻ để xác minh và xuất dữ liệu có cấu trúc.
+    ![văn bản thay thế](docImgs/README/image-15.png)
+    Khi tạo thẻ mới, bạn cũng có thể kéo thẻ trực tiếp từ thẻ hiện có xuống dưới cùng để tự động tạo thẻ.
+    ![văn bản thay thế](docImgs/README/image-16.png)
 
     ![alt text](docImgs/README/image-17.png)
 
-*  Schema 支持嵌入（`$ref` 到类型 `$defs`），可以组合复用已有结构，便于复合能力搭建。
+* Lược đồ hỗ trợ nhúng (`$ref` thành loại `$defs`) và có thể kết hợp cũng như sử dụng lại các cấu trúc hiện có để tạo điều kiện thuận lợi cho việc xây dựng các khả năng tổng hợp.
 
-    ![alt text](docImgs/README/image-18.png)
+![văn bản thay thế](docImgs/README/image-18.png)
     
-注意，尽量新增模型而不是修改已存在模型结构，避免和已有数据冲突。
+Lưu ý, hãy thử thêm mô hình mới thay vì sửa đổi cấu trúc mô hình hiện có để tránh xung đột với dữ liệu hiện có.
 
-### 章节审核与通用审核
+### Review chương và review chung
 
-除章节正文外，其它卡片（例如阶段大纲、通用文本等）也可以直接使用顶部的 **审核** 按钮。
+Ngoài văn bản chương, các thẻ khác (chẳng hạn như dàn ý giai đoạn, văn bản chung, v.v.) cũng có thể trực tiếp sử dụng nút **Đánh giá** ở trên cùng.
 
-- 审核入口统一为一个按钮，按钮右侧可切换审核提示词
-- 阶段大纲默认使用 `阶段审核` 提示词
-- 普通卡片默认使用 `通用审核` 提示词
-- 审核结果统一保存为 `内容审核卡片`
+- Lối vào ôn tập được thống nhất thành một nút và các từ nhắc ôn tập có thể được chuyển đổi ở bên phải nút
+- Theo mặc định, phác thảo giai đoạn sử dụng từ nhắc `giai đoạn xem xét`
+- Các thẻ thông thường sử dụng từ nhắc `General Review` theo mặc định
+- Kết quả review được lưu thống nhất dưới dạng `thẻ review nội dung`
 
-这样你既可以为不同卡片类型配置不同审核标准，又能保持统一的审核结果结构和查看方式。
-
+Bằng cách này, bạn có thể định cấu hình các tiêu chuẩn đánh giá khác nhau cho các loại thẻ khác nhau trong khi vẫn duy trì cấu trúc kết quả đánh giá và phương pháp xem thống nhất.
 
 <a id="prompt-workshop"></a>
-### 提示词工坊 (Prompt Workshop)
+### Hội thảo nhắc nhở
 
-*   所有 AI 功能的背后都是可编辑的提示词模板。你可以在这里修改预设模板，或创建全新的模板。
-*   **知识库注入**: 支持通过 `@KB{name=知识库名称}` 语法，在提示词中动态引用"知识库"内容，为 AI 提供更丰富的背景信息。
+* Đằng sau tất cả các chức năng AI là các mẫu từ gợi ý có thể chỉnh sửa. Tại đây bạn có thể sửa đổi các mẫu cài sẵn hoặc tạo các mẫu hoàn toàn mới.
+* **Chèn cơ sở kiến ​​thức**: Hỗ trợ tham chiếu động đến nội dung "cơ sở kiến ​​thức" bằng các từ gợi ý thông qua cú pháp `@KB{name=tên cơ sở kiến ​​thức}`, cung cấp thông tin cơ bản phong phú hơn cho AI.
 
 <a id="context-dsl"></a>
-### 上下文注入 (@DSL) 详解
+### Giải thích chi tiết về chèn bối cảnh (@DSL)
 
-这是 NovelForge 的特色。它允许你在提示词模板中，用 `@` 符号精确地引用项目中的任何数据注入为上下文。
+Đây là một tính năng của NovelForge. Nó cho phép bạn sử dụng ký hiệu `@` để tham chiếu chính xác bất kỳ dữ liệu nào trong dự án dưới dạng ngữ cảnh trong mẫu từ nhắc.
 
-*   **按标题引用**: `@卡片标题` 或 `@卡片标题.content.某个字段`
-*   **按类型引用**: `@type:角色卡` (所有角色卡)
-*   **特殊引用**: `@self` (当前卡片), `@parent` (父卡片)
-*   **强大的过滤器**:
-    *   `[previous]`: 获取同级的前一个卡片。
-    *   `[previous:global:n]`: 获取全局顺序（树状先序）中最近的n个同类型卡片。
-    *   `[sibling]`: 获取所有同级兄弟卡片。
-    *   `[index=...]`: 按序号获取，支持表达式，如 `$self.content.volume_number - 1`。
-    *   `[filter:...]`: 按条件过滤，如 `[filter:content.level > 5]` 或 `[filter:content.name in $self.content.entity_list]`。
-*   **字段级别选中**: 可选中整个卡片数据，也可以单独选中卡片的字段。
+* **Trích dẫn theo tiêu đề**: `@cardtitle` hoặc `@cardtitle.content.certain field`
+* **Tham khảo theo loại**: `@type:Character Card` (tất cả các thẻ nhân vật)
+* **Tài liệu tham khảo đặc biệt**: `@self` (thẻ hiện tại), `@parent` (thẻ gốc)
+* **Bộ lọc mạnh mẽ**:
+    * `[trước]`: Lấy thẻ trước cùng cấp.
+    * `[previous:global:n]`: Lấy n thẻ cùng loại gần nhất theo thứ tự chung (thứ tự cây).
+    * `[anh chị em]`: Nhận tất cả các thẻ anh chị em cùng cấp.
+    * `[index=...]`: Nhận theo số sê-ri, hỗ trợ các biểu thức, chẳng hạn như `$self.content.volume_number - 1`.
+    * `[filter:...]`: Lọc theo điều kiện, chẳng hạn như `[filter:content.level > 5]` hoặc `[filter:content.name in $self.content.entity_list]`.
+* **Lựa chọn cấp độ trường**: Có thể chọn toàn bộ dữ liệu thẻ hoặc có thể chọn riêng lẻ các trường của thẻ.
 
-例如，引用最近3章的章节标题及原文:
-![Alt text](docImgs/README/image-23.png)
+Ví dụ: trích dẫn tiêu đề chương và văn bản gốc của 3 chương cuối:
+![Văn bản thay thế](docImgs/README/image-23.png)
 
 <a id="workflow-system"></a>
-### 工作流系统（代码式工作流 + Workflow Agent）
+### Hệ thống quy trình làm việc (quy trình làm việc được mã hóa + Tác nhân quy trình làm việc)
 
-工作流系统用于把常见创作动作（初始化项目、保存后自动生成子卡、批量处理内容等）编排成可复用流程，并在合适时机自动执行。
+Hệ thống quy trình công việc được sử dụng để tổ chức các hành động sáng tạo phổ biến (khởi tạo dự án, tự động tạo thẻ con sau khi lưu, xử lý hàng loạt nội dung, v.v.) thành các quy trình có thể sử dụng lại và tự động thực hiện chúng vào thời điểm thích hợp.
 
-当前已完成代码式主线重构，旧 DAG 式工作流方案已移除。
+Hiện tại, quá trình xây dựng lại dòng chính dựa trên mã đã hoàn tất và giải pháp quy trình làm việc kiểu DAG cũ đã bị xóa.
 
 <a id="workflow-studio"></a>
-#### 工作流系统
+#### Hệ thống quy trình làm việc
 
-- 访问“工作流”页面，可在可视化与代码视图中编辑工作流。
-- 可通过节点库快速搭建流程，也可以直接编写/修改代码。
-- 参数面板支持实时编辑与校验，修改后可安全应用到工作流代码。
-- 支持查看运行记录、执行结果与错误信息，便于迭代调试。
+- Truy cập trang Quy trình công việc để chỉnh sửa quy trình công việc ở chế độ xem mã và hình ảnh.
+- Quy trình có thể được xây dựng nhanh chóng thông qua thư viện nút hoặc mã có thể được viết/sửa đổi trực tiếp.
+- Bảng tham số hỗ trợ chỉnh sửa và xác minh theo thời gian thực và các sửa đổi có thể được áp dụng một cách an toàn cho mã quy trình làm việc.
+- Hỗ trợ xem các bản ghi đang chạy, kết quả thực hiện và thông báo lỗi để thuận tiện cho việc gỡ lỗi lặp lại.
 
 ![alt text](docImgs/README/image-30.png)
 
 <a id="workflow-triggers"></a>
-#### 触发器配置
+#### Cấu hình kích hoạt
 
-每个工作流可以配置一个或多个触发器，定义何时自动执行：
+Mỗi quy trình công việc có thể được cấu hình bằng một hoặc nhiều trình kích hoạt để xác định thời điểm thực thi tự động:
 
-- **保存时触发**：当指定类型卡片保存时自动执行
-- **创建项目时触发**：新建项目后自动执行（常用于项目初始化）
-
+- **Kích hoạt khi lưu**: Tự động thực thi khi lưu loại thẻ được chỉ định
+- **Kích hoạt khi tạo dự án**: Tự động thực thi sau khi tạo dự án mới (thường được sử dụng để khởi tạo dự án)
 
 <a id="workflow-status-bar"></a>
-#### 工作流状态栏（全局后台运行）
+#### Thanh trạng thái quy trình làm việc (chạy nền chung)
 
-- 工作流运行后，状态会显示在全局工作流状态栏中（不局限于工作流页面）。
-- 你可以切换到其它页面继续创作，工作流在后台执行。
-- 状态栏会显示运行中数量、当前节点、总体进度与完成状态。
+- Sau khi quy trình làm việc chạy, trạng thái sẽ được hiển thị trên thanh trạng thái quy trình làm việc chung (không giới hạn ở trang quy trình làm việc).
+- Bạn có thể chuyển sang các trang khác để tiếp tục tạo và quy trình làm việc được thực hiện ở chế độ nền.
+- Thanh trạng thái sẽ hiển thị số lượng đang chạy, nút hiện tại, tiến độ tổng thể và trạng thái hoàn thành.
 
 ![alt text](docImgs/README/image-25.png)
 
 <a id="workflow-progress-recovery"></a>
-#### 节点级进度与中断恢复（Beta）
+#### Tiến trình cấp nút và phục hồi gián đoạn (Beta)
 
-- 系统支持节点级进度上报，可看到“当前执行到哪个节点”。
-- 支持暂停/恢复执行，并保留运行状态用于续跑。
-- 支持运行记录持久化与查看。
-- 说明：这部分能力已可用，复杂流程下可能存在少量边界问题（如个别恢复场景）。
+- Hệ thống hỗ trợ báo cáo tiến trình cấp nút và bạn có thể xem "nút nào hiện đang được thực thi".
+- Hỗ trợ tạm dừng/tiếp tục thực thi và giữ nguyên trạng thái đang chạy để tiếp tục chạy.
+- Hỗ trợ tính kiên trì và xem các bản ghi đang chạy.
+- Lưu ý: Phần khả năng này đã có sẵn và có thể có một số vấn đề về ranh giới trong các quy trình phức tạp (chẳng hạn như các kịch bản khôi phục riêng lẻ).
 
 <a id="workflow-persistent-vs-temporary"></a>
-#### 持久化工作流 vs 临时工作流
+#### Quy trình làm việc liên tục và quy trình làm việc tạm thời
 
-- **临时工作流（默认）**：运行记录用于当前查看与调试，后续会被自动清理。
-- **持久化工作流**：开启“持久化保存”后，运行记录会长期保留（受系统保留策略影响）。
+- **Quy trình làm việc tạm thời (mặc định)**: Bản ghi đang chạy được sử dụng để xem và gỡ lỗi hiện tại và sẽ tự động được làm sạch sau.
+- **Quy trình làm việc liên tục**: Sau khi bật "lưu liên tục", các bản ghi đang chạy sẽ được lưu giữ trong thời gian dài (bị ảnh hưởng bởi chính sách lưu giữ của hệ thống).
 
+<a id="workflow-buildins"></a>
+#### Mẫu quy trình làm việc tích hợp sẵn
 
-<a id="workflow-builtins"></a>
-#### 内置工作流模板
+Hệ thống được cài đặt sẵn một số quy trình công việc phổ biến, có thể được sử dụng trực tiếp hoặc làm tài liệu tham khảo:
 
-系统预置了多个常用工作流，可直接使用或作为参考：
-
-- **项目创建·雪花创作法**: 新建项目时按照雪花创作法自动创建初始卡片结构
-- **世界观·转组织**: 从世界观设定的势力列表自动生成组织卡
-- **核心蓝图·落子卡**: 根据蓝图内容自动创建角色卡、场景卡和分卷卡片
-- **分卷大纲·落子卡**: 根据分卷大纲自动创建阶段大纲和写作指南
-- **阶段大纲·落章节卡**: 根据阶段大纲的章节列表自动创建章节大纲和正文卡片
-- **拆书工作流**: 用于拆解既有文本结构并落地到卡片体系
+- **Tạo dự án·Phương pháp tạo bông tuyết**: Khi tạo một dự án mới, cấu trúc thẻ ban đầu sẽ tự động được tạo theo Phương pháp tạo bông tuyết.
+- **Chế độ xem thế giới·Chuyển tổ chức**: Tự động tạo thẻ tổ chức từ danh sách lực lượng được đặt trong chế độ xem thế giới
+- **Core Blueprint·Lost Card**: Tự động tạo thẻ nhân vật, thẻ cảnh và thẻ tập dựa trên nội dung của bản thiết kế
+- **Phác thảo giấy·Thẻ vị trí**: Tự động tạo dàn ý giai đoạn và hướng dẫn viết dựa trên dàn ý giấy
+- **Phác thảo giai đoạn·Thẻ chương**: Tự động tạo đề cương chương và thẻ văn bản dựa trên danh sách chương của phác thảo giai đoạn
+- **Quy trình tháo dỡ sách**: Dùng để tháo rời cấu trúc văn bản hiện có và triển khai vào hệ thống thẻ
 
 <a id="workflow-project-init"></a>
-#### 项目初始化工作流
+#### Quy trình khởi tạo dự án
 
-新建项目时，可以选择一个 `onprojectcreate` 触发器的工作流作为项目模板：
+Khi tạo dự án mới, bạn có thể chọn quy trình làm việc có trình kích hoạt `onprojectcreate` làm mẫu dự án:
 
-- 默认选择"项目创建·雪花创作法"，自动创建作品标签、金手指、一句话梗概、故事大纲、世界观设定、核心蓝图等卡片
-- 也可以在工作流工作室中创建自己的项目初始化工作流，完全自定义项目起始结构
-- 支持复杂的初始化逻辑，如根据条件创建不同的卡片结构
+- "Tạo dự án·Phương pháp tạo bông tuyết" được chọn theo mặc định, tự động tạo các thẻ như thẻ công việc, mánh gian lận, tóm tắt một câu, dàn ý câu chuyện, cài đặt thế giới quan và bản thiết kế cốt lõi.
+- Bạn cũng có thể tạo quy trình khởi tạo dự án của riêng mình trong studio quy trình công việc để tùy chỉnh hoàn toàn cấu trúc bắt đầu dự án
+- Hỗ trợ logic khởi tạo phức tạp, chẳng hạn như tạo các cấu trúc thẻ khác nhau dựa trên các điều kiện
 
 ![Alt text](docImgs/README/image-26.png)
 
 <a id="workflow-agent"></a>
-#### 工作流 Agent（自然语言编写工作流）
+#### Workflow Agent (quy trình viết bằng ngôn ngữ tự nhiên)
 
-- 在工作流页面打开工作流 Agent，对它说出你的目标，例如“创建一个多 AI 辩论流程并输出到指定项目”。
-- Agent 会自动读取当前工作流、生成修改方案、校验后给出可应用结果。
-- 使用这种方式，无需自己搭建工作流，可以快速实现复杂流程。
-- 目前可能还存在一些bug
+- Mở tác nhân quy trình công việc trên trang quy trình công việc và nói mục tiêu của bạn với nó, chẳng hạn như "Tạo quy trình tranh luận đa AI và xuất nó cho dự án đã chỉ định."
+- Đại lý sẽ tự động đọc quy trình làm việc hiện tại, tạo kế hoạch sửa đổi và cung cấp kết quả áp dụng sau khi xác minh.
+- Sử dụng phương pháp này, bạn không cần xây dựng quy trình làm việc của riêng mình và có thể nhanh chóng triển khai các quy trình phức tạp.
+- Có thể vẫn còn một số lỗi
 
-![alt text](docImgs/README/image-31.png)
-![alt text](docImgs/README/image-32.png)
-![alt text](docImgs/README/image-33.png)
-![alt text](docImgs/README/image-34.png)
-![alt text](docImgs/README/image-35.png)
-（右边执行界面是详细进度显示，工作流状态栏是简单的进度展示）
-一些长时间任务执行可以切换到其它界面，无需一直在工作流界面等待。执行完成后工作流状态栏会闪烁提示。
+![văn bản thay thế](docImgs/README/image-31.png)
+![văn bản thay thế](docImgs/README/image-32.png)
+![văn bản thay thế](docImgs/README/image-33.png)
+![văn bản thay thế](docImgs/README/image-34.png)
+![văn bản thay thế](docImgs/README/image-35.png)
+(Giao diện thực hiện ở bên phải là màn hình hiển thị tiến trình chi tiết và thanh trạng thái quy trình làm việc là màn hình hiển thị tiến trình đơn giản)
+Việc thực thi một số tác vụ dài hạn có thể được chuyển sang các giao diện khác mà không cần chờ đợi trong giao diện quy trình làm việc. Sau khi thực hiện xong, thanh trạng thái quy trình làm việc sẽ nhấp nháy.
 
 <a id="workflow-examples"></a>
-#### 工作流使用示例
-拆书工作流
-先建一个空项目
-![alt text](docImgs/README/image-36.png)
+#### Ví dụ về cách sử dụng quy trình làm việc
+Quy trình mở sách
+Tạo một dự án trống trước tiên
+![văn bản thay thế](docImgs/README/image-36.png)
 
-进入工作流界面，选择拆书工作流
+Vào giao diện quy trình làm việc và chọn quy trình mở sách
 
 ![alt text](docImgs/README/image-37.png)
 
-设置目标项目、模型名、小说章节目录
+Đặt dự án mục tiêu, tên mô hình và thư mục chương tiểu thuyết
 
 ![alt text](docImgs/README/image-38.png)
 
-注意，小说文件存放需按满足预设的格式要求，例如按每章节进行分割存储为txt文件
-![alt text](docImgs/README/image-41.png)
+Lưu ý rằng tệp tiểu thuyết phải được lưu trữ theo cách đáp ứng các yêu cầu về định dạng đặt trước, chẳng hạn như chia thành từng chương và lưu trữ dưới dạng tệp txt.
+![văn bản thay thế](docImgs/README/image-41.png)
 
-点击执行即可
+Bấm để thực hiện
 
+Kết quả khi giải nén sách:
+![văn bản thay thế](docImgs/README/image-39.png)
 
-拆书结果：
-![alt text](docImgs/README/image-39.png)
-
-提取章节大纲→划分阶段故事线→根据所有阶段故事性进行全局分析
-
----
-
-## 许可证协议
-本项目采用双许可证授权模式：
-
-- 默认情况下，本项目基于 GNU Affero General Public License v3.0 (AGPLv3) 授权协议
-- 提供服务型商用：将本项目（或其修改版本）作为后端以 SaaS、托管或其他形式向第三方提供服务，须通过作者获取商业授权许可。
-
-请遵守开源协议条款，并在适用场景下取得相应授权。
+Trích xuất dàn ý của chương → chia mạch truyện thành các giai đoạn → tiến hành phân tích tổng thể dựa trên cách kể chuyện của tất cả các giai đoạn
 
 ---
 
-## 📂 项目结构
+## Thỏa thuận cấp phép
+Dự án này áp dụng mô hình ủy quyền giấy phép kép:
+
+- Theo mặc định, dự án này được cấp phép theo Giấy phép Công cộng GNU Affero v3.0 (AGPLv3)
+- Cung cấp dịch vụ cho mục đích thương mại: Để sử dụng dự án này (hoặc phiên bản sửa đổi) làm phụ trợ để cung cấp dịch vụ cho bên thứ ba trong SaaS, hosting hoặc các hình thức khác, phải có giấy phép ủy quyền thương mại của tác giả.
+
+Vui lòng tuân thủ các điều khoản của thỏa thuận nguồn mở và nhận được ủy quyền tương ứng trong các trường hợp áp dụng.
+
+---
+
+## 📂 Cấu trúc dự án
 
 ```
 NovelForge/
-  ├── backend/        # FastAPI 后端
+  ├── backend/        # Backend FastAPI (Phân hệ dịch vụ phía sau)
   │   ├── app/
-  │   │   ├── api/        # API 路由
-  │   │   ├── db/         # 数据库模型与会话
-  │   │   ├── schemas/    # Pydantic 数据模型
-  │   │   └── services/   # 核心业务逻辑
-  │   └── main.py       # 入口
+  │   │   ├── api/        # Định tuyến API (API Routing)
+  │   │   ├── db/         # Mô hình cơ sở dữ liệu & Phiên làm việc (Database Models & Sessions)
+  │   │   ├── schemas/    # Mô hình dữ liệu Pydantic (Pydantic Data Models)
+  │   │   └── services/   # Logic nghiệp vụ cốt lõi (Core Business Logic)
+  │   └── main.py       # Điểm khởi chạy (Entry Point)
   │
-  └── frontend/       # Electron + Vue3 前端
+  └── frontend/       # Frontend Electron + Vue3 (Phần giao diện người dùng)
       └── src/
-          ├── main/       # Electron 主进程
-          ├── preload/    # 预加载脚本
-          └── renderer/   # Vue 渲染进程
+          ├── main/       # Luồng xử lý chính của Electron (Electron Main Process)
+          ├── preload/    # Kịch bản tải trước (Preload Scripts)
+          └── renderer/   # Luồng kết xuất của Vue (Vue Renderer Process)
               └── src/
-                  ├── components/ # Vue 组件
-                  ├── services/   # 前端服务
-                  ├── stores/     # Pinia 状态管理
-                  └── views/      # 页面视图
+                  ├── components/ # Thành phần Vue (Vue Components)
+                  ├── services/   # Dịch vụ giao diện người dùng (Frontend Services)
+                  ├── stores/     # Quản lý trạng thái Pinia (Pinia State Management)
+                  └── views/      # Giao diện trang hiển thị (Page Views)
 ```
 
 ---
 
-<a id="展望"></a>
-## 展望
+<a id="Nhìn về phía trước"></a>
+## Triển vọng
 
-NovelForge 目前仍处于迭代的早期阶段，作者深知该项目在创作流程、一致性维持、 UI 设计、交互体验等方面还有巨大的改进空间。
+NovelForge vẫn đang trong giai đoạn đầu của quá trình lặp lại và tác giả nhận thức rõ rằng dự án vẫn còn rất nhiều cơ hội để cải thiện về quy trình sáng tạo, duy trì tính nhất quán, thiết kế giao diện người dùng, trải nghiệm tương tác, v.v.
 
-最好的工具源于社区的智慧。无论你是创作者还是开发者，都真诚地欢迎你：
+Những công cụ tốt nhất được sinh ra từ trí tuệ của cộng đồng. Cho dù bạn là người sáng tạo hay nhà phát triển, bạn đều được chào đón chân thành:
 
-*   在 **Issues** 中提出宝贵的功能建议或反馈问题。
-*   分享你对创作流程的独到见解。
+* Gửi đề xuất hoặc phản hồi về tính năng có giá trị trong **Vấn đề**.
+* Chia sẻ những hiểu biết độc đáo của bạn về quá trình sáng tạo.
 
 
 
-<a id="交流群"></a>
-## 交流群
+<a id="Nhóm liên lạc"></a>
+## Nhóm liên lạc
 
 ![alt text](docImgs/README/image-40.png)
