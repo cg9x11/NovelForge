@@ -78,6 +78,7 @@ watch(() => props.modelValue, async (open) => { if (open) { await nextTick(); em
               <span>{{ t('settingsDialog.tabs.about') }}</span>
             </el-badge>
           </template>
+          <Versions />
           <div class="about-toolbar">
             <span class="locale-label">{{ t('app.language') }}</span>
             <el-select v-model="currentLocale" style="width: 200px">
@@ -86,7 +87,6 @@ watch(() => props.modelValue, async (open) => { if (open) { await nextTick(); em
               <el-option value="vi-VN" :label="t('app.language_vi')" />
             </el-select>
           </div>
-          <Versions />
         </el-tab-pane>
       </el-tabs>
     </div>

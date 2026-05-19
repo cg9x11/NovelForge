@@ -118,7 +118,6 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .app-layout {
-  --workflow-status-bar-reserved-height: 80px;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -129,9 +128,6 @@ onBeforeUnmount(() => {
 
 .main-content {
   flex-grow: 1;
-  min-height: 0;
-  padding-bottom: var(--workflow-status-bar-reserved-height);
-  box-sizing: border-box;
   overflow: auto; /* Allow content to scroll if needed */
 }
 </style>
