@@ -148,6 +148,14 @@ function parseSSELine(line: string): { event: string; data: any } | null {
  * @param event 事件对象
  * @param callbacks 回调函数
  */
+function formatGenerationStreamError(data: any): string {
+  if (data?.error_code === 'GENERATION_FAILED') {
+    const message = data.message ? `: ${data.message}` : ''
+    return `${i18n.global.t('generation.errors.failed')}${message}`
+  }
+  return data?.text || data?.message || String(i18n.global.t('generation.errors.failed'))
+}
+
 function handleEvent(event: { event: string; data: any }, callbacks: GenerateCallbacks): void {
   const { data } = event
   const type = data.type || event.event
@@ -166,7 +174,7 @@ function handleEvent(event: { event: string; data: any }, callbacks: GenerateCal
       break
 
     case 'error':
-      callbacks.onError?.(data.text)
+      callbacks.onError?.(formatGenerationStreamError(data))
       break
 
     case 'done':

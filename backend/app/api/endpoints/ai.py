@@ -126,7 +126,7 @@ async def get_ai_config_options(session: Session = Depends(get_session)):
 async def render_prompt_with_knowledge(name: str, session: Session = Depends(get_session)):
     p = prompt_service.get_prompt_by_identifier(session, name)
     if not p or not p.template:
-        raise HTTPException(status_code=404, detail=f"未找到提示词: {name}")
+        raise HTTPException(status_code=404, detail={"error_code": "PROMPT_NOT_FOUND", "prompt_name": name})
     try:
         text = prompt_service.inject_knowledge(session, str(p.template))
         return ApiResponse(data={"text": text})
@@ -161,7 +161,7 @@ async def generate_ai_content(
     # 获取提示词
     prompt = prompt_service.get_prompt_by_identifier(session, request.prompt_name)
     if not prompt:
-        raise HTTPException(status_code=400, detail=f"未找到提示词名称: {request.prompt_name}")
+        raise HTTPException(status_code=400, detail={"error_code": "PROMPT_NAME_NOT_FOUND", "prompt_name": request.prompt_name})
 
     # 注入知识库
     prompt_template = prompt_service.inject_knowledge(session, prompt.template or '')
@@ -232,7 +232,7 @@ async def generate_continuation(
             raise HTTPException(status_code=400, detail="续写必须指定 prompt_name")
         p = prompt_service.get_prompt_by_identifier(session, request.prompt_name)
         if not p or not p.template:
-            raise HTTPException(status_code=400, detail=f"未找到提示词名称: {request.prompt_name}")
+            raise HTTPException(status_code=400, detail={"error_code": "PROMPT_NAME_NOT_FOUND", "prompt_name": request.prompt_name})
         # 注入知识库
         system_prompt = prompt_service.inject_knowledge(session, str(p.template))
 
@@ -345,7 +345,8 @@ async def generate_with_instruction_stream(
             logger.error(f"指令流生成失败: {e}", exc_info=True)
             error_event = {
                 "type": "error",
-                "text": f"生成失败: {str(e)}"
+                "error_code": "GENERATION_FAILED",
+                "message": str(e)
             }
             yield f"data: {json.dumps(error_event, ensure_ascii=False)}\n\n"
     
