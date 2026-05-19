@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable, Optional, Protocol
@@ -143,7 +143,7 @@ class StructuredCardMemoryExtractor:
             lines.extend(self.build_reference_lines(model))
         if not lines:
             return None
-        return f"ã€{self.spec.reference_title}ã€‘\n" + "\n".join(lines)
+        return f"【{self.spec.reference_title}】\n" + "\n".join(lines)
 
     async def extract(
         self,
@@ -160,18 +160,18 @@ class StructuredCardMemoryExtractor:
         extra_context: str | None = None,
         context: dict[str, Any] | None = None,
     ) -> BaseModel:
-        prompt = prompt_service.get_prompt_by_identifier(session, self.prompt_name)
+        prompt = prompt_service.get_prompt_by_name(session, self.prompt_name)
         if not prompt:
-            raise ValueError(f"æœªæ‰¾åˆ°æç¤ºè¯: {self.prompt_name}")
+            raise ValueError(f"未找到提示词: {self.prompt_name}")
 
         system_prompt = prompt.template
-        system_prompt += f"\n\nè¯·ä¸¥æ ¼æŒ‰ä»¥ä¸‹ JSON Schema è¾“å‡º:\n{self.output_model.model_json_schema()}"
+        system_prompt += f"\n\n请严格按以下 JSON Schema 输出:\n{self.output_model.model_json_schema()}"
 
         target_names, related_names = self._partition_participants(participants)
 
         ref_blocks: list[str] = []
         if extra_context:
-            ref_blocks.append(f"ã€è¡¥å……ä¸Šä¸‹æ–‡ï¼Œä»…ä¾›å‚è€ƒï¼Œä¸è¦æœºæ¢°å¤è¿°ã€‘\n{extra_context}")
+            ref_blocks.append(f"【补充上下文，仅供参考，不要机械复述】\n{extra_context}")
 
         reference_block = self._build_reference_block(
             session=session,
@@ -185,8 +185,8 @@ class StructuredCardMemoryExtractor:
         participant_desc = self.build_participant_payload(target_names, related_names, participants)
         user_prompt = (
             f"{ref_text}"
-            f"å‚ä¸Žå®žä½“ä¿¡æ¯ï¼š{participant_desc}\n\n"
-            f"ç« èŠ‚æ­£æ–‡å¦‚ä¸‹ï¼š\n{text}\n"
+            f"参与实体信息：{participant_desc}\n\n"
+            f"章节正文如下：\n{text}\n"
         )
 
         log_extract_prompt(self.code, self.prompt_name, llm_config_id, system_prompt, user_prompt)
@@ -202,7 +202,7 @@ class StructuredCardMemoryExtractor:
             timeout=timeout,
         )
         if not isinstance(result, self.output_model):
-            raise ValueError(f"{self.name}å¤±è´¥ï¼šè¾“å‡ºæ ¼å¼ä¸ç¬¦åˆ {self.output_model.__name__}")
+            raise ValueError(f"{self.name}失败：输出格式不符合 {self.output_model.__name__}")
 
         if target_names:
             allowed_names = {name.strip() for name in target_names if name.strip()}
@@ -225,7 +225,7 @@ class StructuredCardMemoryExtractor:
     ) -> dict[str, Any]:
         card_type = session.exec(select(CardType).where(CardType.name == self.spec.card_type_name)).first()
         if not card_type:
-            raise ValueError(f"æœªæ‰¾åˆ°å¡ç‰‡ç±»åž‹ï¼š{self.spec.card_type_name}")
+            raise ValueError(f"未找到卡片类型：{self.spec.card_type_name}")
 
         affected_card_ids: list[int] = []
         updated_card_count = 0
@@ -304,4 +304,3 @@ class BaseMemoryExtractor(Protocol):
     ) -> dict[str, Any]: ...
 
     def build_affected_targets(self, data: BaseModel) -> list[dict[str, Any]]: ...
-

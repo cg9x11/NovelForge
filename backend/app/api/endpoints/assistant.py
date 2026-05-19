@@ -1,6 +1,6 @@
-﻿"""
-çµæ„ŸåŠ©æ‰‹ä¸“ç”¨æŽ¥å£
-æ”¯æŒå·¥å…·è°ƒç”¨çš„å¯¹è¯
+"""
+灵感助手专用接口
+支持工具调用的对话
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -23,15 +23,15 @@ async def assistant_chat(
     session: Session = Depends(get_session)
 ):
     """
-    çµæ„ŸåŠ©æ‰‹å¯¹è¯æŽ¥å£ï¼ˆæ”¯æŒå·¥å…·è°ƒç”¨ï¼‰
+    灵感助手对话接口（支持工具调用）
     
-    ç‰¹ç‚¹ï¼š
-    - ä¸“ç”¨è¯·æ±‚æ¨¡åž‹ï¼ˆè¯­ä¹‰æ¸…æ™°ï¼‰
-    - è‡ªåŠ¨æ³¨å…¥å·¥å…·é›†
-    - æ”¯æŒæµå¼è¾“å‡º
-    - æ”¯æŒå·¥å…·è°ƒç”¨ç»“æžœè¿”å›ž
+    特点：
+    - 专用请求模型（语义清晰）
+    - 自动注入工具集
+    - 支持流式输出
+    - 支持工具调用结果返回
     """
-    # åŠ è½½ç³»ç»Ÿæç¤ºè¯ï¼ˆæ ¹æ®æ¨¡å¼é€‰æ‹©ä¸åŒçš„æç¤ºè¯ï¼‰
+    # 加载系统提示词（根据模式选择不同的提示词）
     from app.services import prompt_service
     
     prompt_name = request.prompt_name
@@ -39,25 +39,25 @@ async def assistant_chat(
 
     if react_enabled:
         react_prompt_name = f"{prompt_name}-React"
-        p = prompt_service.get_prompt_by_identifier(session, react_prompt_name)
+        p = prompt_service.get_prompt_by_name(session, react_prompt_name)
         if p and p.template:
             system_prompt = str(p.template)
-            logger.info(f"[Assistant API] React æ¨¡å¼å¯ç”¨ï¼Œä½¿ç”¨æç¤ºè¯ {react_prompt_name}")
+            logger.info(f"[Assistant API] React 模式启用，使用提示词 {react_prompt_name}")
         else:
-            logger.warning(f"[Assistant API] React æ¨¡å¼å¯ç”¨ä½†æœªæ‰¾åˆ° {react_prompt_name}ï¼Œé€€å›žæ ‡å‡†æç¤ºè¯ {prompt_name}")
-            p = prompt_service.get_prompt_by_identifier(session, prompt_name)
+            logger.warning(f"[Assistant API] React 模式启用但未找到 {react_prompt_name}，退回标准提示词 {prompt_name}")
+            p = prompt_service.get_prompt_by_name(session, prompt_name)
             if not p or not p.template:
                 raise HTTPException(status_code=400, detail={"error_code": "PROMPT_NOT_FOUND", "prompt_name": prompt_name})
             system_prompt = str(p.template)
     else:
-        p = prompt_service.get_prompt_by_identifier(session, prompt_name)
+        p = prompt_service.get_prompt_by_name(session, prompt_name)
         if not p or not p.template:
             raise HTTPException(status_code=400, detail={"error_code": "PROMPT_NOT_FOUND", "prompt_name": prompt_name})
         system_prompt = str(p.template)
     
-    # æ‰€æœ‰æ¨¡å¼ç»Ÿä¸€èµ° LangChain ChatModel + Tools ç®¡çº¿
+    # 所有模式统一走 LangChain ChatModel + Tools 管线
     async def stream_with_tools() -> AsyncGenerator[str, None]:
-        logger.info("[Assistant API] ä½¿ç”¨{}æ¨¡å¼".format("React" if react_enabled else "æ ‡å‡†"))
+        logger.info("[Assistant API] 使用{}模式".format("React" if react_enabled else "标准"))
         async for chunk in generate_assistant_chat_streaming(
             session=session,
             request=request,
@@ -75,4 +75,3 @@ async def assistant_chat(
             "X-Accel-Buffering": "no"
         }
     )
-
