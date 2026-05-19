@@ -2905,7 +2905,7 @@ function rejectPendingAiEdit() {
 function executeAIGeneration(
 	requestData: ContinuationRequest,
 	replaceMode = false,
-	taskName = 'AI生成',
+	taskName = t('codemirror.ai.generation'),
 	replaceFrom?: number,
 	replaceTo?: number
 ) {
