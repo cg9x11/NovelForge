@@ -4,13 +4,13 @@
 """
 
 from loguru import logger
-from sqlalchemy import UniqueConstraint, inspect
+from sqlalchemy import UniqueConstraint, inspect, text
 from sqlalchemy.schema import CreateColumn
 from sqlmodel import Session, select
 
 from app.bootstrap.registry import discover_and_run_initializers
 from app.core.events import discover_event_handlers
-from app.db.models import SQLModel, Prompt, CardType, Knowledge
+from app.db.models import SQLModel, Prompt, CardType, Knowledge, Card
 from app.db.session import engine
 from app.services.workflow.registry import discover_workflow_nodes
 from app.services.builtin_key_registry import PROMPT_NAME_TO_KEY, CARD_TYPE_NAME_TO_KEY, KNOWLEDGE_NAME_TO_KEY, resolve_builtin_key
@@ -131,6 +131,69 @@ def _backfill_builtin_keys():
         else:
             logger.info("[??] ??key?????????")
 
+
+
+def _has_cjk(value: str | None) -> bool:
+    return any("\u4e00" <= ch <= "\u9fff" for ch in (value or ""))
+
+
+def _choose_key_keeper(rows):
+    def score(row):
+        return (
+            0 if not _has_cjk(getattr(row, "name", None)) else 1,
+            0 if getattr(row, "built_in", False) else 1,
+            getattr(row, "id", 0) or 0,
+        )
+    return sorted(rows, key=score)[0]
+
+
+def _copy_missing_builtin_fields(target, source, fields: list[str]) -> None:
+    for field in fields:
+        current = getattr(target, field, None)
+        incoming = getattr(source, field, None)
+        if (current is None or current == "" or current == {}) and incoming not in (None, "", {}):
+            setattr(target, field, incoming)
+
+
+def _dedupe_builtin_keys():
+    """Merge duplicate built-in rows created before stable keys existed."""
+    removed: list[str] = []
+    with Session(engine) as session:
+        specs = [
+            (Prompt, ["description", "template", "version"]),
+            (CardType, ["model_name", "description", "json_schema", "ai_params", "editor_component", "default_ai_context_template", "default_ai_context_template_review", "ui_layout"]),
+            (Knowledge, ["description", "content"]),
+        ]
+        for model, merge_fields in specs:
+            rows = [row for row in session.exec(select(model)).all() if getattr(row, "key", None)]
+            groups: dict[str, list] = {}
+            for row in rows:
+                groups.setdefault(row.key, []).append(row)
+
+            for key, duplicates in groups.items():
+                if len(duplicates) <= 1:
+                    continue
+                keeper = _choose_key_keeper(duplicates)
+                keeper.built_in = any(getattr(row, "built_in", False) for row in duplicates)
+                for row in duplicates:
+                    if row.id == keeper.id:
+                        continue
+                    _copy_missing_builtin_fields(keeper, row, merge_fields)
+                    if model is CardType:
+                        session.exec(
+                            text("UPDATE card SET card_type_id = :keeper_id WHERE card_type_id = :old_id"),
+                            params={"keeper_id": keeper.id, "old_id": row.id},
+                        )
+                    session.delete(row)
+                    removed.append(f"{model.__name__}:{key}:{row.id}->{keeper.id}")
+                session.add(keeper)
+
+        if removed:
+            session.commit()
+            logger.info(f"[??] ??????? key: {', '.join(removed[:30])}{' ...' if len(removed) > 30 else ''}")
+        else:
+            logger.info("[??] ?? key ?????")
+
 def init_application_data():
     """初始化应用数据
 
@@ -213,6 +276,8 @@ def startup():
     init_database()
     # 2. 初始化应用数据
     init_application_data()
+    _backfill_builtin_keys()
+    _dedupe_builtin_keys()
     # 3. 注册事件处理器
     register_event_handlers()
     # 4. 注册工作流节点
