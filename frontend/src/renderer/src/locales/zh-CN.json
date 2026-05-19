@@ -1844,5 +1844,9 @@
     },
     "assembledSuccess": "Context assembled",
     "assembledFailed": "Assemble failed"
+  },
+  "errors": {
+    "promptNotFound": "??????: {name}",
+    "promptNameNotFound": "????????: {name}"
   }
 }

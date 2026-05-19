@@ -1844,5 +1844,9 @@
     },
     "assembledSuccess": "Đã lắp ngữ cảnh",
     "assembledFailed": "Lắp ngữ cảnh thất bại"
+  },
+  "errors": {
+    "promptNotFound": "Không tìm thấy prompt: {name}",
+    "promptNameNotFound": "Không tìm thấy tên prompt: {name}"
   }
 }

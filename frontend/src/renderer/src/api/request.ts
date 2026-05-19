@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { ElMessage, ElLoading } from 'element-plus'
 import { tr } from '@renderer/utils/i18n'
+import { i18n } from '@renderer/i18n'
 
 // 后端API的基础URL
 // 约定：
@@ -37,6 +38,20 @@ interface ApiResponse<T> {
   status: 'success' | 'error'
   data: T
   message?: string
+}
+
+function translateBackendError(detail: any, fallback?: string): string {
+  if (detail && typeof detail === 'object') {
+    switch (detail.error_code) {
+      case 'PROMPT_NOT_FOUND':
+        return String(i18n.global.t('errors.promptNotFound', { name: detail.prompt_name || '' }))
+      case 'PROMPT_NAME_NOT_FOUND':
+        return String(i18n.global.t('errors.promptNameNotFound', { name: detail.prompt_name || '' }))
+      default:
+        break
+    }
+  }
+  return tr(fallback || 'Request failed')
 }
 
 class HttpClient {
@@ -127,8 +142,8 @@ class HttpClient {
             ElMessage.error(tr('Unknown validation error'))
           }
         } else {
-          const errorMessage = error.response?.data?.message || error.response?.data?.detail || error.message || 'Request failed'
-          ElMessage.error(tr(errorMessage))
+          const errorMessage = translateBackendError(error.response?.data?.detail, error.response?.data?.message || error.message || 'Request failed')
+          ElMessage.error(errorMessage)
         }
         console.error('请求错误:', error.response?.data || error)
         return Promise.reject(error)
