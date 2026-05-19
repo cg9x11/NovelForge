@@ -46,7 +46,10 @@ def _resolve_card_type_name(db: Session, card: Card) -> str | None:
 @router.post("/card-types", response_model=CardTypeRead)
 def create_card_type(card_type: CardTypeCreate, db: Session = Depends(get_session)):
     service = CardTypeService(db)
-    created = service.create(card_type)
+    try:
+        created = service.create(card_type)
+    except BusinessException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
     data = created.model_dump()
     data["json_schema"] = localize_schema_titles(data.get("json_schema"))
     return data
@@ -74,7 +77,10 @@ def get_card_type(card_type_id: int, db: Session = Depends(get_session)):
 @router.put("/card-types/{card_type_id}", response_model=CardTypeRead)
 def update_card_type(card_type_id: int, card_type: CardTypeUpdate, db: Session = Depends(get_session)):
     service = CardTypeService(db)
-    db_card_type = service.update(card_type_id, card_type)
+    try:
+        db_card_type = service.update(card_type_id, card_type)
+    except BusinessException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
     if db_card_type is None:
         raise HTTPException(status_code=404, detail="CardType not found")
     data = db_card_type.model_dump()

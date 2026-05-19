@@ -17,7 +17,10 @@ def create_prompt(
     """
     创建一个新的提示词模板。
     """
-    new_prompt = prompt_service.create_prompt(session=session, prompt_create=prompt)
+    try:
+        new_prompt = prompt_service.create_prompt(session=session, prompt_create=prompt)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     return ApiResponse(data=new_prompt)
 
 @router.get("/", response_model=ApiResponse[List[PromptRead]], summary="获取提示词列表")
@@ -57,7 +60,10 @@ def update_prompt(
     """
     更新一个已存在的提示词模板。
     """
-    updated_prompt = prompt_service.update_prompt(session=session, prompt_id=prompt_id, prompt_update=prompt)
+    try:
+        updated_prompt = prompt_service.update_prompt(session=session, prompt_id=prompt_id, prompt_update=prompt)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     if not updated_prompt:
         raise HTTPException(status_code=404, detail="提示词未找到")
     return ApiResponse(data=updated_prompt)

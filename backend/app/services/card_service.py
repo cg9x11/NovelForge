@@ -612,10 +612,15 @@ class CardTypeService:
 
     def get_by_id(self, card_type_id: int) -> Optional[CardType]:
         return self.db.get(CardType, card_type_id)
+
+    def get_by_key(self, key: str) -> Optional[CardType]:
+        return self.db.exec(select(CardType).where(CardType.key == key)).first()
         
     def create(self, card_type_create: CardTypeCreate) -> CardType:
         payload = card_type_create.model_dump()
         payload["key"] = payload.get("key") or resolve_card_type_key(payload.get("name"))
+        if payload.get("key") and self.get_by_key(payload["key"]):
+            raise BusinessException(f"Card type key '{payload['key']}' already exists", status_code=400)
         card_type = CardType.model_validate(payload)
         self.db.add(card_type)
         self.db.commit()
@@ -626,7 +631,13 @@ class CardTypeService:
         card_type = self.get_by_id(card_type_id)
         if not card_type:
             return None
-        for key, value in card_type_update.model_dump(exclude_unset=True).items():
+        update_data = card_type_update.model_dump(exclude_unset=True)
+        next_key = update_data.get("key", getattr(card_type, "key", None))
+        if next_key:
+            existing = self.get_by_key(next_key)
+            if existing and existing.id != card_type_id:
+                raise BusinessException(f"Card type key '{next_key}' already exists", status_code=400)
+        for key, value in update_data.items():
             setattr(card_type, key, value)
         if not getattr(card_type, "key", None):
             card_type.key = resolve_card_type_key(card_type.name)

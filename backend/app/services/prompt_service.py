@@ -53,6 +53,8 @@ def create_prompt(session: Session, prompt_create: PromptCreate) -> Prompt:
     
     payload = prompt_create.model_dump()
     payload["key"] = payload.get("key") or resolve_builtin_key(prompt_create.name, PROMPT_NAME_TO_KEY)
+    if payload.get("key") and get_prompt_by_key(session, payload["key"]):
+        raise ValueError(f"Prompt key '{payload['key']}' already exists")
     db_prompt = Prompt.model_validate(payload)
     session.add(db_prompt)
     session.commit()
@@ -65,6 +67,11 @@ def update_prompt(session: Session, prompt_id: int, prompt_update: PromptUpdate)
     if not db_prompt:
         return None
     prompt_data = prompt_update.model_dump(exclude_unset=True)
+    next_key = prompt_data.get("key", getattr(db_prompt, "key", None))
+    if next_key:
+        existing = get_prompt_by_key(session, next_key)
+        if existing and existing.id != prompt_id:
+            raise ValueError(f"Prompt key '{next_key}' already exists")
     for key, value in prompt_data.items():
         setattr(db_prompt, key, value)
     if not getattr(db_prompt, "key", None):

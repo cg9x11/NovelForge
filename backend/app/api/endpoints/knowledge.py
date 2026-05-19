@@ -20,7 +20,9 @@ def create_knowledge(body: KnowledgeCreate, session: Session = Depends(get_sessi
     svc = KnowledgeService(session)
     if svc.get_by_name(body.name):
         raise HTTPException(status_code=400, detail='同名知识库已存在')
-    item = svc.create(name=body.name, description=body.description, content=body.content)
+    if body.key and svc.get_by_key(body.key):
+        raise HTTPException(status_code=400, detail='同 key 知识库已存在')
+    item = svc.create(key=body.key, name=body.name, description=body.description, content=body.content)
     return ApiResponse(data=item)
 
 @router.get('/{kid}', response_model=ApiResponse[KnowledgeRead], summary='获取单个知识库')
@@ -34,6 +36,10 @@ def get_knowledge(kid: int, session: Session = Depends(get_session)):
 @router.put('/{kid}', response_model=ApiResponse[KnowledgeRead], summary='更新知识库')
 def update_knowledge(kid: int, body: KnowledgeUpdate, session: Session = Depends(get_session)):
     svc = KnowledgeService(session)
+    if body.key:
+        existing = svc.get_by_key(body.key)
+        if existing and existing.id != kid:
+            raise HTTPException(status_code=400, detail='Duplicate knowledge key')
     item = svc.update(kid, key=body.key, name=body.name, description=body.description, content=body.content)
     if not item:
         raise HTTPException(status_code=404, detail='知识库不存在')
@@ -50,4 +56,4 @@ def delete_knowledge(kid: int, session: Session = Depends(get_session)):
     ok = svc.delete(kid)
     if not ok:
         raise HTTPException(status_code=404, detail='知识库不存在')
-    return ApiResponse(message='删除成功') 
+    return ApiResponse(message='删除成功')
