@@ -1871,5 +1871,21 @@
     "success": "? Success",
     "failed": "? Failed",
     "executed": "Executed"
+  },
+  "dynamic_form": {
+    "fields": {
+      "entity": {
+        "character": "Character",
+        "scene": "Scene",
+        "organization": "Organization",
+        "item": "Item",
+        "concept": "Concept"
+      },
+      "select_placeholder": "Select {label}",
+      "input_placeholder": "Enter {label}",
+      "loading_options": "Loading options",
+      "no_knowledge_options": "No options found. Please maintain them in Knowledge Base first",
+      "no_options": "No options available"
+    }
   }
 }

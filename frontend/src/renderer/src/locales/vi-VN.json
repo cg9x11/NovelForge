@@ -1871,5 +1871,21 @@
     "success": "? Th?nh c?ng",
     "failed": "? Th?t b?i",
     "executed": "?? th?c thi"
+  },
+  "dynamic_form": {
+    "fields": {
+      "entity": {
+        "character": "Nh?n v?t",
+        "scene": "B?i c?nh",
+        "organization": "T? ch?c",
+        "item": "V?t ph?m",
+        "concept": "Kh?i ni?m"
+      },
+      "select_placeholder": "Ch?n {label}",
+      "input_placeholder": "Nh?p {label}",
+      "loading_options": "?ang t?i t?y ch?n",
+      "no_knowledge_options": "Kh?ng t?m th?y t?y ch?n. Vui l?ng duy tr? trong Kho tri th?c tr??c",
+      "no_options": "Ch?a c? t?y ch?n"
+    }
   }
 }

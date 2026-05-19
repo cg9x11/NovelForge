@@ -21,6 +21,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { JSONSchema } from '@renderer/api/schema'
 import { resolveKnowledgeOptions } from '@renderer/services/knowledgeOptionResolver'
 
@@ -32,6 +33,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['update:modelValue'])
+const { t } = useI18n()
 const knowledgeOptions = ref<Array<string | number>>([])
 const isLoading = ref(false)
 
@@ -92,7 +94,7 @@ const noDataText = computed(() => {
 function getOptionLabel(item: string | number): string {
   const raw = String(item)
   if (props.prop === 'entity_type') {
-    return ENTITY_TYPE_LABELS[raw] || raw
+    return t(`dynamic_form.fields.entity.${raw}`) || raw
   }
   return raw
 }
