@@ -5,6 +5,8 @@ import type { components } from '@renderer/types/generated'
 export type GeneralAIRequest = components['schemas']['GeneralAIRequest']
 export type ContinuationRequest = components['schemas']['ContinuationRequest']
 export type ContinuationResponse = components['schemas']['ContinuationResponse']
+export const DEFAULT_ASSISTANT_PROMPT_KEY = 'idea_chat'
+
 export type AssistantChatRequest = components['schemas']['AssistantChatRequest']
 
 // append_continuous_novel_directive（用于控制是否追加"连续小说正文"指令）
