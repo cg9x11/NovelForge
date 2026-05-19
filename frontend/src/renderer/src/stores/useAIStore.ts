@@ -3,6 +3,23 @@ import { ref } from 'vue'
 import { generateAIContent } from '@renderer/api/ai'
 import { useCardStore } from './useCardStore'
 import { showInterruptOverlay, hideInterruptOverlay } from '@renderer/services/interruptOverlay'
+import { i18n } from '@renderer/i18n'
+import { getCardTypeKey } from '@renderer/utils/cardType'
+
+
+function collectEntityNames(cardStore: ReturnType<typeof useCardStore>): string[] {
+  const allowed = new Set(['character_card', 'scene_card', 'organization_card', 'item_card', 'concept_card'])
+  const typeById = new Map<number, any>()
+  ;(cardStore.cardTypes || []).forEach((cardType: any) => {
+    if (cardType?.id) typeById.set(cardType.id, cardType)
+  })
+  return Array.from(new Set((cardStore.cards || []).map((card: any) => {
+    const cardType = typeById.get(card.card_type_id) || card.card_type
+    if (!allowed.has(getCardTypeKey(cardType) || '')) return null
+    const name = (card?.content?.name || '').trim()
+    return name || null
+  }).filter(Boolean))) as string[]
+}
 
 export const useAIStore = defineStore('ai', () => {
   const isGenerating = ref(false)
@@ -21,17 +38,9 @@ export const useAIStore = defineStore('ai', () => {
     try {
       currentAbort?.abort()
       currentAbort = new AbortController()
-      showInterruptOverlay('AI生成中…', () => { try { currentAbort?.abort() } catch {} })
+      showInterruptOverlay(String(i18n.global.t('interruptOverlay.generating')), () => { try { currentAbort?.abort() } catch {} })
       const cardStore = useCardStore()
-      const allowed = new Set(['角色卡','场景卡','组织卡','物品卡','概念卡'])
-      const typeIdToName = new Map<number, string>()
-      ;(cardStore.cardTypes || []).forEach((t:any) => { if (t?.id) typeIdToName.set(t.id, (t as any).name || '') })
-      const names = Array.from(new Set((cardStore.cards || []).map((c:any) => {
-        const tname = typeIdToName.get(c.card_type_id) || ''
-        if (!allowed.has(tname)) return null
-        const nm = (c?.content?.name || '').trim()
-        return nm || null
-      }).filter(Boolean))) as string[]
+      const names = collectEntityNames(cardStore)
       const deps = JSON.stringify({ all_entity_names: names })
 
       const payload: any = {
@@ -68,17 +77,9 @@ export const useAIStore = defineStore('ai', () => {
     try {
       currentAbort?.abort()
       currentAbort = new AbortController()
-      showInterruptOverlay('AI生成中…', () => { try { currentAbort?.abort() } catch {} })
+      showInterruptOverlay(String(i18n.global.t('interruptOverlay.generating')), () => { try { currentAbort?.abort() } catch {} })
       const cardStore = useCardStore()
-      const allowed = new Set(['角色卡','场景卡','组织卡','物品卡','概念卡'])
-      const typeIdToName = new Map<number, string>()
-      ;(cardStore.cardTypes || []).forEach((t:any) => { if (t?.id) typeIdToName.set(t.id, (t as any).name || '') })
-      const names = Array.from(new Set((cardStore.cards || []).map((c:any) => {
-        const tname = typeIdToName.get(c.card_type_id) || ''
-        if (!allowed.has(tname)) return null
-        const nm = (c?.content?.name || '').trim()
-        return nm || null
-      }).filter(Boolean))) as string[]
+      const names = collectEntityNames(cardStore)
       const deps = JSON.stringify({ all_entity_names: names })
 
       const payload: any = {
