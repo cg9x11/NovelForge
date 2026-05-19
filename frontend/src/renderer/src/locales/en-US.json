@@ -594,7 +594,12 @@
     },
     "untitled": "Untitled Workflow",
     "defaults": {
-      "new_workflow": "New Workflow"
+      "new_workflow": "New Workflow",
+      "example_workflow": "Example Workflow",
+      "new_workflow_comment": "New Workflow",
+      "select_project": "Select project",
+      "load_novel_catalog": "Load novel catalog",
+      "batch_create_volume_cards": "Batch create volume cards"
     },
     "dialogs": {
       "new_name_prompt": "Please enter workflow name",
@@ -1844,8 +1849,7 @@
     },
     "assembledSuccess": "Context assembled",
     "assembledFailed": "Assemble failed"
-  }
-,
+  },
   "errors": {
     "promptNotFound": "Prompt not found: {name}",
     "promptNameNotFound": "Prompt name not found: {name}"

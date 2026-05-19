@@ -594,7 +594,12 @@
     },
     "untitled": "Workflow chưa đặt tên",
     "defaults": {
-      "new_workflow": "Workflow mới"
+      "new_workflow": "Workflow mới",
+      "example_workflow": "Workflow m?u",
+      "new_workflow_comment": "Workflow m?i",
+      "select_project": "Ch?n d? ?n",
+      "load_novel_catalog": "T?i m?c l?c ti?u thuy?t",
+      "batch_create_volume_cards": "T?o h?ng lo?t th? ph?n quy?n"
     },
     "dialogs": {
       "new_name_prompt": "Vui lòng nhập tên workflow",

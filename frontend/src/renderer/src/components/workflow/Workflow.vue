@@ -377,7 +377,7 @@ const loadWorkflowList = async () => {
   }
 }
 
-// 刷新工作流列表
+// 刷${t('workflow.defaults.new_workflow_comment')}列表
 const refreshWorkflowList = async () => {
   await loadWorkflowList()
   ElMessage.success(t('workflow.messages.list_refreshed'))
@@ -389,16 +389,16 @@ const onWorkflowChange = async (workflowId) => {
     // 清空选择
     currentWorkflowId.value = null
     currentWorkflowName.value = t('workflow.untitled')
-    code.value = `# 示例工作流
-#@node(description="选择项目")
+    code.value = `# ${t('workflow.defaults.example_workflow')}
+#@node(description="${t('workflow.defaults.select_project')}")
 project = Logic.SelectProject(project_id=1)
 #</node>
 
-#@node(description="加载小说目录")
+#@node(description="${t('workflow.defaults.load_novel_catalog')}")
 novel = Novel.Load(root_path="E:\\\\Novels\\\\book")
 #</node>
 
-#@node(description="批量创建分卷卡片")
+#@node(description="${t('workflow.defaults.batch_create_volume_cards')}")
 cards = Card.BatchUpsert(
     items=novel.volume_list,
     card_type="volume",
@@ -423,7 +423,7 @@ cards = Card.BatchUpsert(
   }
 }
 
-// 创建新工作流
+// 创建${t('workflow.defaults.new_workflow_comment')}
 const createNewWorkflow = async () => {
   try {
     const { value: name } = await ElMessageBox.prompt(t('workflow.dialogs.new_name_prompt'), t('workflow.dialogs.new_title'), {
@@ -445,9 +445,9 @@ const createNewWorkflow = async () => {
       }
     })
 
-    // 创建新工作流，使用 marker DSL 模板
-    const initialCode = `# 新工作流
-#@node(description="选择项目")
+    // 创建${t('workflow.defaults.new_workflow_comment')}，使用 marker DSL 模板
+    const initialCode = `# ${t('workflow.defaults.new_workflow_comment')}
+#@node(description="${t('workflow.defaults.select_project')}")
 project = Logic.SelectProject(project_id=1)
 #</node>`
     const workflow = await saveCodeWorkflow(name, initialCode)
@@ -493,16 +493,16 @@ const deleteWorkflow = async () => {
     currentWorkflowId.value = null
     currentWorkflowName.value = t('workflow.untitled')
     currentWorkflowRevision.value = ''
-    code.value = `# 示例工作流
-#@node(description="选择项目")
+    code.value = `# ${t('workflow.defaults.example_workflow')}
+#@node(description="${t('workflow.defaults.select_project')}")
 project = Logic.SelectProject(project_id=1)
 #</node>
 
-#@node(description="加载小说目录")
+#@node(description="${t('workflow.defaults.load_novel_catalog')}")
 novel = Novel.Load(root_path="E:\\\\Novels\\\\book")
 #</node>
 
-#@node(description="批量创建分卷卡片")
+#@node(description="${t('workflow.defaults.batch_create_volume_cards')}")
 cards = Card.BatchUpsert(
     items=novel.volume_list,
     card_type="volume",
@@ -575,7 +575,7 @@ const runWorkflow = async () => {
       })
       currentWorkflowRevision.value = ''
     } else {
-      // 创建新工作流
+      // 创建${t('workflow.defaults.new_workflow_comment')}
       const workflow = await saveCodeWorkflow(currentWorkflowName.value, code.value)
       currentWorkflowId.value = workflow.id
     }
@@ -853,7 +853,7 @@ const saveWorkflow = async () => {
       }
       ElMessage.success(t('workflow.messages.workflow_updated'))
     } else {
-      // 创建新工作流，先询问名称
+      // 创建${t('workflow.defaults.new_workflow_comment')}，先询问名称
       const { value: name } = await ElMessageBox.prompt(t('workflow.messages.enter_workflow_name'), t('workflow.messages.save_workflow'), {
         confirmButtonText: t('common.confirm'),
         cancelButtonText: t('common.cancel'),
@@ -1118,15 +1118,15 @@ const onResumeRun = async (run) => {
             notebookCells.push({
               id: 'error-' + Date.now(),
               type: 'execution',
-              content: event.statement?.code || '代码解析失败',
+              content: event.statement?.code || t('workflow.messages.code_parse_failed'),
               description: event.statement?.description || '',
               status: 'error',
-              error: event.error || '未知错误',
+              error: event.error || t('common.unknown_error'),
               outputs: []
             })
           }
           // 标记为失败状态
-          failExecution(event.error || '工作流执行失败')
+          failExecution(event.error || t('workflow.messages.execution_failed'))
           ElMessage.error(event.error || t('workflow.messages.execution_failed'))
         },
         onEnd: () => {
@@ -1144,7 +1144,7 @@ const onResumeRun = async (run) => {
     startExecution(run.workflow_id, run.id)
   } catch (error) {
     console.error('[Workflow] 恢复执行失败:', error)
-    failExecution(error.message || '恢复执行失败')
+    failExecution(error.message || t('workflow.messages.resume_failed'))
     ElMessage.error(error.message || t('workflow.messages.resume_failed'))
   }
 }
