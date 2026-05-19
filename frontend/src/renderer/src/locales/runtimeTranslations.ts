@@ -1,6 +1,6 @@
 import type { AppLocale } from '@renderer/stores/useLocaleStore'
-import generatedEn from './generated-en-US-runtime.json'
-import generatedVi from './generated-vi-VN-runtime.json'
+import enLocale from './en-US.json'
+import viLocale from './vi-VN.json'
 
 type TranslationMap = Record<string, string>
 const CHINESE_RE = /[\u4e00-\u9fff]/
@@ -117,11 +117,11 @@ const viVN: TranslationMap = {
 const dictionaries: Record<AppLocale, TranslationMap> = {
   'zh-CN': {},
   'en-US': {
-    ...generatedEn as TranslationMap,
+    ...(enLocale.runtime_translations as TranslationMap),
     ...enUS
   },
   'vi-VN': {
-    ...generatedVi as TranslationMap,
+    ...(viLocale.runtime_translations as TranslationMap),
     ...viVN
   }
 }

@@ -74,7 +74,7 @@
              class="search-item" 
              @click="handleNodeClick({ id: card.id, title: card.title, card_type: card.card_type })"
            >
-              <el-icon class="card-icon"><component :is="getIconByCardType(card.card_type?.name)" /></el-icon>
+              <el-icon class="card-icon"><component :is="getIconByCardType(card.card_type)" /></el-icon>
               <span class="search-item-title">{{ card.title }}</span>
            </div>
            <el-empty v-if="!searchLoading && searchResults.length === 0" :description="t('editor.search.no_results')" :image-size="60" />
@@ -108,7 +108,7 @@
                   @dragenter.prevent
                 >
                   <el-icon class="card-icon"> 
-                    <component :is="getIconByCardType(data.card_type?.name || data.__groupType)" />
+                    <component :is="getIconByCardType(data.card_type || data.__groupTypeKey || data.__groupType)" />
                   </el-icon>
                   <span class="label">{{ node.label || data.title }}</span>
                   <span v-if="data.children && data.children.length > 0" class="child-count">{{ data.children.length }}</span>
@@ -387,7 +387,7 @@ import { getCardSchema, createCardType } from '@renderer/api/setting'
 import { getProjects } from '@renderer/api/projects'
 import { getCardsForProject, copyCard, getCardAIParams, searchCards } from '@renderer/api/cards'
 import { DEFAULT_ASSISTANT_PROMPT_KEY, generateAIContent } from '@renderer/api/ai'
-import { isCardType } from '@renderer/utils/cardType'
+import { getCardTypeKey, isCardType } from '@renderer/utils/cardType'
 import type { AssistantRef, ChapterExcerptRef, ReviewResultRef } from '@renderer/api/ai'
  
  // Mock components that will be created later
@@ -487,7 +487,7 @@ function openExportDialog() {
  // 当某节点的直接子卡片中，任一“类型的数量 > 2”时，为该类型创建一个虚拟分组节点；
  // 其余数量 <= 2 的类型保持原样显示（即使整个父节点下只有一种类型，只要该类型数量>2也要分组）。
  // 该结构完全在前端进行，不影响后端数据
- interface TreeNode { id: number | string; title: string; children?: TreeNode[]; card_type?: { name: string }; __isGroup?: boolean; __groupType?: string }
+ interface TreeNode { id: number | string; title: string; children?: TreeNode[]; card_type?: { name: string; key?: string; output_model_name?: string }; __isGroup?: boolean; __groupType?: string; __groupTypeKey?: string }
 
 
  function buildGroupedNodes(nodes: any[]): any[] {
@@ -502,32 +502,34 @@ function openExportDialog() {
     }
     if (Array.isArray(n.children) && n.children.length > 0) {
       // 统计子节点类型数量
-      const byType: Record<string, any[]> = {}
+      const byType: Record<string, { title: string; key: string; cards: any[] }> = {}
       n.children.forEach((c: any) => {
-        const typeName = c.card_type?.name || t('common.unknown')
-        if (!byType[typeName]) byType[typeName] = []
-        byType[typeName].push(c)
+        const typeTitle = c.card_type?.name || t('common.unknown')
+        const typeKey = getCardTypeKey(c.card_type) || typeTitle
+        if (!byType[typeKey]) byType[typeKey] = { title: typeTitle, key: typeKey, cards: [] }
+        byType[typeKey].cards.push(c)
       })
-      const types = Object.keys(byType)
+      const groups = Object.values(byType)
         const grouped: any[] = []
-        types.forEach(t => {
-          const list = byType[t]
+        groups.forEach(group => {
+          const list = group.cards
         if (list.length > 2) {
-            // 创建虚拟分组节点（id 使用字符串避免冲突）
+            // Create virtual group node with stable key id
             grouped.push({
-              id: `group:${n.id}:${t}`,
-              title: `${t}`,
+              id: `group:${n.id}:${group.key}`,
+              title: group.title,
               __isGroup: true,
-              __groupType: t,
-              __parentCardId: n.id,  // 保存实际父卡片ID
+              __groupType: group.title,
+              __groupTypeKey: group.key,
+              __parentCardId: n.id,
               children: list.map(x => ({ ...x }))
             })
           } else {
-          // 数量为 1 或 2，直接平铺
+          // Keep one or two cards flat
           grouped.push(...list)
           }
         })
-      // 递归对子树继续处理（分组节点与普通节点都递归其 children）
+      // Recurse both virtual group nodes and normal nodes
       node.children = grouped.map((x: any) => {
         const copy = { ...x }
         if (Array.isArray(copy.children) && copy.children.length > 0) {
@@ -1223,39 +1225,41 @@ async function handleCreateCard() {
 }
 
 // 根据卡片类型返回图标组件
-function getIconByCardType(typeName?: string) {
-  // 约定：若后端默认类型名称变更，可在此映射中调整
-  switch (typeName) {
-    case '作品标签':
+function getIconByCardType(cardTypeOrKey?: any) {
+  const typeKey = typeof cardTypeOrKey === 'string' ? cardTypeOrKey : getCardTypeKey(cardTypeOrKey)
+  switch (typeKey) {
+    case 'work_tags':
       return CollectionTag
-    case '金手指':
+    case 'special_ability':
       return MagicStick
-    case '一句话梗概':
+    case 'one_sentence':
       return ChatLineRound
-    case '故事大纲':
+    case 'story_outline':
       return List
-    case '世界观设定':
+    case 'world_building':
       return Connection
-    case '核心蓝图':
+    case 'blueprint':
       return Tickets
-    case '分卷大纲':
+    case 'volume_outline':
       return Notebook
-    case '章节大纲':
+    case 'chapter_outline':
+    case 'chapter_body':
+    case 'general_text':
       return Document
-    case '角色卡':
+    case 'character_card':
       return User
-    case '场景卡':
+    case 'scene_card':
       return OfficeBuilding
-    case '组织卡':
+    case 'organization_card':
       return Connection
-    case '物品卡':
+    case 'item_card':
       return Box
-    case '概念卡':
+    case 'concept_card':
       return CollectionTag
-    case '文件夹':
+    case 'folder':
       return Folder
     default:
-      return Document // 通用默认图标
+      return Document
   }
 }
 
@@ -1265,7 +1269,7 @@ function handleContextCommand(command: string, data: any) {
     openCreateChild(data.id)
   } else if (command === 'create-child-in-group') {
     // 分组节点：使用实际父卡片ID，并预设卡片类型
-    openCreateChildInGroup(data.__parentCardId, data.__groupType)
+    openCreateChildInGroup(data.__parentCardId, data.__groupType, data.__groupTypeKey)
   } else if (command === 'delete') {
     deleteNode(data.id, data.title)
   } else if (command === 'batch-delete') {
@@ -1311,11 +1315,14 @@ async function onCardSchemaSaved() {
   } catch {}
 }
 
-function openCreateCardDialog(options?: { title?: string; cardTypeName?: string; parentId?: number | null }) {
+function openCreateCardDialog(options?: { title?: string; cardTypeName?: string; cardTypeKey?: string; parentId?: number | null }) {
   newCardForm.title = options?.title || ''
   newCardForm.parent_id = options?.parentId == null ? '' as any : options.parentId as any
-  if (options?.cardTypeName) {
-    const cardType = cardStore.cardTypes.find(ct => ct.name === options.cardTypeName)
+  if (options?.cardTypeKey || options?.cardTypeName) {
+    const cardType = cardStore.cardTypes.find(ct =>
+      (options?.cardTypeKey && getCardTypeKey(ct) === options.cardTypeKey) ||
+      (options?.cardTypeName && ct.name === options.cardTypeName)
+    )
     newCardForm.card_type_id = cardType?.id
   } else {
     newCardForm.card_type_id = undefined
@@ -1331,8 +1338,8 @@ function openCreateChild(parentId: number) {
 }
 
 // 打开"新建卡片"对话框（分组节点专用）：预填父ID和卡片类型
-function openCreateChildInGroup(parentId: number, groupType: string) {
-  openCreateCardDialog({ parentId, cardTypeName: groupType })
+function openCreateChildInGroup(parentId: number, groupType: string, groupTypeKey?: string) {
+  openCreateCardDialog({ parentId, cardTypeName: groupType, cardTypeKey: groupTypeKey })
 }
 
 function openCreateRoot() {
@@ -1344,6 +1351,7 @@ function onOpenCreateCardEvent(e: Event) {
   openCreateCardDialog({
     title: typeof detail.title === 'string' ? detail.title : '',
     cardTypeName: typeof detail.cardTypeName === 'string' ? detail.cardTypeName : '',
+    cardTypeKey: typeof detail.cardTypeKey === 'string' ? detail.cardTypeKey : '',
     parentId: Number.isFinite(Number(detail.parentId)) ? Number(detail.parentId) : null,
   })
 }
