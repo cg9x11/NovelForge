@@ -67,7 +67,7 @@ def get_workflow_agent_system_prompt(session: Session, react_enabled: bool = Fal
     try:
         prompt = None
         if react_enabled:
-            prompt = prompt_service.get_prompt_by_name(session, WORKFLOW_AGENT_REACT_PROMPT_NAME)
+            prompt = prompt_service.get_prompt_by_identifier(session, WORKFLOW_AGENT_REACT_PROMPT_NAME)
             if prompt and prompt.template and prompt.template.strip():
                 logger.info(
                     "[WorkflowAgent] loaded system prompt: {}",
@@ -81,7 +81,7 @@ def get_workflow_agent_system_prompt(session: Session, react_enabled: bool = Fal
                 WORKFLOW_AGENT_PROMPT_NAME,
             )
 
-        prompt = prompt_service.get_prompt_by_name(session, WORKFLOW_AGENT_PROMPT_NAME)
+        prompt = prompt_service.get_prompt_by_identifier(session, WORKFLOW_AGENT_PROMPT_NAME)
         if prompt and prompt.template and prompt.template.strip():
             logger.info(
                 "[WorkflowAgent] loaded system prompt: {}",

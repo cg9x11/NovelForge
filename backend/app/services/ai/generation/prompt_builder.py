@@ -105,7 +105,7 @@ def build_instruction_system_prompt(
     # 2. 加载指令规范说明
     instruction_guide = FALLBACK_INSTRUCTION_GUIDE
     try:
-        prompt = prompt_service.get_prompt_by_name(session, "指令流生成规范")
+        prompt = prompt_service.get_prompt_by_identifier(session, "指令流生成规范")
         if prompt and prompt.template:
             instruction_guide = prompt.template
     except Exception:
