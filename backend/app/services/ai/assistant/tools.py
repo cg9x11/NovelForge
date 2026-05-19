@@ -12,7 +12,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlmodel import select
 
 from app.services.card_service import CardService
-from app.db.models import Card, CardType
+from app.db.models import Card
 from app.services.card_type_service_utils import get_card_type_by_identifier
 from app.services.ai.generation.instruction_validator import InstructionExecutor
 from app.services.ai.card_type_schema import get_card_type_schema_payload
@@ -79,7 +79,7 @@ def _get_card_type_schema(session, card_type_name: str) -> Dict[str, Any]:
 
 def _create_empty_card(session, card_type_name: str, title: str, parent_card_id: Optional[int], project_id: int) -> Card:
     """创建空卡片"""
-    card_type = session.query(CardType).filter_by(name=card_type_name).first()
+    card_type = get_card_type_by_identifier(session, card_type_name)
     if not card_type:
         raise ValueError(f"卡片类型 '{card_type_name}' 不存在")
     

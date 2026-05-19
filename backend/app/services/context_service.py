@@ -10,6 +10,7 @@ from app.schemas.context import ConceptSummary, FactsStructured, ItemSummary
 from app.schemas.relation_extract import CN_TO_EN_KIND
 from app.services.kg_provider import get_provider
 from app.utils.text_utils import truncate_text
+from app.services.card_type_service_utils import resolve_card_type_key
 
 
 @dataclass
@@ -63,10 +64,10 @@ def _card_entity_type(card: Card) -> str:
 	if entity_type:
 		return entity_type
 
-	card_type_name = _clean_text(getattr(card.card_type, "name", ""))
-	if "物品" in card_type_name:
+	card_type_key = _clean_text(getattr(card.card_type, "key", "")) or (resolve_card_type_key(getattr(card.card_type, "name", "")) or "")
+	if card_type_key == "item_card":
 		return "item"
-	if "概念" in card_type_name:
+	if card_type_key == "concept_card":
 		return "concept"
 
 	model_name = _clean_text(getattr(card, "model_name", "") or getattr(card.card_type, "model_name", ""))
