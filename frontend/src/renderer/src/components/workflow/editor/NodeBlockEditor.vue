@@ -176,7 +176,7 @@
                     v-for="ct in cardTypeList"
                     :key="ct.id"
                     :label="ct.name"
-                    :value="ct.name"
+                    :value="ct.key || ct.name"
                   />
                 </el-select>
 
@@ -202,7 +202,7 @@
                       v-for="ct in cardTypeList"
                       :key="ct.id"
                       :label="ct.name"
-                      :value="ct.name"
+                      :value="ct.key || ct.name"
                     />
                   </el-option-group>
                 </el-select>
@@ -1659,13 +1659,19 @@ function formatDisplayValue(field) {
       displayValue = llmConfig.display_name || llmConfig.model_name || `LLM #${llmConfigId}`
     }
   } else if (xComponent === 'PromptSelect') {
-    // 显示提示词名称
+    // Show prompt display name
     const promptId = parseInt(displayValue)
     const prompt = promptList.value.find(p => p.id === promptId)
     if (prompt) {
       displayValue = prompt.name
     }
+  } else if (xComponent === 'CardTypeSelect' || xComponent === 'ResponseModelSelect') {
+    const cardType = cardTypeList.value.find(ct => (ct.key || ct.name) === displayValue)
+    if (cardType) {
+      displayValue = cardType.name
+    }
   }
+
   
   // CodeEditor / Textarea 不截断，保留多行展示
   if (xComponent === 'CodeEditor' || xComponent === 'Textarea') {
