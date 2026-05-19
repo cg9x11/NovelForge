@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Setting, Sunny, Moon, Document } from '@element-plus/icons-vue'
@@ -36,12 +36,13 @@ function handleLogoClick() {
 const isLogoClickable = computed(() => currentView.value !== 'dashboard')
 
 function openIdeasWorkbench() {
-  // 直接调用主进程打开新窗口，避免当前窗口路由或状态变化引起的闪烁
+  // ç›´æŽ¥è°ƒç”¨ä¸»è¿›ç¨‹æ‰“å¼€æ–°çª—å£ï¼Œé¿å…å½“å‰çª—å£è·¯ç”±æˆ–çŠ¶æ€å˜åŒ–å¼•èµ·çš„é—ªçƒ
   // @ts-ignore
-  window.api?.openIdeasHome?.()
+  appStore.goToIdeas()
+  window.location.hash = '#/ideas-home'
 }
 
-// 知识库抽屉
+// çŸ¥è¯†åº“æŠ½å±‰
 // const kbVisible = ref(false)
 </script>
 
@@ -96,3 +97,4 @@ function openIdeasWorkbench() {
   gap: 15px;
 }
 </style> 
+

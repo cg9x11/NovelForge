@@ -3,6 +3,9 @@
     <!-- 顶部工具栏 -->
     <div class="workflow-toolbar">
       <div class="toolbar-left">
+        <el-button @click="goBackToDashboard" plain>
+          <span>{{ t('common.back') }}</span>
+        </el-button>
         <el-select
           v-model="currentWorkflowId"
           :placeholder="t('workflow.select_workflow')"
@@ -255,6 +258,7 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Refresh, Document, Delete, VideoPlay, VideoPause, Close, List, Clock, CircleCheck, ArrowDown } from '@element-plus/icons-vue'
+import { useAppStore } from '@renderer/stores/useAppStore'
 import NodeBlockEditor from './editor/NodeBlockEditor.vue'
 import CodeEditor from './editor/CodeEditor.vue'
 import WorkflowNotebook from './notebook/WorkflowNotebook.vue'
@@ -275,6 +279,12 @@ import {
 import request from '@/api/request'
 
 const { t } = useI18n()
+const appStore = useAppStore()
+
+function goBackToDashboard() {
+  appStore.goToDashboard()
+  window.location.hash = ''
+}
 
 // 使用状态机管理执行状态
 const {

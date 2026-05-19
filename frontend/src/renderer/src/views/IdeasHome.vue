@@ -4,16 +4,23 @@ import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useProjectStore } from '@renderer/stores/useProjectStore'
 import { useCardStore } from '@renderer/stores/useCardStore'
+import { useAppStore } from '@renderer/stores/useAppStore'
 import { getProjects } from '@renderer/api/projects'
 import { getCardsForProject, copyCard, moveCard, type CardRead } from '@renderer/api/cards'
 import Editor from './Editor.vue'
 
 const projectStore = useProjectStore()
+const appStore = useAppStore()
 const { currentProject } = storeToRefs(projectStore)
 
 const cardStore = useCardStore()
 const { cardTree } = storeToRefs(cardStore)
 const { t } = useI18n()
+
+function goBackToDashboard() {
+  appStore.goToDashboard()
+  window.location.hash = ''
+}
 
 onMounted(async () => {
   // 若未加载或不是保留项目，则加载保留项目
@@ -109,6 +116,7 @@ async function confirmTransfer() {
   <div class="ideas-home">
     <div class="topbar" v-if="currentProject">
       <div class="left">
+        <el-button size="small" @click="goBackToDashboard">{{ t('common.back') }}</el-button>
         <el-button size="small" @click="openTransferDialog">{{ t('ideas_home.transferToProject') }}</el-button>
       </div>
       <div class="right"></div>
