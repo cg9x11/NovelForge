@@ -1,11 +1,12 @@
 <template>
   <div class="card-type-manager">
     <div class="toolbar">
-      <el-input v-model="query" :placeholder="t('card_type_manager.searchPlaceholder')" clearable class="search" />
-      <el-button type="primary" @click="openEditor()">{{ t('card_type_manager.addType') }}</el-button>
+      <el-input v-model="query" size="small" :placeholder="t('card_type_manager.searchPlaceholder')" clearable class="search" />
+      <el-button type="primary" size="small" @click="openEditor()">{{ t('card_type_manager.addType') }}</el-button>
     </div>
 
     <el-table :data="filteredTypes" height="60vh" size="small" :border="false" v-loading="loading">
+      <el-table-column prop="key" label="Key" width="170" show-overflow-tooltip />
       <el-table-column prop="name" :label="t('card_type_manager.columns.name')" width="220" />
       <el-table-column prop="description" :label="t('card_type_manager.columns.description')" min-width="260" show-overflow-tooltip>
         <template #default="{ row }">
@@ -33,9 +34,10 @@
       </el-table-column>
     </el-table>
 
-    <el-drawer v-model="drawer.visible" :title="drawer.editing ? t('card_type_manager.editTypeTitle') : t('card_type_manager.addTypeTitle')" size="60%">
+    <el-dialog v-model="drawer.visible" :title="drawer.editing ? t('card_type_manager.editTypeTitle') : t('card_type_manager.addTypeTitle')" width="50%" append-to-body destroy-on-close class="setting-editor-dialog">
       <div class="editor-grid">
-        <el-form label-position="top" :model="form">
+        <el-form label-position="top" size="small" :model="form">
+          <el-form-item label="Key"><el-input v-model="form.key" /></el-form-item>
           <el-form-item :label="t('card_type_manager.form.name')"><el-input v-model="form.name" /></el-form-item>
           <el-form-item :label="t('card_type_manager.form.description')"><el-input v-model="form.description" type="textarea" :rows="2" /></el-form-item>
           <el-form-item :label="t('card_type_manager.form.enableAI')"><el-switch v-model="form.is_ai_enabled" /></el-form-item>
@@ -51,7 +53,7 @@
             </el-form-item>
             <el-form-item :label="t('card_type_manager.form.prompt')">
               <el-select v-model="aiParams.prompt_name" filterable :placeholder="t('card_type_manager.selectPrompt')" style="width:100%">
-                <el-option v-for="p in prompts" :key="p.name" :label="p.name" :value="p.name" />
+                <el-option v-for="p in prompts" :key="p.id" :label="p.name" :value="p.key || p.name" />
               </el-select>
             </el-form-item>
             <div class="ai-grid">
@@ -72,14 +74,14 @@
           </el-form-item>
         </el-form>
         <div class="mt-2">
-          <el-button type="primary" plain @click="openSchemaEditor">{{ t('card_type_manager.editSchemaWithSuffix') }}</el-button>
+          <el-button type="primary" plain size="small" @click="openSchemaEditor">{{ t('card_type_manager.editSchemaWithSuffix') }}</el-button>
         </div>
       </div>
       <template #footer>
-        <el-button @click="drawer.visible=false">{{ t('common.cancel') }}</el-button>
-        <el-button type="primary" @click="saveType">{{ t('common.save') }}</el-button>
+        <el-button size="small" @click="drawer.visible=false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" size="small" @click="saveType">{{ t('common.save') }}</el-button>
       </template>
-    </el-drawer>
+    </el-dialog>
 
     <SchemaStudio v-model:visible="studio.visible" :mode="'type'" :target-id="studio.typeId" :context-title="studio.typeName" @saved="onStudioSaved" />
   </div>
@@ -118,7 +120,7 @@ const filteredTypes = computed(() => {
 })
 
 const drawer = ref({ visible: false, editing: false, id: 0 })
-const form = ref<any>({ name: '', description: '', is_ai_enabled: true, is_singleton: false, default_ai_context_template: '' })
+const form = ref<any>({ key: '', name: '', description: '', is_ai_enabled: true, is_singleton: false, default_ai_context_template: '' })
 const uiLayoutText = ref('')
 // AI 参数与可选项
 const aiParams = ref<{ llm_config_id?: number; prompt_name?: string; temperature?: number; max_tokens?: number; timeout?: number }>({})
@@ -128,7 +130,7 @@ const prompts = ref<any[]>([])
 
 function openEditor(row?: CardTypeRead) {
   drawer.value = { visible: true, editing: !!row, id: row?.id || 0 }
-  form.value = row ? { ...row } : { name: '', description: '', is_ai_enabled: true, is_singleton: false, default_ai_context_template: '' }
+  form.value = row ? { ...row } : { key: '', name: '', description: '', is_ai_enabled: true, is_singleton: false, default_ai_context_template: '' }
   uiLayoutText.value = row?.ui_layout ? JSON.stringify(row.ui_layout, null, 2) : ''
   aiParams.value = (row as any)?.ai_params ? { ...defaultAIParams, ...(row as any).ai_params } : { ...defaultAIParams }
   // 首次打开加载可选项

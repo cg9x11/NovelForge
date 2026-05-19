@@ -1,10 +1,11 @@
 ﻿<template>
   <div class="prompt-workshop">
     <div class="toolbar">
-      <h2>{{ t('prompt_workshop.title') }}</h2>
-      <el-button type="primary" @click="handleCreate">{{ t('prompt_workshop.new_prompt') }}</el-button>
+      <h4>{{ t('prompt_workshop.title') }}</h4>
+      <el-button type="primary" size="small" @click="handleCreate">{{ t('prompt_workshop.new_prompt') }}</el-button>
     </div>
-    <el-table :data="prompts" style="width: 100%" v-loading="loading">
+    <el-table :data="prompts" height="60vh" size="small" style="width: 100%" v-loading="loading">
+      <el-table-column prop="key" label="Key" width="190" show-overflow-tooltip />
       <el-table-column prop="name" :label="t('prompt_workshop.name')" width="180" />
       <el-table-column prop="description" :label="t('prompt_workshop.description')" />
       <el-table-column :label="t('common.actions')" width="220">
@@ -20,8 +21,11 @@
       </el-table-column>
     </el-table>
 
-    <el-drawer v-model="drawerVisible" :title="dialogTitle" size="60%" append-to-body>
-      <el-form :model="currentPrompt" label-width="90px" ref="promptForm" class="form-grid">
+    <el-dialog v-model="drawerVisible" :title="dialogTitle" width="50%" append-to-body destroy-on-close class="setting-editor-dialog">
+      <el-form :model="currentPrompt" label-width="90px" size="small" ref="promptForm" class="form-grid">
+        <el-form-item label="Key" prop="key">
+          <el-input v-model="(currentPrompt as any).key" />
+        </el-form-item>
         <el-form-item :label="t('prompt_workshop.name')" prop="name" :rules="{ required: true, message: t('prompt_workshop.validation.name_required'), trigger: 'blur' }">
           <el-input v-model="currentPrompt.name" />
         </el-form-item>
@@ -74,11 +78,11 @@
       </el-form>
       <template #footer>
         <div class="drawer-footer">
-          <el-button @click="drawerVisible = false">{{ t('common.cancel') }}</el-button>
-          <el-button type="primary" @click="handleSave" :loading="saving">{{ t('common.save') }}</el-button>
+          <el-button size="small" @click="drawerVisible = false">{{ t('common.cancel') }}</el-button>
+          <el-button type="primary" size="small" @click="handleSave" :loading="saving">{{ t('common.save') }}</el-button>
         </div>
       </template>
-    </el-drawer>
+    </el-dialog>
   </div>
 </template>
 
@@ -91,6 +95,7 @@ import { listKnowledge, type Knowledge, listPrompts, createPrompt, updatePrompt,
 
 interface Prompt {
   id: number
+  key?: string | null
   name: string
   description: string
   template: string
@@ -168,7 +173,7 @@ function resetStructuredDefaults() {
 }
 
 function handleCreate() {
-  currentPrompt.value = { name: '', description: '', template: '' }
+  currentPrompt.value = { key: '', name: '', description: '', template: '' }
   resetStructuredDefaults()
   useStructured.value = false
   drawerVisible.value = true

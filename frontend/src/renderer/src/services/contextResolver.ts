@@ -1,4 +1,21 @@
 import type { CardRead } from '@renderer/api/cards'
+import { getCardTypeKey } from '@renderer/utils/cardType'
+
+const CARD_TYPE_NAME_TO_KEY: Record<string, string> = {
+  '分卷大纲': 'volume_outline',
+  '阶段大纲': 'stage_outline',
+  '章节大纲': 'chapter_outline',
+  '章节正文': 'chapter_body',
+  '角色卡': 'character_card',
+  '场景卡': 'scene_card',
+  '组织卡': 'organization_card',
+  '物品卡': 'item_card',
+  '概念卡': 'concept_card'
+}
+
+function resolveTypeKey(typeName: string): string {
+  return CARD_TYPE_NAME_TO_KEY[typeName] || typeName
+}
 import type { AssembleContextResponse } from '@renderer/api/ai'
 
 // 上下文解析变量
@@ -137,7 +154,8 @@ function evalIndexExpr(expr: string, vars: ResolveVars, ctx?: ResolveContext, ca
 }
 
 function selectByType(cards: CardRead[], typeName: string): CardRead[] {
-  return cards.filter(c => c.card_type?.name === typeName)
+  const typeKey = resolveTypeKey(typeName)
+  return cards.filter(c => getCardTypeKey(c.card_type) === typeKey)
 }
 
 function selectByTitle(cards: CardRead[], title: string): CardRead | undefined {
@@ -151,11 +169,12 @@ function selectParent(cards: CardRead[], card?: CardRead): CardRead | undefined 
 
 // 获取某卡片向上追溯的最近一个特定类型祖先
 function getNearestAncestorOfType(cards: CardRead[], card: CardRead | undefined, typeName: string): CardRead | undefined {
+  const typeKey = resolveTypeKey(typeName)
   let cur = card
   while (cur && cur.parent_id) {
     const parent = cards.find(c => c.id === cur!.parent_id)
     if (!parent) return undefined
-    if (parent.card_type?.name === typeName) return parent
+    if (getCardTypeKey(parent.card_type) === typeKey) return parent
     cur = parent
   }
   return undefined
@@ -498,9 +517,10 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
       if (mode === 'local') {
         // 局部 previous：同一父卡片下的同类型兄弟卡片（按 display_order 排序）
         const pid = ctx.currentCard?.parent_id ?? null
-        const siblings = ctx.cards.filter(c => 
+        const typeKey = resolveTypeKey(typeName)
+      const siblings = ctx.cards.filter(c => 
           c.parent_id === pid && 
-          c.card_type?.name === typeName && 
+          getCardTypeKey(c.card_type) === typeKey && 
           c.id !== ctx.currentCard?.id
         ).sort((a, b) => a.display_order - b.display_order)
         
@@ -516,7 +536,8 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
         const indexById = new Map<number, number>()
         orderedAll.forEach((c, i) => indexById.set(c.id, i))
         const currentIndex = ctx.currentCard ? (indexById.get(ctx.currentCard.id) ?? -1) : -1
-        prevList = orderedAll.filter((c, i) => c.card_type?.name === typeName && i < currentIndex)
+        const typeKey = resolveTypeKey(typeName)
+        prevList = orderedAll.filter((c, i) => getCardTypeKey(c.card_type) === typeKey && i < currentIndex)
         // 应用实体短期跨卷过滤
         prevList = filterShortLivedEntityAcrossVolumes(ctx.cards, ctx.currentCard, prevList)
         
@@ -542,7 +563,8 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
     // sibling: 同父节点下的同类型卡片（按 display_order）
     if (filter === 'sibling') {
       const pid = ctx.currentCard?.parent_id ?? null
-      const siblings = ctx.cards.filter(c => c.parent_id === pid && c.card_type?.name === typeName && c.id !== ctx.currentCard?.id)
+      const typeKey = resolveTypeKey(typeName)
+      const siblings = ctx.cards.filter(c => c.parent_id === pid && getCardTypeKey(c.card_type) === typeKey && c.id !== ctx.currentCard?.id)
         .sort((a, b) => a.display_order - b.display_order)
       if (!rawPath) {
         const collected = siblings.map(c => getPathValue(c, 'content'))
@@ -559,7 +581,8 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
     }
 
     // 其他情况：以稳定排序供 first/last/index 使用
-    const rawCandidates = orderedAll.filter(c => c.card_type?.name === typeName)
+    const typeKey = resolveTypeKey(typeName)
+    const rawCandidates = orderedAll.filter(c => getCardTypeKey(c.card_type) === typeKey)
     let candidates = [...rawCandidates]
     candidates = candidates.sort((a, b) => {
       const na = extractVolumeNumberFromTitle(a.title)

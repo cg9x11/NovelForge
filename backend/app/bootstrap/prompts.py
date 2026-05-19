@@ -8,6 +8,7 @@ from sqlmodel import Session, select
 from loguru import logger
 
 from app.db.models import Prompt
+from app.services.builtin_key_registry import PROMPT_NAME_TO_KEY, resolve_builtin_key
 from app.core.config import settings
 from .registry import initializer
 
@@ -68,7 +69,12 @@ def init_prompts(session: Session) -> None:
     """
     overwrite = settings.bootstrap.should_overwrite
     existing_prompts = session.exec(select(Prompt)).all()
-    existing_names = {p.name for p in existing_prompts}
+    for existing_prompt in existing_prompts:
+        mapped_key = PROMPT_NAME_TO_KEY.get((existing_prompt.name or '').strip())
+        if mapped_key or not getattr(existing_prompt, "key", None):
+            existing_prompt.key = mapped_key or resolve_builtin_key(existing_prompt.name, PROMPT_NAME_TO_KEY)
+    existing_by_name = {p.name: p for p in existing_prompts}
+    existing_by_key = {p.key: p for p in existing_prompts if getattr(p, "key", None)}
 
     all_prompts_data = get_all_prompt_files()
 
@@ -78,14 +84,20 @@ def init_prompts(session: Session) -> None:
     prompts_to_add = []
     
     for name, prompt_data in all_prompts_data.items():
-        if name in existing_names:
+        prompt_key = prompt_data.get('key') or resolve_builtin_key(name, PROMPT_NAME_TO_KEY)
+        existing_prompt = existing_by_key.get(prompt_key) or existing_by_name.get(name)
+        if existing_prompt:
             if overwrite:
-                existing_prompt = next(p for p in existing_prompts if p.name == name)
+                existing_prompt.name = name
                 existing_prompt.template = prompt_data['template']
                 existing_prompt.description = prompt_data.get('description')
+                existing_prompt.key = prompt_key or existing_prompt.key
                 existing_prompt.built_in = True
                 updated_count += 1
             else:
+                if not getattr(existing_prompt, "key", None) and prompt_key:
+                    existing_prompt.key = prompt_key
+                    session.add(existing_prompt)
                 skipped_count += 1
         else:
             prompts_to_add.append(Prompt(**prompt_data, built_in=True))

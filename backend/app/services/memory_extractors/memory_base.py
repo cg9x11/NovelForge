@@ -9,6 +9,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlmodel import Session, select
 
 from app.db.models import Card, CardType
+from app.services.card_type_service_utils import get_card_type_by_identifier
 from app.schemas.memory import ParticipantTyped
 from app.services import prompt_service
 from app.services.ai.core import llm_service
@@ -125,7 +126,7 @@ class StructuredCardMemoryExtractor:
     ) -> str | None:
         if not project_id or not target_names:
             return None
-        card_type = session.exec(select(CardType).where(CardType.name == self.spec.card_type_name)).first()
+        card_type = get_card_type_by_identifier(session, self.spec.card_type_name)
         if not card_type:
             return None
         stmt = select(Card).where(
@@ -223,7 +224,7 @@ class StructuredCardMemoryExtractor:
         options: dict[str, Any] | None = None,
         context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        card_type = session.exec(select(CardType).where(CardType.name == self.spec.card_type_name)).first()
+        card_type = get_card_type_by_identifier(session, self.spec.card_type_name)
         if not card_type:
             raise ValueError(f"未找到卡片类型：{self.spec.card_type_name}")
 

@@ -8,6 +8,7 @@ from sqlmodel import Session, select
 from loguru import logger
 
 from app.db.models import Knowledge
+from app.services.builtin_key_registry import KNOWLEDGE_NAME_TO_KEY, resolve_builtin_key
 from app.core.config import settings
 from .registry import initializer
 

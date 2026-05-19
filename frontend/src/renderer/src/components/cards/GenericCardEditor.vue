@@ -184,6 +184,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, nextTick, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
+import { isCardType } from '@renderer/utils/cardType'
 import { storeToRefs } from 'pinia'
 import { useCardStore } from '@renderer/stores/useCardStore'
 import { useAIStore } from '@renderer/stores/useAIStore'
@@ -295,7 +296,7 @@ const activeContentEditor = computed(() => {
   return null // null 表示使用默认的表单编辑器
 })
 
-const isStageOutlineCard = computed(() => props.card.card_type?.name === '阶段大纲')
+const isStageOutlineCard = computed(() => isCardType(props.card.card_type, 'stage_outline'))
 
 // 通用的内容编辑器引用（可以是 CodeMirrorEditor 或其他）
 const contentEditorRef = ref<any>(null)

@@ -12,6 +12,7 @@ from app.services.ai.core.llm_service import generate_structured
 from ...registry import register_node
 from ..base import BaseNode
 from app.db.models import CardType
+from app.services.card_type_service_utils import get_card_type_by_identifier
 from app.schemas.response_registry import RESPONSE_MODEL_MAP
 from sqlmodel import select
 
@@ -251,8 +252,7 @@ class BatchStructuredNode(BaseNode[BatchStructuredInput, BatchStructuredOutput])
         """根据配置获取 JSON Schema
         """
         
-        stmt = select(CardType).where(CardType.name == inputs.response_model_id)
-        ct = session.exec(stmt).first()
+        ct = get_card_type_by_identifier(session, inputs.response_model_id)
         if ct and ct.json_schema:
             return ct.json_schema
 

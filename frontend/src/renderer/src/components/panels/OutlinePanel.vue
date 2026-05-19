@@ -73,6 +73,7 @@
 
 <script setup lang="ts">
 import { computed, watch, ref } from 'vue'
+import { isCardType } from '@renderer/utils/cardType'
 import { useI18n } from 'vue-i18n'
 import { useCardStore } from '@renderer/stores/useCardStore'
 import { storeToRefs } from 'pinia'
@@ -104,7 +105,7 @@ function findVolumeOutline(card: CardRead | null): void {
   const parent = cards.value?.find(c => c.id === card.parent_id)
   if (!parent) return
   
-  if (parent.card_type?.name === '分卷大纲') {
+  if (isCardType(parent.card_type, 'volume_outline')) {
     internalOutline.value = parent.content
     
     // 根据章节号匹配所处阶段
@@ -172,10 +173,10 @@ const stageNow = computed(() => {
     // 构建 id->card 映射，便于向上追溯祖先
     const idMap = new Map<number, any>(all.map(c => [c.id, c]))
     // 定位当前卷的分卷大纲卡
-    const volumeCard = all.find(c => c?.card_type?.name === '分卷大纲' && Number(((c.content as any)?.volume_outline?.volume_number)) === vol)
+    const volumeCard = all.find(c => isCardType(c?.card_type, 'volume_outline') && Number(((c.content as any)?.volume_outline?.volume_number)) === vol)
     // 候选阶段卡：card_type 名称为“阶段大纲”，且同属该卷（祖先包含 volumeCard 或 content.volume_number==vol）
     const stageCards = all.filter(c => {
-      if (c?.card_type?.name !== '阶段大纲') return false
+      if (!isCardType(c?.card_type, 'stage_outline')) return false
       const contentVol = Number(((c.content as any)?.volume_number))
       if (Number.isFinite(contentVol) && contentVol === vol) return true
       if (volumeCard && c.parent_id) {
@@ -211,7 +212,7 @@ const chapterOutline = computed(() => {
     const vol = Number(props.volumeNumber)
     const ch = Number(props.chapterNumber)
     if (!Number.isFinite(vol) || !Number.isFinite(ch)) return null
-    const list = (cards.value || []).filter(c => c?.card_type?.name === '章节大纲')
+    const list = (cards.value || []).filter(c => isCardType(c?.card_type, 'chapter_outline'))
     for (const c of list) {
       const co = (c.content as any)?.chapter_outline || (c.content as any)
       const v = Number(co?.volume_number)

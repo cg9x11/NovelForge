@@ -13,6 +13,7 @@ from sqlmodel import select
 
 from app.services.card_service import CardService
 from app.db.models import Card, CardType
+from app.services.card_type_service_utils import get_card_type_by_identifier
 from app.services.ai.generation.instruction_validator import InstructionExecutor
 from app.services.ai.card_type_schema import get_card_type_schema_payload
 from app.schemas.tool_result import (
@@ -131,7 +132,10 @@ def search_cards(
     query = deps.session.query(Card).filter(Card.project_id == deps.project_id)
     
     if card_type:
-        query = query.join(CardType).filter(CardType.name == card_type)
+        resolved_card_type = get_card_type_by_identifier(deps.session, card_type)
+        if not resolved_card_type:
+            return {"success": True, "cards": [], "count": 0}
+        query = query.filter(Card.card_type_id == resolved_card_type.id)
     
     if title_keyword:
         query = query.filter(Card.title.ilike(f'%{title_keyword}%'))
@@ -748,7 +752,7 @@ def list_reviews_for_target(
         f"📚 [Assistant.list_reviews_for_target] target_id={target_id}, review_type={review_type}, limit={limit}"
     )
     try:
-        review_card_type = deps.session.query(CardType).filter(CardType.name == REVIEW_RESULT_CARD_TYPE_NAME).first()
+        review_card_type = get_card_type_by_identifier(deps.session, REVIEW_RESULT_CARD_TYPE_NAME)
         if not review_card_type:
             return {"success": False, "error": f"缺少卡片类型: {REVIEW_RESULT_CARD_TYPE_NAME}"}
 
@@ -801,7 +805,7 @@ def get_review_record(review_id: int) -> Dict[str, Any]:
     logger.info(f"📄 [Assistant.get_review_record] review_card_id={review_id}")
     try:
         row = deps.session.get(Card, review_id)
-        review_card_type = deps.session.query(CardType).filter(CardType.name == REVIEW_RESULT_CARD_TYPE_NAME).first()
+        review_card_type = get_card_type_by_identifier(deps.session, REVIEW_RESULT_CARD_TYPE_NAME)
         if not row or row.project_id != deps.project_id or not review_card_type or row.card_type_id != review_card_type.id:
             return {"success": False, "error": f"审核结果卡片 #{review_id} 不存在"}
         content = dict(row.content or {})

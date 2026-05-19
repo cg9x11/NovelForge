@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 from ...registry import register_node
 from ..base import BaseNode
 from app.services import prompt_service
+from app.services.card_type_service_utils import get_card_type_by_identifier
 from app.services.ai.core.model_builder import build_model_from_json_schema
 from app.services.ai.core.llm_service import generate_structured
 from app.services.schema_service import compose_full_schema
@@ -152,8 +153,7 @@ class StructuredGenerateNode(BaseNode[StructuredGenerateInput, StructuredGenerat
         """根据配置获取 JSON Schema
         """
         
-        stmt = select(CardType).where(CardType.name == inputs.response_model_id)
-        ct = session.exec(stmt).first()
+        ct = get_card_type_by_identifier(session, inputs.response_model_id)
         if ct and ct.json_schema:
             return ct.json_schema
 

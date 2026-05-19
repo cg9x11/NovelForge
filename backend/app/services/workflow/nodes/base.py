@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from ..engine.async_executor import ProgressEvent
 
 from app.db.models import Card, CardType
+from app.services.card_type_service_utils import get_card_type_by_identifier
 from ..types import ExecutionContext, NodeMetadata
 
 
@@ -34,8 +35,7 @@ def get_card_by_id(session: Session, card_id: int) -> Optional[Card]:
 
 def get_card_type_by_name(session: Session, type_name: str) -> Optional[CardType]:
     """根据名称获取卡片类型"""
-    stmt = select(CardType).where(CardType.name == type_name)
-    return session.exec(stmt).first()
+    return get_card_type_by_identifier(session, type_name)
 
 
 def resolve_card_reference(

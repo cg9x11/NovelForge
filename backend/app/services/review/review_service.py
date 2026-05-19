@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from sqlmodel import Session, select
 
 from app.db.models import Card, CardType
+from app.services.card_type_service_utils import get_card_type_by_identifier
 from app.schemas.chapter_review import (
     ReviewCardUpsertRequest,
     ReviewDraftResult,
@@ -56,16 +57,14 @@ def _build_system_prompt(session: Session, prompt_name: str) -> str:
 
 
 def _get_review_card_type_or_500(session: Session) -> CardType:
-    stmt = select(CardType).where(CardType.name == REVIEW_RESULT_CARD_TYPE_NAME)
-    card_type = session.exec(stmt).first()
+    card_type = get_card_type_by_identifier(session, REVIEW_RESULT_CARD_TYPE_NAME)
     if not card_type:
         raise HTTPException(status_code=500, detail=f"缺少卡片类型: {REVIEW_RESULT_CARD_TYPE_NAME}")
     return card_type
 
 
 def _get_review_folder_card_type(session: Session) -> CardType | None:
-    stmt = select(CardType).where(CardType.name == REVIEW_RESULT_FOLDER_CARD_TYPE_NAME)
-    return session.exec(stmt).first()
+    return get_card_type_by_identifier(session, REVIEW_RESULT_FOLDER_CARD_TYPE_NAME)
 
 
 def _get_or_create_review_folder_card(session: Session, project_id: int) -> Card | None:

@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from ...engine.async_executor import ProgressEvent
 
 from app.db.models import CardType
+from app.services.card_type_service_utils import get_card_type_by_identifier
 from app.schemas.response_registry import RESPONSE_MODEL_MAP
 from app.services.ai.core.model_builder import build_model_from_json_schema
 from app.services.ai.core.llm_service import generate_structured
@@ -361,8 +362,7 @@ class SequentialStructuredNode(BaseNode[SequentialStructuredInput, SequentialStr
     def _get_schema(self, session, inputs: SequentialStructuredInput) -> Optional[Dict[str, Any]]:
         """根据配置获取 JSON Schema"""
 
-        stmt = select(CardType).where(CardType.name == inputs.response_model_id)
-        ct = session.exec(stmt).first()
+        ct = get_card_type_by_identifier(session, inputs.response_model_id)
         if ct and ct.json_schema:
             return ct.json_schema
 

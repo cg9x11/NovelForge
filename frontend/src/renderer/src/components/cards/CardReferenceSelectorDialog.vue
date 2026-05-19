@@ -149,6 +149,7 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { CardRead } from '@renderer/api/cards'
+import { getCardTypeKey } from '@renderer/utils/cardType'
 import { schemaService, type JSONSchema } from '@renderer/api/schema'
 import { getCardSchema } from '@renderer/api/setting'
 import { ElDialog, ElInput, ElScrollbar, ElTree, ElButton, ElRadioGroup, ElRadioButton, ElSelect, ElOption, ElCheckbox } from 'element-plus'
@@ -358,7 +359,7 @@ function findCurrentStage(cards: CardRead[], currentCardId?: number): { stage: a
   const vol = typeof c?.volume_number === 'number' ? c.volume_number : undefined
   const chn = typeof c?.chapter_number === 'number' ? c.chapter_number : undefined
   if (!vol || !chn) return { stage: null }
-  const volCard = cards.find(x => (x.card_type as any)?.output_model_name === 'VolumeOutline' || x.card_type?.name === '分卷大纲')
+  const volCard = cards.find(x => getCardTypeKey(x.card_type) === 'volume_outline')
   if (!volCard) return { stage: null, volumeNumber: vol, chapterNumber: chn }
   const vo = unwrapVolumeOutline(volCard.content || {})
   const stages = Array.isArray(vo?.stage_lines) ? vo.stage_lines : []
@@ -424,7 +425,7 @@ async function handleTypeChange() {
   selectedFieldPath.value = null
   selectedFieldPaths.value = []
   fieldPaths.value = []
-  const sample = props.cards.find(c => c.card_type?.name === selectedTypeName.value)
+  const sample = props.cards.find(c => getCardTypeKey(c.card_type) === getCardTypeKey({ name: selectedTypeName.value }))
   if (sample) {
     try {
       const resp = await getCardSchema(sample.id)

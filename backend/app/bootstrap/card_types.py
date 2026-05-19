@@ -11,6 +11,7 @@ from loguru import logger
 
 from app.core.config import settings
 from app.db.models import Card, CardType, LLMConfig
+from app.services.builtin_key_registry import CARD_TYPE_NAME_TO_KEY, resolve_builtin_key
 from app.schemas.response_registry import RESPONSE_MODEL_MAP
 from .registry import initializer
 
@@ -303,14 +304,20 @@ def create_default_card_types(session: Session) -> None:
     overwrite_card_schemas = settings.bootstrap.should_overwrite_card_schemas
 
     existing_types = session.exec(select(CardType)).all()
-    existing_type_names = {ct.name for ct in existing_types}
+    for existing_type in existing_types:
+        mapped_key = CARD_TYPE_NAME_TO_KEY.get((existing_type.name or '').strip())
+        if mapped_key or not getattr(existing_type, "key", None):
+            existing_type.key = mapped_key or resolve_builtin_key(existing_type.name, CARD_TYPE_NAME_TO_KEY)
     existing_type_by_name = {ct.name: ct for ct in existing_types}
+    existing_type_by_key = {ct.key: ct for ct in existing_types if getattr(ct, "key", None)}
 
     # 默认 llm_config_id：取第一个可用 LLM 配置（若存在）
     default_llm = session.exec(select(LLMConfig)).first()
 
     for name, details in default_types.items():
-        if name not in existing_type_names:
+        card_type_key = resolve_builtin_key(name, CARD_TYPE_NAME_TO_KEY)
+        existing_type = existing_type_by_key.get(card_type_key) or existing_type_by_name.get(name)
+        if not existing_type:
             # 直接在卡片类型上存储结构（json_schema）
             schema = None
             try:
@@ -326,6 +333,7 @@ def create_default_card_types(session: Session) -> None:
                 # 若存在可用的默认 LLM，则写入其 ID；避免写 0 导致前端无法识别
                 ai_params = {**ai_params, "llm_config_id": (default_llm.id if default_llm else None)}
             card_type = CardType(
+                key=card_type_key,
                 name=name,
                 model_name=TYPE_TO_MODEL_KEY.get(name, name),
                 description=details.get("description", f"{name}的默认卡片类型"),
@@ -342,7 +350,9 @@ def create_default_card_types(session: Session) -> None:
             logger.info(f"Created default card type: {name}")
         else:
             # 增量更新：刷新类型结构与元信息
-            ct = existing_type_by_name[name]
+            ct = existing_type
+            ct.name = name
+            ct.key = card_type_key
             try:
                 model_class = RESPONSE_MODEL_MAP.get(TYPE_TO_MODEL_KEY.get(name))
                 if model_class:
@@ -372,7 +382,7 @@ def create_default_card_types(session: Session) -> None:
 
     all_cards = session.exec(select(Card)).all()
     for card in all_cards:
-        card_type = existing_type_by_name.get(getattr(card.card_type, "name", ""))
+        card_type = existing_type_by_key.get(getattr(card.card_type, "key", None)) or existing_type_by_name.get(getattr(card.card_type, "name", ""))
         if not card_type and getattr(card, "card_type_id", None):
             card_type = session.get(CardType, card.card_type_id)
         if not card_type:

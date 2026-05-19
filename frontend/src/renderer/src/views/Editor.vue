@@ -386,7 +386,8 @@ import SchemaStudio from '@renderer/components/shared/SchemaStudio.vue'
 import { getCardSchema, createCardType } from '@renderer/api/setting'
 import { getProjects } from '@renderer/api/projects'
 import { getCardsForProject, copyCard, getCardAIParams, searchCards } from '@renderer/api/cards'
-import { generateAIContent } from '@renderer/api/ai'
+import { DEFAULT_ASSISTANT_PROMPT_KEY, generateAIContent } from '@renderer/api/ai'
+import { isCardType } from '@renderer/utils/cardType'
 import type { AssistantRef, ChapterExcerptRef, ReviewResultRef } from '@renderer/api/ai'
  
  // Mock components that will be created later
@@ -1456,7 +1457,7 @@ const assistantSelectionCleared = ref<boolean>(false)
 
 const assistantParams = ref<{ llm_config_id: number | null; prompt_name: string | null; temperature: number | null; max_tokens: number | null; timeout: number | null }>({ llm_config_id: null, prompt_name: t('assistant.default_prompt'), temperature: null, max_tokens: null, timeout: null })
 const isChapterContent = computed(() => {
-  return activeCard.value?.card_type?.name === '章节正文'
+  return isCardType(activeCard.value?.card_type, 'chapter_body')
 })
 
 const showRightSidebarTabs = computed(() => {
@@ -1466,7 +1467,7 @@ const showRightSidebarTabs = computed(() => {
 const reviewTargetCardIdForSidebar = computed<number | null>(() => {
   const card = activeCard.value as any
   if (!card) return null
-  if (card?.card_type?.name === '内容审核卡片') {
+  if (isCardType(card?.card_type, 'review_result_card')) {
     const target = Number(card?.content?.review_target_card_id || 0)
     return Number.isFinite(target) && target > 0 ? target : null
   }

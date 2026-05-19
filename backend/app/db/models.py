@@ -66,6 +66,7 @@ class LLMConfig(SQLModel, table=True):
 
 class Prompt(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    key: Optional[str] = Field(default=None, index=True)
     name: str = Field(unique=True, index=True)
     description: Optional[str] = None
     template: str
@@ -76,6 +77,7 @@ class Prompt(SQLModel, table=True):
 
 class CardType(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    key: Optional[str] = Field(default=None, index=True)
     name: str = Field(index=True)
     # 兼容旧的模型名称（如 CharacterCard/SceneCard），为空则默认等于 name
     model_name: Optional[str] = Field(default=None, index=True)
@@ -157,6 +159,7 @@ class ForeshadowItem(SQLModel, table=True):
 # 知识库模型
 class Knowledge(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+    key: Optional[str] = Field(default=None, index=True)
     name: str = Field(unique=True, index=True)
     description: Optional[str] = None
     content: str

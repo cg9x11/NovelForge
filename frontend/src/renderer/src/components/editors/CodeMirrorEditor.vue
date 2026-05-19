@@ -1133,6 +1133,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { getCardTypeKey, isCardType } from '@renderer/utils/cardType'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
@@ -1572,6 +1573,16 @@ interface ParticipantReviewNotice {
 	cardTypeName: ManagedCardTypeName
 	entityType: ManagedEntityType
 }
+function getManagedCardTypeKey(cardTypeName: ManagedCardTypeName): string {
+	if (cardTypeName.includes('??')) return 'character_card'
+	if (cardTypeName.includes('??')) return 'scene_card'
+	if (cardTypeName.includes('??')) return 'organization_card'
+	if (cardTypeName.includes('??')) return 'item_card'
+	if (cardTypeName.includes('??')) return 'concept_card'
+	return cardTypeName
+}
+
+
 const ENTITY_TYPE_TO_CARD_TYPE_NAME: Record<ManagedEntityType, ManagedCardTypeName> = {
 	character: '角色卡',
 	scene: '场景卡',
@@ -3089,7 +3100,7 @@ function extractParticipantsWithTypeForCurrentChapter(): { name: string, type: s
 function getExistingCardTitleSet(cardTypeName: ManagedCardTypeName): Set<string> {
 	const set = new Set<string>()
 	for (const card of cards.value || []) {
-		if (card?.card_type?.name !== cardTypeName) continue
+		if (getCardTypeKey(card?.card_type) !== getManagedCardTypeKey(cardTypeName)) continue
 		const title = String(card?.title || '').trim()
 		if (title) set.add(title)
 	}
@@ -3264,7 +3275,7 @@ function extractCharacterParticipantsForCurrentChapter(): string[] {
 		const list = (localCard.content as any)?.entity_list
 		const result: string[] = []
 		const characterNames = new Set<string>((cards.value || [])
-			.filter((c:any) => c?.card_type?.name === '角色卡')
+			.filter((c:any) => isCardType(c?.card_type, 'character_card'))
 			.map((c:any) => (c?.title || '').trim())
 			.filter((s:string) => !!s))
 		if (Array.isArray(list)) {

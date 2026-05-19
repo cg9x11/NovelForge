@@ -6,6 +6,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from app.db.models import Card, CardType, Project
 from app.schemas.card import CardCreate, CardUpdate, CardTypeCreate, CardTypeUpdate
 from app.exceptions import BusinessException
+from app.services.card_type_service_utils import get_card_type_by_identifier, resolve_card_type_key
 import logging
 import hashlib
 # 引入动态信息模型
@@ -238,8 +239,7 @@ class CardService:
 
             for card_type_name, setup in initial_cards_setup.items():
                 try:
-                    statement = select(CardType).where(CardType.name == card_type_name)
-                    card_type = db.exec(statement).first()
+                    card_type = get_card_type_by_identifier(db, card_type_name)
                     if card_type:
                         # 创建卡片
                         new_card = Card(
@@ -614,7 +614,9 @@ class CardTypeService:
         return self.db.get(CardType, card_type_id)
         
     def create(self, card_type_create: CardTypeCreate) -> CardType:
-        card_type = CardType.model_validate(card_type_create)
+        payload = card_type_create.model_dump()
+        payload["key"] = payload.get("key") or resolve_card_type_key(payload.get("name"))
+        card_type = CardType.model_validate(payload)
         self.db.add(card_type)
         self.db.commit()
         self.db.refresh(card_type)
@@ -626,6 +628,8 @@ class CardTypeService:
             return None
         for key, value in card_type_update.model_dump(exclude_unset=True).items():
             setattr(card_type, key, value)
+        if not getattr(card_type, "key", None):
+            card_type.key = resolve_card_type_key(card_type.name)
         self.db.add(card_type)
         self.db.commit()
         self.db.refresh(card_type)

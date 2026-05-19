@@ -6,13 +6,14 @@
 from loguru import logger
 from sqlalchemy import UniqueConstraint, inspect
 from sqlalchemy.schema import CreateColumn
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.bootstrap.registry import discover_and_run_initializers
 from app.core.events import discover_event_handlers
-from app.db.models import SQLModel
+from app.db.models import SQLModel, Prompt, CardType, Knowledge
 from app.db.session import engine
 from app.services.workflow.registry import discover_workflow_nodes
+from app.services.builtin_key_registry import PROMPT_NAME_TO_KEY, CARD_TYPE_NAME_TO_KEY, KNOWLEDGE_NAME_TO_KEY, resolve_builtin_key
 
 
 def init_database():
@@ -25,6 +26,7 @@ def init_database():
     # 对已有数据库执行轻量补齐：自动发现模型新增的安全追加列并补齐。
     # 仅处理“加列”场景；复杂变更仍建议使用 Alembic 迁移。
     _ensure_safe_additive_columns()
+    _backfill_builtin_keys()
     logger.info("[启动] 数据库表结构初始化完成")
 
 
@@ -106,6 +108,28 @@ def _ensure_safe_additive_columns():
     if skipped_columns:
         logger.warning(f"[启动] 检测到不安全或失败列，已跳过自动补齐: {', '.join(skipped_columns)}")
 
+
+def _backfill_builtin_keys():
+    updated: list[str] = []
+    with Session(engine) as session:
+        specs = [
+            (Prompt, PROMPT_NAME_TO_KEY),
+            (CardType, CARD_TYPE_NAME_TO_KEY),
+            (Knowledge, KNOWLEDGE_NAME_TO_KEY),
+        ]
+        for model, mapping in specs:
+            for row in session.exec(select(model)).all():
+                name = getattr(row, "name", None)
+                desired = mapping.get((name or "").strip()) or getattr(row, "key", None) or resolve_builtin_key(name, mapping)
+                if desired and getattr(row, "key", None) != desired:
+                    row.key = desired
+                    session.add(row)
+                    updated.append(f"{model.__name__}:{name}->{desired}")
+        if updated:
+            session.commit()
+            logger.info(f"[??] ?????key: {', '.join(updated[:20])}{' ...' if len(updated) > 20 else ''}")
+        else:
+            logger.info("[??] ??key?????????")
 
 def init_application_data():
     """初始化应用数据

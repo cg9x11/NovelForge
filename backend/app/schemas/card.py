@@ -6,6 +6,7 @@ from datetime import datetime
 # --- CardType Schemas ---
 
 class CardTypeBase(BaseModel):
+    key: Optional[str] = None
     name: str
     model_name: Optional[str] = None
     description: Optional[str] = None
@@ -28,6 +29,7 @@ class CardTypeCreate(CardTypeBase):
 
 
 class CardTypeUpdate(BaseModel):
+    key: Optional[str] = None
     name: Optional[str] = None
     model_name: Optional[str] = None
     description: Optional[str] = None

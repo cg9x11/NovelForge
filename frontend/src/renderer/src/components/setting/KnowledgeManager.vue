@@ -6,6 +6,7 @@
     </div>
 
     <el-table :data="items" height="60vh" size="small" v-loading="loading">
+      <el-table-column prop="key" label="Key" width="170" show-overflow-tooltip />
       <el-table-column prop="name" :label="t('knowledge_manager.columns.name')" width="90" />
       <el-table-column prop="description" :label="t('knowledge_manager.columns.description')" min-width="150" />
       <el-table-column :label="t('knowledge_manager.columns.builtIn')" width="80">
@@ -27,6 +28,7 @@
 
     <el-dialog v-model="editor.visible" :title="editor.editing ? t('knowledge_manager.editKnowledge') : t('knowledge_manager.newKnowledge')" width="50%" append-to-body>
       <el-form label-position="top" :model="editor.form">
+        <el-form-item label="Key"><el-input v-model="(editor.form as any).key" :disabled="editor.editing && editor.form.built_in" /></el-form-item>
         <el-form-item :label="t('knowledge_manager.form.name')"><el-input v-model="editor.form.name" :disabled="editor.editing && editor.form.built_in" /></el-form-item>
         <el-form-item :label="t('knowledge_manager.form.description')"><el-input v-model="editor.form.description" type="textarea" :rows="2" /></el-form-item>
         <el-form-item :label="t('knowledge_manager.form.content')"><el-input v-model="editor.form.content" type="textarea" :rows="14" /></el-form-item>
@@ -67,15 +69,15 @@ async function fetchList() {
 function openEditor(row?: Knowledge) {
   editor.value.visible = true
   editor.value.editing = !!row
-  editor.value.form = row ? { ...row } : { name: '', description: '', content: '' }
+  editor.value.form = row ? { ...row } as any : { key: '', name: '', description: '', content: '' } as any
 }
 
 async function save() {
   try {
     const f = editor.value.form
-    if (!f?.name || !f.content) { ElMessage.warning(t('knowledge_manager.messages.fillNameAndContent')); return }
+    if (!(f as any)?.key || !f?.name || !f.content) { ElMessage.warning(t('knowledge_manager.messages.fillNameAndContent')); return }
     if (editor.value.editing && f.id) {
-      const saved = await updateKnowledge(f.id, { name: f.name, description: f.description || '', content: f.content })
+      const saved = await updateKnowledge(f.id, { key: (f as any).key, name: f.name, description: f.description || '', content: f.content } as any)
       resetKnowledgeOptionCache()
       ElMessage.success(t('knowledge_manager.messages.updated'))
       // 局部更新
@@ -84,7 +86,7 @@ async function save() {
         if (idx >= 0) items.value[idx] = saved
       }
     } else {
-      const created = await createKnowledge({ name: f.name, description: f.description || '', content: f.content })
+      const created = await createKnowledge({ key: (f as any).key, name: f.name, description: f.description || '', content: f.content } as any)
       resetKnowledgeOptionCache()
       ElMessage.success(t('knowledge_manager.messages.created'))
       if (created) items.value.unshift(created)

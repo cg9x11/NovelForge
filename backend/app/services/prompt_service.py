@@ -2,17 +2,42 @@ from typing import List, Optional, Dict, Any
 from sqlmodel import Session, select
 from app.db.models import Prompt
 from app.schemas.prompt import PromptCreate, PromptUpdate
+from app.services.builtin_key_registry import PROMPT_NAME_TO_KEY, resolve_builtin_key
 from string import Template
 import re
 
 def get_prompt(session: Session, prompt_id: int) -> Optional[Prompt]:
-    """根据ID获取单个提示词"""
+    """??ID???????"""
     return session.get(Prompt, prompt_id)
 
-def get_prompt_by_name(session: Session, prompt_name: str) -> Optional[Prompt]:
-    """根据名称获取单个提示词"""
-    statement = select(Prompt).where(Prompt.name == prompt_name)
+
+def get_prompt_by_key(session: Session, prompt_key: str) -> Optional[Prompt]:
+    statement = select(Prompt).where(Prompt.key == prompt_key)
     return session.exec(statement).first()
+
+
+def resolve_prompt_key(identifier: str) -> str:
+    from app.services.builtin_key_registry import PROMPT_NAME_TO_KEY, resolve_builtin_key
+    return resolve_builtin_key(identifier, PROMPT_NAME_TO_KEY) or identifier
+
+
+def get_prompt_by_name(session: Session, prompt_name: str) -> Optional[Prompt]:
+    """?????????????????"""
+    statement = select(Prompt).where(Prompt.name == prompt_name)
+    prompt = session.exec(statement).first()
+    if prompt:
+        return prompt
+    resolved = resolve_prompt_key(prompt_name)
+    if resolved and resolved != prompt_name:
+        return get_prompt_by_key(session, resolved)
+    return None
+
+
+def get_prompt_by_identifier(session: Session, identifier: str) -> Optional[Prompt]:
+    prompt = get_prompt_by_key(session, identifier)
+    if prompt:
+        return prompt
+    return get_prompt_by_name(session, identifier)
 
 def get_prompts(session: Session, skip: int = 0, limit: int = 100) -> List[Prompt]:
     """获取提示词列表"""
@@ -26,7 +51,9 @@ def create_prompt(session: Session, prompt_create: PromptCreate) -> Prompt:
     if existing_prompt:
         raise ValueError(f"提示词名称 '{prompt_create.name}' 已存在")
     
-    db_prompt = Prompt.model_validate(prompt_create)
+    payload = prompt_create.model_dump()
+    payload["key"] = payload.get("key") or resolve_builtin_key(prompt_create.name, PROMPT_NAME_TO_KEY)
+    db_prompt = Prompt.model_validate(payload)
     session.add(db_prompt)
     session.commit()
     session.refresh(db_prompt)
@@ -40,6 +67,8 @@ def update_prompt(session: Session, prompt_id: int, prompt_update: PromptUpdate)
     prompt_data = prompt_update.model_dump(exclude_unset=True)
     for key, value in prompt_data.items():
         setattr(db_prompt, key, value)
+    if not getattr(db_prompt, "key", None):
+        db_prompt.key = resolve_builtin_key(db_prompt.name, PROMPT_NAME_TO_KEY)
     session.add(db_prompt)
     session.commit()
     session.refresh(db_prompt)
@@ -101,7 +130,7 @@ def inject_knowledge(session: Session, template: str) -> str:
         return kb.content if kb and kb.content else f"/* 知识库未找到: id={kid} */"
 
     def fetch_kb_by_name(name: str) -> str:
-        kb = svc.get_by_name(name)
+        kb = svc.get_by_identifier(name)
         return kb.content if kb and kb.content else f"/* 知识库未找到: name={name} */"
 
     # 先处理 knowledge 分段（更结构化的注入）
