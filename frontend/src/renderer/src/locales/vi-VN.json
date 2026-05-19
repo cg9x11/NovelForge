@@ -1854,5 +1854,22 @@
   "errors": {
     "promptNotFound": "Không tìm thấy prompt: {name}",
     "promptNameNotFound": "Không tìm thấy tên prompt: {name}"
+  },
+  "agent_message_list": {
+    "thinking_in_progress": "?ang suy ngh??",
+    "thinking_process": "Qu? tr?nh suy ngh?",
+    "thinking_done": "Suy ngh? xong",
+    "jump_to_card": "Chuy?n t?i th? ?",
+    "collapse_result": "Thu g?n k?t qu?",
+    "expand_result": "M? r?ng k?t qu?",
+    "copy_reply": "Sao ch?p ph?n h?i",
+    "regenerate": "T?o l?i",
+    "delete_reply": "X?a ph?n h?i",
+    "copy_message": "Sao ch?p tin nh?n",
+    "delete_message": "X?a tin nh?n",
+    "empty": "Nh?p y?u c?u, t?i s? ??a ra k?t qu? c? th? xem x?t tr??c.",
+    "success": "? Th?nh c?ng",
+    "failed": "? Th?t b?i",
+    "executed": "?? th?c thi"
   }
 }

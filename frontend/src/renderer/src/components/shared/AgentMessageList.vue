@@ -19,7 +19,7 @@
                           <template v-else>✓</template>
                         </span>
                         <span class="thinking-title">
-                          {{ isThinkingInProgress(idx, timelineIndex) ? '思考中…' : (isThinkingItemOpen(idx, timelineIndex) ? '思考过程' : '思考完成') }}
+                          {{ isThinkingInProgress(idx, timelineIndex) ? t('agent_message_list.thinking_in_progress') : (isThinkingItemOpen(idx, timelineIndex) ? t('agent_message_list.thinking_process') : t('agent_message_list.thinking_done')) }}
                         </span>
                         <el-icon class="thinking-arrow">
                           <ArrowUp v-if="isThinkingItemOpen(idx, timelineIndex)" />
@@ -46,13 +46,13 @@
 
                     <div v-if="showJumpLink(timelineItem.tool)" class="tool-jump-row">
                       <el-link type="primary" size="small" @click="emitJumpToCard(timelineItem.tool)">
-                        跳转到卡片 →
+                        {{ t('agent_message_list.jump_to_card') }}
                       </el-link>
                     </div>
 
                     <div v-if="timelineItem.tool.result !== undefined" class="tool-result-toggle-row">
                       <el-button text size="small" @click="toggleToolResult(idx, timelineIndex)">
-                        {{ isToolResultOpen(idx, timelineIndex) ? '收起结果' : '展开结果' }}
+                        {{ isToolResultOpen(idx, timelineIndex) ? t('agent_message_list.collapse_result') : t('agent_message_list.expand_result') }}
                       </el-button>
                     </div>
                     <pre
@@ -95,7 +95,7 @@
           v-if="msg.role === 'assistant' && shouldShowAssistantActions(msg, idx)"
           class="assistant-actions"
         >
-          <el-tooltip content="复制回复" placement="top">
+          <el-tooltip :content="t('agent_message_list.copy_reply')" placement="top">
             <el-button
               circle
               size="small"
@@ -103,7 +103,7 @@
               @click="emitCopyAssistant(idx)"
             />
           </el-tooltip>
-          <el-tooltip content="重新生成" placement="top">
+          <el-tooltip :content="t('agent_message_list.regenerate')" placement="top">
             <el-button
               circle
               size="small"
@@ -111,7 +111,7 @@
               @click="emitRegenerateAssistant(idx)"
             />
           </el-tooltip>
-          <el-tooltip content="删除回复" placement="top">
+          <el-tooltip :content="t('agent_message_list.delete_reply')" placement="top">
             <el-button
               circle
               size="small"
@@ -125,7 +125,7 @@
           v-if="msg.role === 'user' && shouldShowUserActions(msg, idx)"
           class="assistant-actions"
         >
-          <el-tooltip content="复制消息" placement="top">
+          <el-tooltip :content="t('agent_message_list.copy_message')" placement="top">
             <el-button
               circle
               size="small"
@@ -133,7 +133,7 @@
               @click="emitCopyUser(idx)"
             />
           </el-tooltip>
-          <el-tooltip content="删除消息" placement="top">
+          <el-tooltip :content="t('agent_message_list.delete_message')" placement="top">
             <el-button
               circle
               size="small"
@@ -145,12 +145,13 @@
       </div>
     </div>
 
-    <el-empty v-if="!props.messages.length" :description="props.emptyDescription" />
+    <el-empty v-if="!props.messages.length" :description="displayEmptyDescription" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { XMarkdown } from 'vue-element-plus-x'
 import { Loading, CopyDocument, RefreshRight, ArrowUp, ArrowDown, Delete } from '@element-plus/icons-vue'
 
@@ -168,7 +169,7 @@ const props = withDefaults(
     showUserActions?: boolean
   }>(),
   {
-    emptyDescription: '请输入需求，我会先给出可审阅的结果。',
+    emptyDescription: '',
     streaming: false,
     jumpProjectId: null,
     showAssistantActions: false,
@@ -191,6 +192,8 @@ const thinkingOpenMap = ref<Record<string, boolean>>({})
 const toolResultOpenMap = ref<Record<string, boolean>>({})
 
 const appStore = useAppStore()
+const { t } = useI18n()
+const displayEmptyDescription = computed(() => props.emptyDescription || t('agent_message_list.empty'))
 const isDarkMode = computed(() => appStore.isDarkMode)
 
 function thinkingKey(messageIndex: number, timelineIndex: number): string {
@@ -288,9 +291,9 @@ function formatToolValue(value: unknown): string {
 
 function formatToolStatus(toolItem: any): string {
   const success = toolItem?.result?.success
-  if (success === true) return '✅ 成功'
-  if (success === false) return '❌ 失败'
-  return '已执行'
+  if (success === true) return t('agent_message_list.success')
+  if (success === false) return t('agent_message_list.failed')
+  return t('agent_message_list.executed')
 }
 
 function showJumpLink(toolItem: any): boolean {

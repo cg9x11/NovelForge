@@ -1854,5 +1854,22 @@
   "errors": {
     "promptNotFound": "Prompt not found: {name}",
     "promptNameNotFound": "Prompt name not found: {name}"
+  },
+  "agent_message_list": {
+    "thinking_in_progress": "Thinking?",
+    "thinking_process": "Thinking process",
+    "thinking_done": "Thinking complete",
+    "jump_to_card": "Jump to card ?",
+    "collapse_result": "Collapse result",
+    "expand_result": "Expand result",
+    "copy_reply": "Copy reply",
+    "regenerate": "Regenerate",
+    "delete_reply": "Delete reply",
+    "copy_message": "Copy message",
+    "delete_message": "Delete message",
+    "empty": "Enter your request. I will return a reviewable result first.",
+    "success": "? Success",
+    "failed": "? Failed",
+    "executed": "Executed"
   }
 }
