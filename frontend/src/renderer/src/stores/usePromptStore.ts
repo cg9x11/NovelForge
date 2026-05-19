@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { i18n } from '@renderer/i18n'
 import { listPrompts, type Prompt } from '@renderer/api/setting'
+const t = i18n.global.t
 
 export const usePromptStore = defineStore('prompt', () => {
   // State
@@ -16,7 +18,7 @@ export const usePromptStore = defineStore('prompt', () => {
       prompts.value = list || []
     } catch (error) {
       console.error('获取提示词列表失败:', error)
-      ElMessage.error('获取提示词列表失败')
+      ElMessage.error(t('prompt_store.fetch_failed'))
       throw error
     } finally {
       isLoading.value = false

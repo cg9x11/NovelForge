@@ -1,45 +1,45 @@
 ﻿<template>
   <div class="relation-graph-panel">
     <div class="toolbar">
-      <el-input v-model="filters.keyword" placeholder="关键词（实体/关系/事实）" clearable class="w-keyword" @keyup.enter="reload" />
-      <el-select v-model="filters.kind" clearable placeholder="关系类型" class="w-select">
+      <el-input v-model="filters.keyword" :placeholder="t('relation_graph.keyword_placeholder')" clearable class="w-keyword" @keyup.enter="reload" />
+      <el-select v-model="filters.kind" clearable :placeholder="t('relation_graph.kind')" class="w-select">
         <el-option v-for="k in kindOptions" :key="k" :label="k" :value="k" />
       </el-select>
-      <el-select v-model="filters.stance" clearable placeholder="立场" class="w-select">
+      <el-select v-model="filters.stance" clearable :placeholder="t('relation_graph.stance')" class="w-select">
         <el-option v-for="s in stanceOptions" :key="s" :label="s" :value="s" />
       </el-select>
-      <el-button type="primary" @click="reload">查询</el-button>
-      <el-button @click="resetFilters">重置</el-button>
+      <el-button type="primary" @click="reload">{{ t('common.search') }}</el-button>
+      <el-button @click="resetFilters">{{ t('common.reset') }}</el-button>
     </div>
 
     <div class="actions">
-      <el-button type="primary" @click="openCreate">新增关系</el-button>
-      <el-button @click="openBatchCreate">批量新增</el-button>
-      <el-button @click="openImport">导入</el-button>
-      <el-button :disabled="selectedKeys.length === 0" @click="exportSelected('json')">导出 JSON</el-button>
-      <el-button :disabled="selectedKeys.length === 0" @click="exportSelected('csv')">导出 CSV</el-button>
-      <el-button :disabled="selectedKeys.length === 0" type="danger" @click="batchDelete">批量删除</el-button>
-      <el-button :disabled="selectedKeys.length === 0" @click="batchKindVisible = true">批量改类型</el-button>
-      <el-button :disabled="selectedKeys.length === 0" @click="batchStanceVisible = true">批量改立场</el-button>
-      <el-button :disabled="selectedKeys.length === 0" @click="batchEventsVisible = true">批量追加事件</el-button>
+      <el-button type="primary" @click="openCreate">{{ t('relation_graph.create') }}</el-button>
+      <el-button @click="openBatchCreate">{{ t('relation_graph.batch_create') }}</el-button>
+      <el-button @click="openImport">{{ t('relation_graph.import') }}</el-button>
+      <el-button :disabled="selectedKeys.length === 0" @click="exportSelected('json')">{{ t('relation_graph.export_json') }}</el-button>
+      <el-button :disabled="selectedKeys.length === 0" @click="exportSelected('csv')">{{ t('relation_graph.export_csv') }}</el-button>
+      <el-button :disabled="selectedKeys.length === 0" type="danger" @click="batchDelete">{{ t('relation_graph.batch_delete') }}</el-button>
+      <el-button :disabled="selectedKeys.length === 0" @click="batchKindVisible = true">{{ t('relation_graph_panel.batch_change_type') }}</el-button>
+      <el-button :disabled="selectedKeys.length === 0" @click="batchStanceVisible = true">{{ t('relation_graph_panel.batch_change_stance') }}</el-button>
+      <el-button :disabled="selectedKeys.length === 0" @click="batchEventsVisible = true">{{ t('relation_graph_panel.batch_append_events') }}</el-button>
     </div>
 
     <el-table :data="rows" border stripe v-loading="loading" @selection-change="onSelectionChange">
       <el-table-column type="selection" width="48" />
       <el-table-column prop="source" label="A" min-width="140" />
       <el-table-column prop="target" label="B" min-width="140" />
-      <el-table-column prop="kind_cn" label="关系" width="120" />
-      <el-table-column prop="stance" label="立场" width="100" />
-      <el-table-column prop="fact" label="事实" min-width="260" show-overflow-tooltip />
-      <el-table-column label="更新时间" width="180">
+      <el-table-column prop="kind_cn" :label="t('relation_graph.kind')" width="120" />
+      <el-table-column prop="stance" :label="t('relation_graph.stance')" width="100" />
+      <el-table-column prop="fact" :label="t('relation_graph.fact')" min-width="260" show-overflow-tooltip />
+      <el-table-column :label="t('relation_graph.updated_at')" width="180">
         <template #default="{ row }">
           {{ row.updated_at ? new Date(row.updated_at).toLocaleString() : '' }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="140" fixed="right">
+      <el-table-column :label="t('common.actions')" width="140" fixed="right">
         <template #default="scope">
-          <el-button text size="small" @click="openEdit(scope.row)">编辑</el-button>
-          <el-button text size="small" type="danger" @click="removeOne(scope.row)">删除</el-button>
+          <el-button text size="small" @click="openEdit(scope.row)">{{ t('common.edit') }}</el-button>
+          <el-button text size="small" type="danger" @click="removeOne(scope.row)">{{ t('common.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -55,86 +55,86 @@
       />
     </div>
 
-    <el-dialog v-model="editVisible" :title="editMode === 'create' ? '新增关系' : '编辑关系'" width="680px">
+    <el-dialog v-model="editVisible" :title="editMode === 'create' ? t('relation_graph_panel.create_relation') : t('relation_graph_panel.edit_relation')" width="680px">
       <el-form label-width="110px">
-        <el-form-item label="实体 A"><el-input v-model="form.source" /></el-form-item>
-        <el-form-item label="关系类型">
-          <el-select v-model="form.kind_cn" placeholder="选择关系类型">
+        <el-form-item :label="t('relation_graph_panel.entity_a')"><el-input v-model="form.source" /></el-form-item>
+        <el-form-item :label="t('relation_graph_panel.relation_type')">
+          <el-select v-model="form.kind_cn" :placeholder="t('relation_graph_panel.select_relation_type')">
             <el-option v-for="k in kindOptions" :key="k" :label="k" :value="k" />
           </el-select>
         </el-form-item>
-        <el-form-item label="实体 B"><el-input v-model="form.target" /></el-form-item>
-        <el-form-item label="立场">
+        <el-form-item :label="t('relation_graph_panel.entity_b')"><el-input v-model="form.target" /></el-form-item>
+        <el-form-item :label="t('relation_graph_panel.stance')">
           <el-select v-model="form.stance" clearable>
             <el-option v-for="s in stanceOptions" :key="s" :label="s" :value="s" />
           </el-select>
         </el-form-item>
-        <el-form-item label="事实"><el-input v-model="form.fact" type="textarea" :rows="2" /></el-form-item>
-        <el-form-item label="A称呼B"><el-input v-model="form.a_to_b_addressing" /></el-form-item>
-        <el-form-item label="B称呼A"><el-input v-model="form.b_to_a_addressing" /></el-form-item>
-        <el-form-item label="近期对话">
-          <el-input v-model="form.dialoguesText" type="textarea" :rows="3" placeholder="每行一条" />
+        <el-form-item :label="t('relation_graph_panel.fact')"><el-input v-model="form.fact" type="textarea" :rows="2" /></el-form-item>
+        <el-form-item :label="t('relation_graph_panel.a_calls_b')"><el-input v-model="form.a_to_b_addressing" /></el-form-item>
+        <el-form-item :label="t('relation_graph_panel.b_calls_a')"><el-input v-model="form.b_to_a_addressing" /></el-form-item>
+        <el-form-item :label="t('relation_graph_panel.recent_dialogues')">
+          <el-input v-model="form.dialoguesText" type="textarea" :rows="3" :placeholder="t('relation_graph_panel.one_per_line')" />
         </el-form-item>
-        <el-form-item label="近期事件">
-          <el-input v-model="form.eventsText" type="textarea" :rows="3" placeholder="每行一条摘要" />
+        <el-form-item :label="t('relation_graph_panel.recent_events')">
+          <el-input v-model="form.eventsText" type="textarea" :rows="3" :placeholder="t('relation_graph_panel.one_summary_per_line')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="editVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitEdit">保存</el-button>
+        <el-button @click="editVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="submitEdit">{{ t('common.save') }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="batchKindVisible" title="批量修改关系类型" width="420px">
-      <el-select v-model="batchKind" placeholder="选择新类型" style="width: 100%">
+    <el-dialog v-model="batchKindVisible" :title="t('relation_graph_panel.batch_change_type')" width="420px">
+      <el-select v-model="batchKind" :placeholder="t('relation_graph_panel.select_new_type')" style="width: 100%">
         <el-option v-for="k in kindOptions" :key="k" :label="k" :value="k" />
       </el-select>
       <template #footer>
-        <el-button @click="batchKindVisible = false">取消</el-button>
-        <el-button type="primary" @click="applyBatchKind">确定</el-button>
+        <el-button @click="batchKindVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="applyBatchKind">{{ t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="batchStanceVisible" title="批量修改立场" width="420px">
-      <el-select v-model="batchStance" clearable placeholder="选择新立场" style="width: 100%">
+    <el-dialog v-model="batchStanceVisible" :title="t('relation_graph_panel.batch_change_stance')" width="420px">
+      <el-select v-model="batchStance" clearable :placeholder="t('relation_graph_panel.select_new_stance')" style="width: 100%">
         <el-option v-for="s in stanceOptions" :key="s" :label="s" :value="s" />
       </el-select>
       <template #footer>
-        <el-button @click="batchStanceVisible = false">取消</el-button>
-        <el-button type="primary" @click="applyBatchStance">确定</el-button>
+        <el-button @click="batchStanceVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="applyBatchStance">{{ t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="batchEventsVisible" title="批量追加事件" width="520px">
-      <el-input v-model="batchEventsText" type="textarea" :rows="6" placeholder="每行一条事件摘要" />
+    <el-dialog v-model="batchEventsVisible" :title="t('relation_graph_panel.batch_append_events')" width="520px">
+      <el-input v-model="batchEventsText" type="textarea" :rows="6" :placeholder="t('relation_graph_panel.one_event_summary_per_line')" />
       <template #footer>
-        <el-button @click="batchEventsVisible = false">取消</el-button>
-        <el-button type="primary" @click="applyBatchEvents">确定</el-button>
+        <el-button @click="batchEventsVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="applyBatchEvents">{{ t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="batchCreateVisible" title="批量新增关系" width="680px">
-      <div class="tip">支持 JSON 数组，或每行 CSV：source,target,kind_cn,stance</div>
+    <el-dialog v-model="batchCreateVisible" :title="t('relation_graph_panel.batch_create_relations')" width="680px">
+      <div class="tip">{{ t('relation_graph_panel.batch_create_tip') }}</div>
       <el-input v-model="batchCreateText" type="textarea" :rows="12" />
       <template #footer>
-        <el-button @click="batchCreateVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitBatchCreate">提交</el-button>
+        <el-button @click="batchCreateVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="submitBatchCreate">{{ t('relation_graph_panel.submit') }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="importVisible" title="导入关系图" width="680px">
+    <el-dialog v-model="importVisible" :title="t('relation_graph_panel.import_graph')" width="680px">
       <div class="toolbar compact">
         <el-select v-model="importFormat" class="w-select">
           <el-option label="JSON" value="json" />
           <el-option label="CSV" value="csv" />
         </el-select>
-        <el-button @click="pickFile">从文件读取</el-button>
+        <el-button @click="pickFile">{{ t('relation_graph_panel.read_from_file') }}</el-button>
       </div>
       <input ref="fileInputRef" type="file" class="hidden" @change="onFileChange" />
       <el-input v-model="importContent" type="textarea" :rows="12" />
       <template #footer>
-        <el-button @click="importVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitImport">导入</el-button>
+        <el-button @click="importVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="submitImport">{{ t('relation_graph_panel.import') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -142,6 +142,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useProjectStore } from '@renderer/stores/useProjectStore'
 import {
@@ -163,6 +164,7 @@ import {
 } from '@renderer/api/relationGraph'
 
 const props = defineProps<{ refreshSeq?: number }>()
+const { t } = useI18n()
 
 const projectStore = useProjectStore()
 const loading = ref(false)
@@ -218,7 +220,7 @@ const selectedKeys = computed<RelationGraphKey[]>(() =>
 
 function getProjectId(): number {
   const pid = projectStore.currentProject?.id
-  if (!pid) throw new Error('请先选择项目')
+  if (!pid) throw new Error(t('relation_graph_panel.messages.select_project_first'))
   return pid
 }
 
@@ -275,7 +277,7 @@ async function reload() {
     rows.value = resp.items || []
     total.value = resp.total || 0
   } catch (e: any) {
-    ElMessage.error(e?.message || '加载关系图失败')
+    ElMessage.error(e?.message || t('relation_graph_panel.messages.load_failed'))
   } finally {
     loading.value = false
   }
@@ -323,19 +325,23 @@ async function submitEdit() {
     }
 
     editVisible.value = false
-    ElMessage.success('保存成功')
+    ElMessage.success(t('common.save_success'))
     reload()
   } catch (e: any) {
-    ElMessage.error(e?.message || '保存失败')
+    ElMessage.error(e?.message || t('common.save_failed'))
   }
 }
 
 async function removeOne(row: RelationGraphRecord) {
   try {
     const projectId = getProjectId()
-    await ElMessageBox.confirm(`确认删除关系 ${row.source} -> ${row.target} 吗？`, '删除确认', { type: 'warning' })
+    await ElMessageBox.confirm(
+      t('relation_graph_panel.messages.confirmDeleteRelation', { source: row.source, target: row.target }),
+      t('relation_graph_panel.messages.deleteConfirmTitle'),
+      { type: 'warning' }
+    )
     await deleteRelationGraph({ project_id: projectId, key: { source: row.source!, target: row.target!, kind_en: row.kind_en! } })
-    ElMessage.success('删除成功')
+    ElMessage.success(t('relation_graph_panel.messages.delete_success'))
     reload()
   } catch {}
 }
@@ -343,9 +349,13 @@ async function removeOne(row: RelationGraphRecord) {
 async function batchDelete() {
   try {
     const projectId = getProjectId()
-    await ElMessageBox.confirm(`确认删除已勾选的 ${selectedKeys.value.length} 条关系吗？`, '批量删除', { type: 'warning' })
+    await ElMessageBox.confirm(
+      t('relation_graph_panel.messages.confirmBatchDelete', { count: selectedKeys.value.length }),
+      t('relation_graph_panel.messages.batchDeleteTitle'),
+      { type: 'warning' }
+    )
     const resp = await batchDeleteRelationGraph({ project_id: projectId, keys: selectedKeys.value })
-    ElMessage.success(`已删除 ${resp.affected || 0} 条`)
+    ElMessage.success(t('relation_graph_panel.messages.deletedCount', { count: resp.affected || 0 }))
     reload()
   } catch {}
 }
@@ -358,12 +368,12 @@ async function applyBatchKind() {
       keys: selectedKeys.value,
       new_kind_cn: batchKind.value || undefined,
     })
-    ElMessage.success(`已更新 ${resp.affected || 0} 条`)
+    ElMessage.success(t('relation_graph_panel.messages.updatedCount', { count: resp.affected || 0 }))
     batchKindVisible.value = false
     batchKind.value = ''
     reload()
   } catch (e: any) {
-    ElMessage.error(e?.message || '批量更新失败')
+    ElMessage.error(e?.message || t('relation_graph_panel.messages.batch_update_failed'))
   }
 }
 
@@ -375,12 +385,12 @@ async function applyBatchStance() {
       keys: selectedKeys.value,
       stance: batchStance.value || undefined,
     })
-    ElMessage.success(`已更新 ${resp.affected || 0} 条`)
+    ElMessage.success(t('relation_graph_panel.messages.updatedCount', { count: resp.affected || 0 }))
     batchStanceVisible.value = false
     batchStance.value = ''
     reload()
   } catch (e: any) {
-    ElMessage.error(e?.message || '批量更新失败')
+    ElMessage.error(e?.message || t('relation_graph_panel.messages.batch_update_failed'))
   }
 }
 
@@ -389,12 +399,12 @@ async function applyBatchEvents() {
     const projectId = getProjectId()
     const events = parseLines(batchEventsText.value).map((summary) => ({ summary }))
     const resp = await batchAppendEventsRelationGraph({ project_id: projectId, keys: selectedKeys.value, events, max_size: 20 })
-    ElMessage.success(`已更新 ${resp.affected || 0} 条`)
+    ElMessage.success(t('relation_graph_panel.messages.updatedCount', { count: resp.affected || 0 }))
     batchEventsVisible.value = false
     batchEventsText.value = ''
     reload()
   } catch (e: any) {
-    ElMessage.error(e?.message || '批量更新失败')
+    ElMessage.error(e?.message || t('relation_graph_panel.messages.batch_update_failed'))
   }
 }
 
@@ -407,7 +417,7 @@ function parseBatchCreateInput(text: string) {
   if (!trimmed) return []
   if (trimmed.startsWith('[')) {
     const arr = JSON.parse(trimmed)
-    if (!Array.isArray(arr)) throw new Error('JSON 必须是数组')
+    if (!Array.isArray(arr)) throw new Error(t('relation_graph_panel.messages.json_must_be_array'))
     return arr
   }
   return parseLines(trimmed).map((line) => {
@@ -421,12 +431,12 @@ async function submitBatchCreate() {
     const projectId = getProjectId()
     const relations = parseBatchCreateInput(batchCreateText.value)
     const resp = await batchCreateRelationGraph({ project_id: projectId, relations })
-    ElMessage.success(`已处理 ${resp.affected || 0} 条`)
+    ElMessage.success(t('relation_graph_panel.messages.processedCount', { count: resp.affected || 0 }))
     batchCreateVisible.value = false
     batchCreateText.value = ''
     reload()
   } catch (e: any) {
-    ElMessage.error(e?.message || '批量新增失败')
+    ElMessage.error(e?.message || t('relation_graph_panel.messages.batch_create_failed'))
   }
 }
 
@@ -445,9 +455,9 @@ async function exportSelected(format: 'json' | 'csv') {
     const projectId = getProjectId()
     const resp = await exportRelationGraph({ project_id: projectId, format, keys: selectedKeys.value })
     saveDownload(resp.filename || `relation-graph.${format}`, resp.content || '', resp.mime_type || 'text/plain')
-    ElMessage.success('导出完成')
+    ElMessage.success(t('relation_graph_panel.messages.export_done'))
   } catch (e: any) {
-    ElMessage.error(e?.message || '导出失败')
+    ElMessage.error(e?.message || t('relation_graph_panel.messages.export_failed'))
   }
 }
 
@@ -470,14 +480,20 @@ async function submitImport() {
   try {
     const projectId = getProjectId()
     const resp = await importRelationGraph({ project_id: projectId, format: importFormat.value, content: importContent.value })
-    ElMessage.success(`导入完成：新增 ${resp.created || 0}，更新 ${resp.updated || 0}，失败 ${resp.failed || 0}`)
+    ElMessage.success(
+      t('relation_graph_panel.messages.importDone', {
+        created: resp.created || 0,
+        updated: resp.updated || 0,
+        failed: resp.failed || 0,
+      })
+    )
     if ((resp.errors || []).length > 0) {
-      ElMessage.warning(`存在 ${resp.errors?.length} 条错误，请检查输入格式`)
+      ElMessage.warning(t('relation_graph_panel.messages.importErrors', { count: resp.errors?.length }))
     }
     importVisible.value = false
     reload()
   } catch (e: any) {
-    ElMessage.error(e?.message || '导入失败')
+    ElMessage.error(e?.message || t('relation_graph_panel.messages.import_failed'))
   }
 }
 
@@ -487,7 +503,7 @@ async function loadMeta() {
     kindOptions.value = (meta.kinds || []).map((item) => item.kind_cn).filter(Boolean)
     stanceOptions.value = (meta.stances || []).filter(Boolean)
   } catch (e: any) {
-    ElMessage.error(e?.message || '加载关系元数据失败')
+    ElMessage.error(e?.message || t('relation_graph_panel.messages.load_meta_failed'))
   }
 }
 

@@ -1,34 +1,34 @@
 <template>
   <el-dialog
     v-model="visible"
-    title="工作流运行记录"
+    :title="t('workflow.runs.title')"
     width="90%"
     :close-on-click-modal="false"
   >
     <div class="runs-dialog-content">
       <!-- 过滤器 -->
       <div class="filters">
-        <el-select v-model="statusFilter" placeholder="状态筛选" clearable @change="loadRuns" style="width: 150px">
-          <el-option label="全部" value="" />
-          <el-option label="运行中" value="running" />
-          <el-option label="已暂停" value="paused" />
-          <el-option label="已完成" value="succeeded" />
-          <el-option label="失败" value="failed" />
+        <el-select v-model="statusFilter" :placeholder="t('workflow.runs.status_filter')" clearable @change="loadRuns" style="width: 150px">
+          <el-option :label="t('workflow.runs.all')" value="" />
+          <el-option :label="t('workflow.status.running')" value="running" />
+          <el-option :label="t('workflow.status.paused')" value="paused" />
+          <el-option :label="t('workflow.status.succeeded')" value="succeeded" />
+          <el-option :label="t('workflow.status.failed')" value="failed" />
         </el-select>
-        <el-button @click="loadRuns" :icon="Refresh">刷新</el-button>
+        <el-button @click="loadRuns" :icon="Refresh">{{ t('common.refresh') }}</el-button>
       </div>
 
       <!-- 运行列表 -->
       <el-table :data="runs" v-loading="loading" stripe style="margin-top: 10px">
-        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column prop="id" :label="t('workflow.runs.id')" width="60" />
         
-        <el-table-column label="工作流" width="180">
+        <el-table-column :label="t('workflow.runs.workflow')" width="180">
           <template #default="{ row }">
-            {{ row.workflow?.name || `工作流 #${row.workflow_id}` }}
+            {{ row.workflow?.name || t('workflow.runs.workflow_fallback', { id: row.workflow_id }) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="状态" width="100">
+        <el-table-column :label="t('workflow.runs.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)" size="small">
               {{ getStatusLabel(row.status) }}
@@ -36,7 +36,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="进度" width="150">
+        <el-table-column :label="t('workflow.runs.progress')" width="150">
           <template #default="{ row }">
             <el-progress 
               v-if="row.status === 'running' || row.status === 'paused'"
@@ -59,13 +59,13 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="创建时间" width="160">
+        <el-table-column :label="t('workflow.runs.created_at')" width="160">
           <template #default="{ row }">
             {{ formatTime(row.created_at) }}
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" fixed="right" width="320">
+        <el-table-column :label="t('workflow.runs.actions')" fixed="right" width="320">
           <template #default="{ row }">
             <div style="display: flex; gap: 4px; flex-wrap: nowrap;">
               <el-button
@@ -74,7 +74,7 @@
                 :icon="VideoPause"
                 size="small"
               >
-                暂停
+                {{ t('workflow.pause') }}
               </el-button>
 
               <el-button
@@ -84,7 +84,7 @@
                 :icon="VideoPlay"
                 size="small"
               >
-                恢复
+                {{ t('workflow.resume') }}
               </el-button>
 
               <el-button
@@ -92,7 +92,7 @@
                 :icon="List"
                 size="small"
               >
-                状态
+                {{ t('workflow.runs.status') }}
               </el-button>
               
               <el-button
@@ -102,7 +102,7 @@
                 plain
                 size="small"
               >
-                删除
+                {{ t('common.delete') }}
               </el-button>
             </div>
           </template>
@@ -113,26 +113,26 @@
     <!-- 节点状态对话框 -->
     <el-dialog
       v-model="nodeStatusVisible"
-      title="节点执行状态"
+      :title="t('workflow.runs.node_execution_status')"
       width="700px"
       append-to-body
     >
       <el-table :data="nodeStatuses" v-loading="loadingNodeStatus" size="small">
-        <el-table-column prop="node_id" label="节点 ID" width="120" />
-        <el-table-column prop="node_type" label="节点类型" width="150" />
-        <el-table-column label="状态" width="100">
+        <el-table-column prop="node_id" :label="t('workflow.runs.node_id')" width="120" />
+        <el-table-column prop="node_type" :label="t('workflow.runs.node_type')" width="150" />
+        <el-table-column :label="t('workflow.runs.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)" size="small">
               {{ getStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="进度" width="120">
+        <el-table-column :label="t('workflow.runs.progress')" width="120">
           <template #default="{ row }">
             <el-progress :percentage="row.progress" :stroke-width="6" />
           </template>
         </el-table-column>
-        <el-table-column prop="error" label="错误" show-overflow-tooltip />
+        <el-table-column prop="error" :label="t('workflow.errors')" show-overflow-tooltip />
       </el-table>
     </el-dialog>
   </el-dialog>
@@ -140,10 +140,13 @@
 
 <script setup lang="ts">
 import { ref, watch, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, VideoPause, VideoPlay, Close, List, Delete } from '@element-plus/icons-vue'
 import { deleteRun as deleteRunApi } from '@renderer/api/workflows'
 import request from '@renderer/api/request'
+
+const { t } = useI18n()
 
 interface WorkflowRun {
   id: number
@@ -254,7 +257,7 @@ async function loadRuns(silent = false) {
     }
   } catch (error: any) {
     if (!silent) {
-      ElMessage.error(`加载运行列表失败：${error.message || error}`)
+      ElMessage.error(t('workflow_runs.messages.load_runs_failed', { error: error.message || error }))
     }
   } finally {
     if (!silent) {
@@ -291,20 +294,20 @@ function getProgress(runId: number): number {
 async function pauseRun(runId: number) {
   try {
     await request.post(`/workflows/runs/${runId}/pause`, {}, '/api')
-    ElMessage.success('工作流已暂停')
+    ElMessage.success(t('workflow_runs.messages.paused'))
     loadRuns()
   } catch (error: any) {
-    ElMessage.error(`暂停失败：${error.message || error}`)
+    ElMessage.error(t('workflow_runs.messages.pause_failed', { error: error.message || error }))
   }
 }
 
 async function resumeRun(runId: number) {
   try {
     await request.post(`/workflows/runs/${runId}/resume`, {}, '/api')
-    ElMessage.success('工作流已恢复，将从断点继续执行')
+    ElMessage.success(t('workflow_runs.messages.resumed_from_checkpoint'))
     loadRuns()
   } catch (error: any) {
-    ElMessage.error(`恢复失败：${error.message || error}`)
+    ElMessage.error(t('workflow_runs.messages.resume_failed', { error: error.message || error }))
   }
 }
 
@@ -316,24 +319,24 @@ async function resumeRunFromDialog(run: WorkflowRun) {
     // 通知父组件恢复执行
     emit('resume-run', run)
     
-    ElMessage.success('正在恢复工作流执行...')
+    ElMessage.success(t('workflow_runs.messages.resuming'))
   } catch (error: any) {
-    ElMessage.error(`恢复失败：${error.message || error}`)
+    ElMessage.error(t('workflow_runs.messages.resume_failed', { error: error.message || error }))
   }
 }
 
 async function cancelRun(runId: number) {
   try {
-    await ElMessageBox.confirm('确定要取消这个工作流运行吗？', '确认取消', {
+    await ElMessageBox.confirm(t('workflow_runs.messages.confirm_cancel_run'), t('workflow_runs.dialogs.confirm_cancel'), {
       type: 'warning'
     })
 
     await request.post(`/workflows/runs/${runId}/cancel`, {}, '/api')
-    ElMessage.success('工作流已取消')
+    ElMessage.success(t('workflow_runs.messages.cancelled'))
     loadRuns()
   } catch (error: any) {
     if (error !== 'cancel') {
-      ElMessage.error(`取消失败：${error.message || error}`)
+      ElMessage.error(t('workflow_runs.messages.cancel_failed', { error: error.message || error }))
     }
   }
 }
@@ -346,7 +349,7 @@ async function viewNodeStatus(runId: number) {
     const status = await request.get<RunStatusResponse>(`/workflows/runs/${runId}/status`, {}, '/api')
     nodeStatuses.value = status.nodes || []
   } catch (error: any) {
-    ElMessage.error(`加载节点状态失败：${error.message || error}`)
+    ElMessage.error(t('workflow_runs.messages.load_node_status_failed', { error: error.message || error }))
   } finally {
     loadingNodeStatus.value = false
   }
@@ -354,18 +357,18 @@ async function viewNodeStatus(runId: number) {
 
 async function deleteRun(runId: number) {
   try {
-    await ElMessageBox.confirm('确定要删除这条运行记录吗？此操作不可恢复。', '确认删除', {
+    await ElMessageBox.confirm(t('workflow_runs.messages.confirm_delete_run'), t('workflow_runs.dialogs.confirm_delete'), {
       type: 'warning',
-      confirmButtonText: '确定删除',
-      cancelButtonText: '取消'
+      confirmButtonText: t('workflow_runs.actions.confirm_delete'),
+      cancelButtonText: t('common.cancel')
     })
 
     await deleteRunApi(runId)
-    ElMessage.success('运行记录已删除')
+    ElMessage.success(t('workflow_runs.messages.run_deleted'))
     loadRuns()
   } catch (error: any) {
     if (error !== 'cancel') {
-      ElMessage.error(`删除失败：${error.message || error}`)
+      ElMessage.error(t('workflow_runs.messages.delete_failed', { error: error.message || error }))
     }
   }
 }
@@ -387,16 +390,16 @@ function getStatusType(status: string): string {
 
 function getStatusLabel(status: string): string {
   const labelMap: Record<string, string> = {
-    running: '运行中',
-    paused: '已暂停',
-    succeeded: '已完成',
-    failed: '失败',
-    cancelled: '已取消',
-    idle: '空闲',
-    pending: '等待中',
-    success: '成功',
-    error: '错误',
-    skipped: '已跳过'
+    running: t('workflow_runs.status.running'),
+    paused: t('workflow_runs.status.paused'),
+    succeeded: t('workflow_runs.status.succeeded'),
+    failed: t('workflow_runs.status.failed'),
+    cancelled: t('workflow_runs.status.cancelled'),
+    idle: t('workflow_runs.status.idle'),
+    pending: t('workflow_runs.status.pending'),
+    success: t('workflow_runs.status.success'),
+    error: t('workflow_runs.status.error'),
+    skipped: t('workflow_runs.status.skipped')
   }
   return labelMap[status] || status
 }
@@ -410,7 +413,7 @@ function formatTime(time?: string | number): string {
     console.warn('[formatTime] 收到数字类型的时间戳:', time)
     if (time < 100000000) {
       console.error('[formatTime] 时间戳异常小，可能是错误数据')
-      return '数据异常'
+      return t('workflow_runs.time.invalid_data')
     }
     time = time * 1000 // 转换为毫秒
   }
@@ -420,14 +423,14 @@ function formatTime(time?: string | number): string {
   // 检查日期是否有效
   if (isNaN(date.getTime())) {
     console.error('[formatTime] 无效的日期:', time)
-    return '无效日期'
+    return t('workflow_runs.time.invalid_date')
   }
   
   // 检查日期是否在合理范围内（2020-2030）
   const year = date.getFullYear()
   if (year < 2020 || year > 2030) {
     console.error('[formatTime] 日期超出合理范围:', date.toISOString(), '原始值:', time)
-    return '日期异常'
+    return t('workflow_runs.time.abnormal_date')
   }
   
   return date.toLocaleString('zh-CN', {

@@ -10,13 +10,13 @@
           </el-breadcrumb-item>
         </el-breadcrumb>
         <el-tag :type="statusTag.type" size="small">{{ statusTag.label }}</el-tag>
-        <span v-if="lastSavedAt" class="last-saved">上次保存：{{ lastSavedAt }}</span>
+        <span v-if="lastSavedAt" class="last-saved">{{ t('editor_header.last_saved', { value: lastSavedAt }) }}</span>
       </div>
       <div class="right">
         <div class="context-action-combo">
-          <el-tooltip content="打开上下文抽屉（Alt+K）">
+          <el-tooltip :content="t('editor_header.open_context_tooltip')">
             <el-button type="primary" plain class="context-main-button" @click="$emit('open-context')">
-              上下文注入
+              {{ t('editor_header.context_injection') }}
               <el-tag size="small" class="context-slot-tag" :type="getSlotTagType(activeContextTemplateKind)">
                 {{ contextTemplateLabels[activeContextTemplateKind] }}
               </el-tag>
@@ -24,7 +24,7 @@
           </el-tooltip>
           <el-popover v-model:visible="slotPickerVisible" trigger="click" width="220" popper-class="context-slot-popper">
             <template #reference>
-              <el-button type="primary" plain class="context-trigger-button" title="切换上下文槽位">
+              <el-button type="primary" plain class="context-trigger-button" :title="t('editor_header.switch_context_slot')">
                 <el-icon><ArrowDown /></el-icon>
               </el-button>
             </template>
@@ -43,22 +43,22 @@
             </div>
           </el-popover>
         </div>
-        <el-button v-if="!isChapterContent" type="success" plain @click="$emit('generate')">AI 生成</el-button>
-        <el-button 
-          :type="canSaveComputed ? 'primary' : 'info'" 
-          :disabled="!canSaveComputed" 
-          :loading="saving" 
+        <el-button v-if="!isChapterContent" type="success" plain @click="$emit('generate')">{{ t('editor_header.ai_generate') }}</el-button>
+        <el-button
+          :type="canSaveComputed ? 'primary' : 'info'"
+          :disabled="!canSaveComputed"
+          :loading="saving"
           :class="{ 'needs-confirmation-btn': needsConfirmation }"
           @click="$emit('save')"
         >
-          {{ needsConfirmation ? '确认并保存' : '保存' }}
+          {{ needsConfirmation ? t('editor_header.confirm_and_save') : t('common.save') }}
         </el-button>
         <el-dropdown>
-          <el-button text>更多</el-button>
+          <el-button text>{{ t('editor_header.more') }}</el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item @click="$emit('open-versions')">历史版本</el-dropdown-item>
-              <el-dropdown-item divided type="danger" @click="$emit('delete')">删除</el-dropdown-item>
+              <el-dropdown-item @click="$emit('open-versions')">{{ t('editor_header.history_versions') }}</el-dropdown-item>
+              <el-dropdown-item divided type="danger" @click="$emit('delete')">{{ t('common.delete') }}</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -71,6 +71,9 @@
 import { computed, watch, ref } from 'vue'
 import { ArrowDown, Select } from '@element-plus/icons-vue'
 import { CONTEXT_TEMPLATE_LABELS, type ContextTemplateKind } from '@renderer/services/contextSlots'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   projectName?: string
@@ -81,31 +84,30 @@ const props = defineProps<{
   lastSavedAt?: string
   canSave?: boolean
   isChapterContent?: boolean
-  needsConfirmation?: boolean  // AI 修改需要确认
+  needsConfirmation?: boolean
   activeContextTemplateKind?: ContextTemplateKind
 }>()
 
-// 计算是否可以保存：如果需要确认，即使没有修改也可以保存
 const canSaveComputed = computed(() => {
   if (props.needsConfirmation) return !props.saving
   return props.canSave
 })
 
-const emit = defineEmits(['update:title','save','generate','open-versions','delete','open-context','update:active-context-template-kind'])
+const emit = defineEmits(['update:title', 'save', 'generate', 'open-versions', 'delete', 'open-context', 'update:active-context-template-kind'])
 const slotPickerVisible = ref(false)
 const contextTemplateKinds: ContextTemplateKind[] = ['generation', 'review']
 const contextTemplateLabels = CONTEXT_TEMPLATE_LABELS
 const activeContextTemplateKind = computed<ContextTemplateKind>(() => props.activeContextTemplateKind || 'generation')
 
 const titleProxy = ref(props.title)
-watch(() => props.title, v => titleProxy.value = v)
-watch(titleProxy, v => emit('update:title', v))
+watch(() => props.title, value => (titleProxy.value = value))
+watch(titleProxy, value => emit('update:title', value))
 
 const statusTag = computed(() => {
-  if (props.needsConfirmation) return { type: 'warning', label: 'AI 已修改' }
-  if (props.saving) return { type: 'warning', label: '保存中' }
-  if (props.dirty) return { type: 'info', label: '未保存' }
-  return { type: 'success', label: '已保存' }
+  if (props.needsConfirmation) return { type: 'warning', label: t('editor_header.status.ai_modified') }
+  if (props.saving) return { type: 'warning', label: t('editor_header.status.saving') }
+  if (props.dirty) return { type: 'info', label: t('editor_header.status.unsaved') }
+  return { type: 'success', label: t('editor_header.status.saved') }
 })
 
 function selectContextTemplateKind(kind: ContextTemplateKind) {
@@ -126,35 +128,32 @@ function getSlotTagType(kind: ContextTemplateKind): 'success' | 'warning' | 'inf
 </script>
 
 <style scoped>
-.editor-header { 
-  flex-shrink: 0; /* 固定：防止被压缩 */
+.editor-header {
+  flex-shrink: 0;
 }
 
 .header-main {
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 8px 12px; 
-  border-bottom: 1px solid var(--el-border-color-light); 
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--el-border-color-light);
   background: var(--el-bg-color);
 }
 
 .left { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .context-action-combo { display: inline-flex; align-items: stretch; }
-.context-main-button { 
-  border-top-right-radius: 0; 
-  border-bottom-right-radius: 0; 
+.context-main-button {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.context-slot-tag {
-  margin-left: 4px;
-  font-weight: 500;
-}
+.context-slot-tag { margin-left: 4px; font-weight: 500; }
 .context-trigger-button { margin-left: -1px; border-top-left-radius: 0; border-bottom-left-radius: 0; padding-inline: 9px; }
 .slot-picker-panel { display: flex; flex-direction: column; gap: 6px; }
 .slot-picker-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; border: 1px solid var(--el-border-color-light); border-radius: 8px; background: var(--el-fill-color-blank); padding: 8px 10px; cursor: pointer; color: var(--el-text-color-primary); }
@@ -172,4 +171,4 @@ function getSlotTagType(kind: ContextTemplateKind): 'success' | 'warning' | 'inf
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
 }
-</style> 
+</style>

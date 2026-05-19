@@ -3,24 +3,24 @@
     <div class="panel-header">
       <div class="header-title-row">
         <div class="title-area">
-          <span class="main-title">灵感助手</span>
+          <span class="main-title">{{ t('assistant.title') }}</span>
           <span class="session-subtitle">{{ currentSession.title }}</span>
         </div>
         <div class="spacer"></div>
-        <el-tooltip content="新增对话" placement="bottom">
+        <el-tooltip :content="t('assistant.new_chat')" placement="bottom">
           <el-button :icon="Plus" size="small" circle @click="createNewSession" />
         </el-tooltip>
-        <el-tooltip content="历史对话" placement="bottom">
+        <el-tooltip :content="t('assistant.chat_history')" placement="bottom">
           <el-button :icon="Clock" size="small" circle @click="historyDrawerVisible = true" />
         </el-tooltip>
       </div>
       <div class="header-controls-row">
         <el-tag v-if="currentCardTitle" size="small" type="info" class="card-tag" effect="plain">{{ currentCardTitle }}</el-tag>
         <div class="spacer"></div>
-        <el-button size="small" @click="$emit('refresh-context')">刷新上下文</el-button>
+        <el-button size="small" @click="$emit('refresh-context')">{{ t('assistant.refresh_context') }}</el-button>
         <el-popover placement="bottom" width="480" trigger="hover">
           <template #reference>
-            <el-tag type="info" class="ctx-tag" size="small">预览</el-tag>
+            <el-tag type="info" class="ctx-tag" size="small">{{ t('assistant.preview') }}</el-tag>
           </template>
           <pre class="ctx-preview">{{ (resolvedContext || '') }}</pre>
         </el-popover>
@@ -32,7 +32,7 @@
         ref="messageListRef"
         :messages="messages"
         :streaming="isStreaming"
-        empty-description="请输入你的需求，我会先给出建议。"
+        :empty-description="t('assistant.empty_description')"
         :jump-project-id="projectStore.currentProject?.id || null"
         :show-assistant-actions="true"
         :assistant-actions-latest-only="false"
@@ -44,7 +44,7 @@
         @copy-user="payload => handleCopyUserAt(payload.index)"
         @delete-user="payload => handleDeleteUserAt(payload.index)"
       />
-      <div v-if="isStreaming" class="streaming-tip">正在生成中…</div>
+      <div v-if="isStreaming" class="streaming-tip">{{ t('assistant.generating') }}</div>
     </div>
 
     <div class="composer">
@@ -79,7 +79,7 @@
                   size="small" 
                   text
                   class="more-refs-btn"
-                  :title="`共 ${assistantStore.injectedRefs.length} 个引用卡片`"
+                  :title="t('assistant.refs_total_title', { count: assistantStore.injectedRefs.length })"
                 >
                   <span class="more-refs-dots">...</span>
                   <span class="more-refs-count">({{ assistantStore.injectedRefs.length }})</span>
@@ -89,8 +89,8 @@
               <!-- Popover 内容 -->
               <div class="more-refs-popover">
                 <div class="popover-header">
-                  <span>引用卡片</span>
-                  <span class="popover-count">{{ assistantStore.injectedRefs.length }} 个</span>
+                  <span>{{ t('assistant.referenced_cards') }}</span>
+                  <span class="popover-count">{{ t('assistant.count_unit', { count: assistantStore.injectedRefs.length }) }}</span>
                 </div>
                 <div class="more-refs-list">
                   <div 
@@ -107,7 +107,7 @@
                       size="small" 
                       text 
                       @click="removeInjectedRef(idx)"
-                      title="删除引用"
+                      :title="t('assistant.remove_reference')"
                     />
                   </div>
                 </div>
@@ -116,11 +116,11 @@
           </div>
         </div>
         
-        <el-button size="small" :icon="Plus" @click="openInjectSelector" class="add-ref-btn">添加引用</el-button>
+        <el-button size="small" :icon="Plus" @click="openInjectSelector" class="add-ref-btn">{{ t('assistant.add_reference') }}</el-button>
       </div>
       
       <div class="composer-subbar">
-        <el-select v-model="overrideLlmId" placeholder="选择模型" size="small" style="width: 200px">
+        <el-select v-model="overrideLlmId" :placeholder="t('assistant.select_model')" size="small" style="width: 200px">
           <el-option v-for="m in llmOptions" :key="m.id" :label="(m.display_name || m.model_name)" :value="m.id" />
         </el-select>
       </div>
@@ -128,14 +128,14 @@
       <AgentComposer
         v-model="draft"
         :rows="4"
-        placeholder="输入你的想法、约束或追问"
+        :placeholder="t('assistant.input_placeholder')"
         :disabled="isStreaming"
         input-class="composer-input"
         @keydown="handleComposerEnter"
       >
         <template #actions>
           <div class="composer-actions">
-            <el-tooltip content="Thinking：启用推理/思考模式（确保模型支持开启/关闭思考）" placement="top">
+            <el-tooltip :content="t('assistant.thinking_tooltip')" placement="top">
               <el-switch 
                 v-model="useThinkingMode" 
                 size="small"
@@ -157,38 +157,38 @@
     </div>
 
     <!-- 选择器对话框 -->
-    <el-dialog v-model="selectorVisible" title="添加引用卡片" width="760px">
+    <el-dialog v-model="selectorVisible" :title="t('assistant.add_reference_card')" width="760px">
       <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
-        <el-select v-model="selectorSourcePid" placeholder="来源项目" style="width: 260px" @change="onSelectorProjectChange($event as any)">
+        <el-select v-model="selectorSourcePid" :placeholder="t('assistant.source_project')" style="width: 260px" @change="onSelectorProjectChange($event as any)">
           <el-option v-for="p in assistantStore.projects" :key="p.id" :label="p.name" :value="p.id" />
         </el-select>
-        <el-input v-model="selectorSearch" placeholder="搜索标题..." clearable style="flex:1" />
+        <el-input v-model="selectorSearch" :placeholder="t('assistant.search_title_placeholder')" clearable style="flex:1" />
       </div>
       <el-tree :data="selectorTreeData" :props="{ label: 'label', children: 'children' }" node-key="key" show-checkbox highlight-current :default-expand-all="false" :check-strictly="false" @check="onTreeCheck" style="max-height:360px; overflow:auto; border:1px solid var(--el-border-color-light); padding:8px; border-radius:6px;" />
       <template #footer>
-        <el-button @click="selectorVisible = false">取消</el-button>
-        <el-button type="primary" :disabled="!selectorSelectedIds.length || !selectorSourcePid" @click="confirmAddInjectedRefs">添加</el-button>
+        <el-button @click="selectorVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :disabled="!selectorSelectedIds.length || !selectorSourcePid" @click="confirmAddInjectedRefs">{{ t('common.add') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 历史对话抽屉 -->
     <el-drawer
       v-model="historyDrawerVisible"
-      title="历史对话"
+      :title="t('assistant.chat_history')"
       direction="rtl"
       size="320px"
     >
       <div class="history-drawer-content">
         <div class="history-actions">
           <el-button type="primary" :icon="Plus" @click="createNewSession" style="width: 100%;">
-            新增对话
+            {{ t('assistant.new_chat') }}
           </el-button>
         </div>
 
         <el-divider />
 
         <div v-if="!historySessions.length" class="empty-history">
-          <el-empty description="暂无历史对话" :image-size="80" />
+          <el-empty :description="t('assistant.no_chat_history')" :image-size="80" />
         </div>
 
         <div v-else class="history-list">
@@ -225,6 +225,7 @@ import { generateContinuationStreaming, renderPromptWithKnowledge } from '@rende
 import { listLLMConfigs, type LLMConfigRead } from '@renderer/api/setting'
 import { Plus, Promotion, ChatDotRound, Delete, Clock, Document, Close, VideoPause } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import AgentMessageList from '@/components/shared/AgentMessageList.vue'
 import AgentComposer from '@/components/shared/AgentComposer.vue'
 import { useAssistantStore } from '@renderer/stores/useAssistantStore'
@@ -243,6 +244,7 @@ import type { AssistantRef } from '@renderer/api/ai'
 
 const props = defineProps<{ resolvedContext: string; llmConfigId?: number | null; promptName?: string | null; temperature?: number | null; max_tokens?: number | null; timeout?: number | null; effectiveSchema?: any; generationPromptName?: string | null; currentCardTitle?: string | null; currentCardContent?: any }>()
 const emit = defineEmits<{ 'finalize': [string]; 'refresh-context': []; 'reset-selection': []; 'jump-to-card': [{ projectId: number; cardId: number }] }>()
+const { t } = useI18n()
 const messages = ref<AssistantPanelMessage[]>([])
 const draft = ref('')
 const isStreaming = ref(false)
@@ -341,7 +343,7 @@ const canSend = computed(() => {
   return !!effectiveLlmId.value && (hasDraft || hasRefs)
 })
 const sendButtonType = computed(() => (isStreaming.value ? 'danger' : 'primary'))
-const sendButtonTitle = computed(() => (isStreaming.value ? '中止生成' : '发送'))
+const sendButtonTitle = computed(() => (isStreaming.value ? t('assistant.abort_generation') : t('assistant.send')))
 const sendButtonIcon = computed(() => (isStreaming.value ? VideoPause : Promotion))
 
 const assistantPrefs = useAssistantPreferences()
@@ -375,9 +377,9 @@ function getRefKey(ref: AssistantRef): string {
 function getRefLabel(ref: AssistantRef): string {
   if (ref.refType === 'card') return `${ref.projectName} / ${ref.cardTitle}`
   if (ref.refType === 'chapter_excerpt') {
-    return `${ref.projectName} / ${ref.cardTitle} [${ref.startLine}-${ref.endLine}行]`
+    return t('assistant.chapter_excerpt_label', { project: ref.projectName, card: ref.cardTitle, start: ref.startLine, end: ref.endLine })
   }
-  return `审核结果 / ${ref.targetTitle}`
+  return t('assistant.review_result_label', { title: ref.targetTitle })
 }
 
 const { buildConversationText, buildAssistantChatRequest } = useAssistantRequestBuilder({
@@ -408,14 +410,14 @@ async function startStreaming(targetIdx: number) {
       }
     } catch (error) {
       console.error('Failed to persist active chapter draft before assistant run:', error)
-      ElMessage.error('正文保存失败，请先保存章节后重试')
+      ElMessage.error(t('assistant.messages.save_body_failed_first'))
       isStreaming.value = false
       return
     }
   }
 
   const chatRequest = buildAssistantChatRequest()
-  const promptName = (props.promptName && props.promptName.trim()) ? props.promptName : '灵感对话'
+  const promptName = (props.promptName && props.promptName.trim()) ? props.promptName : t('assistant.default_prompt')
 
   streamCtl = generateContinuationStreaming({
     ...chatRequest,
@@ -455,7 +457,7 @@ async function startStreaming(targetIdx: number) {
     if (messages.value[targetIdx]) {
       messages.value[targetIdx].toolsInProgress = undefined
     }
-    ElMessage.error(err?.message || '生成失败')
+    ElMessage.error(err?.message || t('assistant.messages.generation_failed'))
     isStreaming.value = false
     streamCtl = null 
   }) as any
@@ -504,9 +506,9 @@ function handleCopyAssistantAt(index: number) {
   if (!text) return
 
   navigator.clipboard.writeText(text).then(() => {
-    ElMessage.success('已复制')
+    ElMessage.success(t('assistant.messages.copied'))
   }).catch(() => {
-    ElMessage.error('复制失败')
+    ElMessage.error(t('assistant.messages.copy_failed'))
   })
 }
 
@@ -517,9 +519,9 @@ function handleCopyUserAt(index: number) {
   if (!text) return
 
   navigator.clipboard.writeText(text).then(() => {
-    ElMessage.success('已复制')
+    ElMessage.success(t('assistant.messages.copied'))
   }).catch(() => {
-    ElMessage.error('复制失败')
+    ElMessage.error(t('assistant.messages.copy_failed'))
   })
 }
 
@@ -543,7 +545,7 @@ function handleDeleteAssistantAt(index: number) {
   if (messages.value[index]?.role !== 'assistant') return
 
   deleteMessageAt(index)
-  ElMessage.success('已删除该回复')
+  ElMessage.success(t('assistant.messages.reply_deleted'))
 }
 
 function handleDeleteUserAt(index: number) {
@@ -552,7 +554,7 @@ function handleDeleteUserAt(index: number) {
   if (messages.value[index]?.role !== 'user') return
 
   deleteMessageAt(index)
-  ElMessage.success('已删除该消息')
+  ElMessage.success(t('assistant.messages.message_deleted'))
 }
 
 function deleteMessageAt(index: number) {
@@ -686,7 +688,7 @@ function handleToolsExecuted(targetIdx: number, tools: Array<{tool_name: string,
   // 显示通知
   const successTools = tools.filter(t => t.result?.success)
   if (successTools.length > 0) {
-    ElMessage.success(`✅ 已执行 ${successTools.length} 个操作`)
+    ElMessage.success(t('assistant.messages.tools_executed', { count: successTools.length }))
   }
 }
 

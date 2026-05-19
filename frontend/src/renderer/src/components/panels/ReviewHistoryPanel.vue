@@ -4,7 +4,7 @@
       <div v-loading="loading" class="panel-body">
         <el-empty
           v-if="!loading && reviews.length === 0"
-          description="当前卡片暂无审核结果卡片"
+          :description="t('review_history.empty')"
           :image-size="80"
         />
 
@@ -41,13 +41,13 @@
                 <span class="review-time">{{ formatTime(row.reviewed_at) }}</span>
                 <div class="review-actions">
                   <el-button size="small" plain type="success" class="review-action-button" @click="addToAssistant(row)">
-                    引用助手
+                    {{ t('review_history.addAssistant') }}
                   </el-button>
                   <el-button size="small" plain type="primary" class="review-action-button" @click="openDetail(row)">
-                    详情
+                    {{ t('common.details') }}
                   </el-button>
                   <el-button size="small" plain type="danger" class="review-action-button" @click="handleDelete(row)">
-                    删除
+                    {{ t('common.delete') }}
                   </el-button>
                 </div>
               </div>
@@ -59,14 +59,14 @@
 
     <template v-else>
       <div class="panel-toolbar detail-toolbar">
-        <el-button size="small" @click="backToList">返回</el-button>
+        <el-button size="small" @click="backToList">{{ t('common.back') }}</el-button>
         <el-button
           size="small"
           type="success"
           plain
           @click="addToAssistant(selectedReview)"
         >
-          引用到灵感助手
+          {{ t('review_history.addToAssistant') }}
         </el-button>
       </div>
 
@@ -92,15 +92,15 @@
               {{ selectedReview.review_target_field }}
             </el-tag>
             <span class="review-score">
-              更新于 {{ formatTime(selectedReview.reviewed_at) }}
+              {{ t('review_history.updatedAt') }} {{ formatTime(selectedReview.reviewed_at) }}
             </span>
           </div>
-          <p class="review-summary">该卡片展示当前最新审核结果，并与被审核卡片保持绑定。</p>
+          <p class="review-summary">{{ t('review_history.summary') }}</p>
         </div>
 
         <div class="review-text-block">
           <SimpleMarkdown
-            :markdown="selectedReview.review_markdown || '（暂无内容）'"
+            :markdown="selectedReview.review_markdown || t('review_history.noContent')"
             class="review-markdown"
           />
         </div>
@@ -111,6 +111,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import SimpleMarkdown from '../common/SimpleMarkdown.vue'
 import {
@@ -122,6 +123,7 @@ import {
 const props = defineProps<{
   targetCardId?: number | null
 }>()
+const { t } = useI18n()
 
 const loading = ref(false)
 const reviews = ref<ReviewResultCard[]>([])
@@ -130,11 +132,11 @@ const selectedReview = ref<ReviewResultCard | null>(null)
 function formatVerdict(verdict?: string | null): string {
   switch (verdict) {
     case 'pass':
-      return '基本通过'
+      return t('review_history.verdict.pass')
     case 'block':
-      return '高风险拦截'
+      return t('review_history.verdict.block')
     default:
-      return '建议修改'
+      return t('review_history.verdict.revise')
   }
 }
 
@@ -152,15 +154,15 @@ function getVerdictTagType(verdict?: string | null): 'success' | 'warning' | 'da
 function formatReviewType(type?: string | null): string {
   switch (type) {
     case 'chapter':
-      return '章节审核'
+      return t('review_history.types.chapter')
     case 'stage':
-      return '阶段审核'
+      return t('review_history.types.stage')
     case 'card':
-      return '通用卡片审核'
+      return t('review_history.types.card')
     case 'custom':
-      return '自定义审核'
+      return t('review_history.types.custom')
     default:
-      return '审核'
+      return t('review_history.types.default')
   }
 }
 
@@ -208,7 +210,7 @@ function addToAssistant(item: ReviewResultCard) {
         projectId: item.project_id,
         reviewCardId: item.card_id,
         targetId: item.review_target_card_id,
-        targetTitle: item.review_target_title || '未命名目标',
+        targetTitle: item.review_target_title || t('review_history.untitledTarget'),
         reviewType: item.review_type,
         reviewProfile: item.review_profile || null,
         qualityGate: item.quality_gate,
@@ -218,7 +220,7 @@ function addToAssistant(item: ReviewResultCard) {
       },
     },
   }))
-  ElMessage.success('已将审核结果卡片引用到灵感助手')
+  ElMessage.success(t('review_history.messages.addedToAssistant'))
 }
 
 async function loadReviews() {
@@ -232,7 +234,7 @@ async function loadReviews() {
     reviews.value = await listTargetReviewCards(props.targetCardId)
   } catch (error) {
     console.error('Failed to load review result cards:', error)
-    ElMessage.error('加载审核结果卡片失败')
+    ElMessage.error(t('review_history.messages.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -241,8 +243,8 @@ async function loadReviews() {
 async function handleDelete(item: ReviewResultCard) {
   try {
     await ElMessageBox.confirm(
-      `确认删除审核结果卡片「${item.title}」吗？此操作不可恢复。`,
-      '删除确认',
+      t('review_history.messages.confirmDelete', { title: item.title }),
+      t('review_history.messages.deleteConfirmTitle'),
       { type: 'warning' }
     )
   } catch {
@@ -255,7 +257,7 @@ async function handleDelete(item: ReviewResultCard) {
       selectedReview.value = null
     }
     reviews.value = reviews.value.filter(review => review.card_id !== item.card_id)
-    ElMessage.success('审核结果卡片已删除')
+    ElMessage.success(t('review_history.messages.deleted'))
   } catch (error) {
     console.error('Failed to delete review result card:', error)
   }

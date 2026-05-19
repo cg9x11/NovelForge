@@ -6,11 +6,13 @@ import { useAppStore } from '@renderer/stores/useAppStore'
 import { useProjectStore } from '@renderer/stores/useProjectStore'
 import { useUpdateStore } from '@renderer/stores/useUpdateStore'
 import KnowledgeManager from '../setting/KnowledgeManager.vue'
+import { useI18n } from 'vue-i18n'
 
 const appStore = useAppStore()
 const projectStore = useProjectStore()
 const updateStore = useUpdateStore()
 const { currentView, isDarkMode } = storeToRefs(appStore)
+const { t } = useI18n()
 
 function toggleTheme() {
   appStore.toggleTheme()
@@ -49,14 +51,14 @@ function openIdeasWorkbench() {
       <span class="logo-text">Novel Forge</span>
     </div>
     <div class="actions-container">
-      <el-button type="primary" title="灵感工作台" @click="openIdeasWorkbench">
+      <el-button type="primary" :title="t('header.ideas')" @click="openIdeasWorkbench">
         <el-icon><Document /></el-icon>
-        <span style="margin-left:6px;">灵感</span>
+        <span style="margin-left:6px;">{{ t('header.ideas') }}</span>
       </el-button>
-      <el-button type="primary" plain title="工作流" @click="openWorkflowManager">工作流</el-button>
-      <el-button :icon="isDarkMode ? Moon : Sunny" @click="toggleTheme" circle title="切换主题" />
+      <el-button type="primary" plain :title="t('header.workflow')" @click="openWorkflowManager">{{ t('header.workflow') }}</el-button>
+      <el-button :icon="isDarkMode ? Moon : Sunny" @click="toggleTheme" circle :title="t('header.toggle_theme')" />
       <el-badge :is-dot="updateStore.hasUpdate" type="warning">
-        <el-button :icon="Setting" @click="openSettingsDialog" circle title="设置" />
+        <el-button :icon="Setting" @click="openSettingsDialog" circle :title="t('header.settings')" />
       </el-badge>
     </div>
   </header>

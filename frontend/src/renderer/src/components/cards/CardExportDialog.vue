@@ -1,16 +1,16 @@
 <template>
-  <el-dialog v-model="visible" title="导出项目卡片" width="560px" destroy-on-close>
+  <el-dialog v-model="visible" :title="t('card_export.title')" width="560px" destroy-on-close>
     <el-form label-position="top">
-      <el-form-item label="导出范围">
+      <el-form-item :label="t('card_export.scope')">
         <el-radio-group v-model="scope">
-          <el-radio value="all">全部卡片</el-radio>
-          <el-radio value="single">单个卡片</el-radio>
-          <el-radio value="type">按类型</el-radio>
+          <el-radio value="all">{{ t('card_export.scope_all') }}</el-radio>
+          <el-radio value="single">{{ t('card_export.scope_single') }}</el-radio>
+          <el-radio value="type">{{ t('card_export.scope_type') }}</el-radio>
         </el-radio-group>
       </el-form-item>
 
-      <el-form-item v-if="scope === 'single'" label="选择卡片">
-        <el-select v-model="selectedCardId" placeholder="请选择卡片" filterable style="width: 100%">
+      <el-form-item v-if="scope === 'single'" :label="t('card_export.select_card')">
+        <el-select v-model="selectedCardId" :placeholder="t('card_export.select_card_placeholder')" filterable style="width: 100%">
           <el-option
             v-for="card in cards"
             :key="card.id"
@@ -20,8 +20,8 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item v-if="scope === 'type'" label="选择卡片类型">
-        <el-select v-model="selectedTypeId" placeholder="请选择类型" style="width: 100%">
+      <el-form-item v-if="scope === 'type'" :label="t('card_export.select_card_type')">
+        <el-select v-model="selectedTypeId" :placeholder="t('card_export.select_type_placeholder')" style="width: 100%">
           <el-option
             v-for="type in cardTypes"
             :key="type.id"
@@ -31,11 +31,11 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="导出格式">
+      <el-form-item :label="t('card_export.format')">
         <el-select v-model="format" style="width: 100%">
-          <el-option label="TXT 文本 (.txt)" value="txt" />
-          <el-option label="Markdown (.md)" value="md" />
-          <el-option label="JSON 数据 (.json)" value="json" />
+          <el-option :label="t('card_export.format_txt')" value="txt" />
+          <el-option :label="t('card_export.format_md')" value="md" />
+          <el-option :label="t('card_export.format_json')" value="json" />
         </el-select>
       </el-form-item>
     </el-form>
@@ -43,9 +43,9 @@
     <el-alert :title="summaryText" type="info" :closable="false" show-icon />
 
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
+      <el-button @click="visible = false">{{ t('common.cancel') }}</el-button>
       <el-button type="primary" :loading="exporting" :disabled="!canExport" @click="handleExport">
-        导出
+        {{ t('card_export.export') }}
       </el-button>
     </template>
   </el-dialog>
@@ -56,9 +56,12 @@ import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { exportCardsForProject, type CardExportFormat, type CardExportScope } from '@renderer/api/cards'
 import type { components } from '@renderer/types/generated'
+import { useI18n } from 'vue-i18n'
 
 type CardRead = components['schemas']['CardRead']
 type CardTypeRead = components['schemas']['CardTypeRead']
+
+const { t } = useI18n()
 
 const props = defineProps<{
   modelValue: boolean
@@ -75,7 +78,7 @@ const emit = defineEmits<{
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (value: boolean) => emit('update:modelValue', value)
+  set: (value: boolean) => emit('update:modelValue', value),
 })
 
 const scope = ref<CardExportScope>('all')
@@ -87,9 +90,9 @@ const exporting = ref(false)
 const filteredCards = computed<CardRead[]>(() => {
   if (scope.value === 'all') return props.cards
   if (scope.value === 'single') {
-    return props.cards.filter((card) => card.id === selectedCardId.value)
+    return props.cards.filter(card => card.id === selectedCardId.value)
   }
-  return props.cards.filter((card) => card.card_type_id === selectedTypeId.value)
+  return props.cards.filter(card => card.card_type_id === selectedTypeId.value)
 })
 
 const canExport = computed(() => {
@@ -100,20 +103,20 @@ const canExport = computed(() => {
 })
 
 const summaryText = computed(() => {
-  if (filteredCards.value.length === 0) return '当前条件下没有可导出的卡片。'
-  return `将导出 ${filteredCards.value.length} 张卡片，格式为 ${format.value.toUpperCase()}。`
+  if (filteredCards.value.length === 0) return t('card_export.no_cards_match')
+  return t('card_export.summary', { count: filteredCards.value.length, format: format.value.toUpperCase() })
 })
 
 watch(
   () => props.modelValue,
-  (isVisible) => {
+  isVisible => {
     if (!isVisible) return
 
     format.value = 'txt'
     selectedCardId.value = null
     selectedTypeId.value = null
 
-    if (props.initialCardId && props.cards.some((card) => card.id === props.initialCardId)) {
+    if (props.initialCardId && props.cards.some(card => card.id === props.initialCardId)) {
       scope.value = 'single'
       selectedCardId.value = props.initialCardId
     } else {
@@ -130,7 +133,7 @@ watch(
   { immediate: true }
 )
 
-watch(scope, (newScope) => {
+watch(scope, newScope => {
   if (newScope === 'single' && selectedCardId.value == null && props.cards.length > 0) {
     selectedCardId.value = props.cards[0].id!
   }
@@ -169,7 +172,7 @@ async function handleExport() {
 
   const payload: any = {
     scope: scope.value,
-    format: format.value
+    format: format.value,
   }
   if (scope.value === 'single') payload.card_id = selectedCardId.value
   if (scope.value === 'type') payload.card_type_id = selectedTypeId.value
@@ -179,10 +182,10 @@ async function handleExport() {
     const response = await exportCardsForProject(props.projectId, payload)
     const filename = response.filename || buildFallbackFilename()
     triggerDownload(response.blob, filename)
-    ElMessage.success(`导出成功，共 ${filteredCards.value.length} 张卡片`)
+    ElMessage.success(t('card_export.messages.export_success', { count: filteredCards.value.length }))
     visible.value = false
   } catch (error) {
-    console.error('导出失败:', error)
+    console.error('export failed:', error)
   } finally {
     exporting.value = false
   }

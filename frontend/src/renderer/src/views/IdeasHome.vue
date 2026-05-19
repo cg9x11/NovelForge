@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import { useProjectStore } from '@renderer/stores/useProjectStore'
 import { useCardStore } from '@renderer/stores/useCardStore'
 import { getProjects } from '@renderer/api/projects'
@@ -12,6 +13,7 @@ const { currentProject } = storeToRefs(projectStore)
 
 const cardStore = useCardStore()
 const { cardTree } = storeToRefs(cardStore)
+const { t } = useI18n()
 
 onMounted(async () => {
   // 若未加载或不是保留项目，则加载保留项目
@@ -107,7 +109,7 @@ async function confirmTransfer() {
   <div class="ideas-home">
     <div class="topbar" v-if="currentProject">
       <div class="left">
-        <el-button size="small" @click="openTransferDialog">移动/复制到项目</el-button>
+        <el-button size="small" @click="openTransferDialog">{{ t('ideas_home.transferToProject') }}</el-button>
       </div>
       <div class="right"></div>
     </div>
@@ -120,31 +122,31 @@ async function confirmTransfer() {
 
     
 
-    <el-dialog v-model="transferDialog" title="移动/复制到项目" width="760px" class="nf-transfer-dialog">
+    <el-dialog v-model="transferDialog" :title="t('ideas_home.transferDialogTitle')" width="760px" class="nf-transfer-dialog">
       <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
         <el-radio-group v-model="transferOp" size="small">
-          <el-radio-button label="copy">复制</el-radio-button>
-          <el-radio-button label="move">移动</el-radio-button>
+          <el-radio-button label="copy">{{ t('ideas_home.copy') }}</el-radio-button>
+          <el-radio-button label="move">{{ t('ideas_home.move') }}</el-radio-button>
         </el-radio-group>
-        <el-select v-model="targetProjectId" placeholder="目标项目" style="width: 240px" @change="onTargetProjectChange($event as any)">
+        <el-select v-model="targetProjectId" :placeholder="t('ideas_home.targetProject')" style="width: 240px" @change="onTargetProjectChange($event as any)">
           <el-option v-for="p in projectOptions" :key="p.id" :label="p.name" :value="p.id" />
         </el-select>
-        <el-tree-select v-model="targetParentId" :data="targetProjectCards" :props="treeSelectProps" check-strictly clearable :render-after-expand="false" placeholder="目标父级（可选）" style="width: 280px" />
-        <el-input v-model="transferSearch" placeholder="搜索自由卡标题..." clearable style="flex:1" />
+        <el-tree-select v-model="targetParentId" :data="targetProjectCards" :props="treeSelectProps" check-strictly clearable :render-after-expand="false" :placeholder="t('ideas_home.targetParentOptional')" style="width: 280px" />
+        <el-input v-model="transferSearch" :placeholder="t('ideas_home.searchFreeCard')" clearable style="flex:1" />
       </div>
       <el-table :data="filteredFreeCards" height="360px" border @selection-change="(rows:any[])=>selectedIds = rows.map(r=>r.id)">
         <el-table-column type="selection" width="48" />
-        <el-table-column prop="title" label="标题" min-width="220" />
-        <el-table-column label="类型" min-width="160">
+        <el-table-column prop="title" :label="t('ideas_home.columns.title')" min-width="220" />
+        <el-table-column :label="t('ideas_home.columns.type')" min-width="160">
           <template #default="{ row }">{{ row.card_type?.name }}</template>
         </el-table-column>
-        <el-table-column label="创建时间" min-width="180">
+        <el-table-column :label="t('ideas_home.columns.createdAt')" min-width="180">
           <template #default="{ row }">{{ (row as any).created_at }}</template>
         </el-table-column>
       </el-table>
       <template #footer>
-        <el-button @click="transferDialog = false">取消</el-button>
-        <el-button type="primary" :disabled="!selectedIds.length || !targetProjectId" @click="confirmTransfer">确定</el-button>
+        <el-button @click="transferDialog = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :disabled="!selectedIds.length || !targetProjectId" @click="confirmTransfer">{{ t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>

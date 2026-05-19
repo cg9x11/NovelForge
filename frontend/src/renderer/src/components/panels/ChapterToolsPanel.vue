@@ -1,52 +1,26 @@
 <template>
 	<div class="chapter-tools-panel">
 		<div class="panel-toolbar">
-			<el-popover
-				v-model:visible="settingsVisible"
-				placement="bottom-end"
-				trigger="click"
-				:width="360"
-				@show="syncEditingConfigFromSaved"
-			>
+			<el-popover v-model:visible="settingsVisible" placement="bottom-end" trigger="click" :width="360" @show="syncEditingConfigFromSaved">
 				<template #reference>
 					<el-button class="config-trigger" type="primary" plain>
-						<template #icon>
-							<el-icon><Setting /></el-icon>
-						</template>
-						模型：{{ selectedModelName || '未设置' }}
+						<template #icon><el-icon><Setting /></el-icon></template>
+						{{ t('chapter_tools.modelLabel') }}?{{ selectedModelName || t('chapter_tools.notSet') }}
 					</el-button>
 				</template>
-
 				<el-form label-width="96px" size="small" class="config-form">
-					<el-form-item label="模型">
-						<el-select
-							v-model="editingConfig.llm_config_id"
-							placeholder="选择模型"
-							filterable
-							style="width: 100%;"
-							:teleported="false"
-						>
-							<el-option
-								v-for="llm in llmConfigs"
-								:key="llm.id"
-								:label="llm.display_name"
-								:value="Number(llm.id)"
-							/>
+					<el-form-item :label="t('chapter_tools.model')">
+						<el-select v-model="editingConfig.llm_config_id" :placeholder="t('chapter_tools.selectModel')" filterable style="width: 100%;" :teleported="false">
+							<el-option v-for="llm in llmConfigs" :key="llm.id" :label="llm.display_name" :value="Number(llm.id)"/>
 						</el-select>
 					</el-form-item>
-					<el-form-item label="温度">
-						<el-input-number v-model="editingConfig.temperature" :min="0" :max="2" :step="0.1" />
-					</el-form-item>
-					<el-form-item label="最大tokens">
-						<el-input-number v-model="editingConfig.max_tokens" :min="256" :max="32768" :step="256" />
-					</el-form-item>
-					<el-form-item label="超时(秒)">
-						<el-input-number v-model="editingConfig.timeout" :min="10" :max="600" :step="10" />
-					</el-form-item>
+					<el-form-item :label="t('chapter_tools.temperature')"><el-input-number v-model="editingConfig.temperature" :min="0" :max="2" :step="0.1" /></el-form-item>
+					<el-form-item :label="t('chapter_tools.maxTokens')"><el-input-number v-model="editingConfig.max_tokens" :min="256" :max="32768" :step="256" /></el-form-item>
+					<el-form-item :label="t('chapter_tools.timeoutSeconds')"><el-input-number v-model="editingConfig.timeout" :min="10" :max="600" :step="10" /></el-form-item>
 					<el-form-item>
 						<div class="config-actions">
-							<el-button type="primary" size="small" @click="saveConfig">保存</el-button>
-							<el-button size="small" @click="resetEditingConfigToPreset">重置为预设</el-button>
+							<el-button type="primary" size="small" @click="saveConfig">{{ t('chapter_tools.save') }}</el-button>
+							<el-button size="small" @click="resetEditingConfigToPreset">{{ t('chapter_tools.resetToPreset') }}</el-button>
 						</div>
 					</el-form-item>
 				</el-form>
@@ -55,98 +29,27 @@
 
 		<div v-if="isBusy" class="busy-banner">
 			<el-icon class="busy-icon is-loading"><Loading /></el-icon>
-			<span>正在{{ runningActionLabel }}，完成后会自动打开预览。</span>
+			<span>{{ t('chapter_tools.runningHint', { action: runningActionLabel }) }}</span>
 		</div>
 
 		<el-card class="tool-card" shadow="never">
-			<template #header>
-				<div class="card-header">
-					<el-icon><User /></el-icon>
-					<span>角色动态信息</span>
-				</div>
-			</template>
-			<div class="card-body">
-				<el-button
-					type="primary"
-					class="action-button"
-					:loading="runningAction === 'dynamic'"
-					:disabled="isBusy && runningAction !== 'dynamic'"
-					@click="handleExtractDynamicInfo"
-				>
-					提取角色动态
-				</el-button>
-			</div>
+			<template #header><div class="card-header"><el-icon><User /></el-icon><span>{{ t('chapter_tools.cards.dynamicInfo') }}</span></div></template>
+			<div class="card-body"><el-button type="primary" class="action-button" :loading="runningAction === 'dynamic'" :disabled="isBusy && runningAction !== 'dynamic'" @click="handleExtractDynamicInfo">{{ t('chapter_tools.actions.extractDynamic') }}</el-button></div>
 		</el-card>
 
 		<el-card class="tool-card" shadow="never">
-			<template #header>
-				<div class="card-header">
-					<el-icon><Connection /></el-icon>
-					<span>关系提取入图</span>
-				</div>
-			</template>
-			<div class="card-body">
-				<el-button
-					type="primary"
-					class="action-button"
-					:loading="runningAction === 'relations'"
-					:disabled="isBusy && runningAction !== 'relations'"
-					@click="handleExtractRelations"
-				>
-					提取关系入图
-				</el-button>
-			</div>
+			<template #header><div class="card-header"><el-icon><Connection /></el-icon><span>{{ t('chapter_tools.cards.relationGraph') }}</span></div></template>
+			<div class="card-body"><el-button type="primary" class="action-button" :loading="runningAction === 'relations'" :disabled="isBusy && runningAction !== 'relations'" @click="handleExtractRelations">{{ t('chapter_tools.actions.extractRelations') }}</el-button></div>
 		</el-card>
 
 		<el-card class="tool-card" shadow="never">
-			<template #header>
-				<div class="card-header">
-					<el-icon><Box /></el-icon>
-					<span>拓展记忆</span>
-				</div>
-			</template>
+			<template #header><div class="card-header"><el-icon><Box /></el-icon><span>{{ t('chapter_tools.cards.memory') }}</span></div></template>
 			<div class="card-body">
 				<div class="memory-actions">
-					<el-button
-						type="primary"
-						plain
-						class="memory-button"
-						:loading="runningAction === 'scene_state'"
-						:disabled="isBusy && runningAction !== 'scene_state'"
-						@click="handleExtractSceneState"
-					>
-						提取场景状态
-					</el-button>
-					<el-button
-						type="primary"
-						plain
-						class="memory-button"
-						:loading="runningAction === 'organization_state'"
-						:disabled="isBusy && runningAction !== 'organization_state'"
-						@click="handleExtractOrganizationState"
-					>
-						提取组织状态
-					</el-button>
-					<el-button
-						type="primary"
-						plain
-						class="memory-button"
-						:loading="runningAction === 'item_state'"
-						:disabled="isBusy && runningAction !== 'item_state'"
-						@click="handleExtractItemState"
-					>
-						提取物品状态
-					</el-button>
-					<el-button
-						type="primary"
-						plain
-						class="memory-button"
-						:loading="runningAction === 'concept_state'"
-						:disabled="isBusy && runningAction !== 'concept_state'"
-						@click="handleExtractConceptState"
-					>
-						提取概念掌握
-					</el-button>
+					<el-button type="primary" plain class="memory-button" :loading="runningAction === 'scene_state'" :disabled="isBusy && runningAction !== 'scene_state'" @click="handleExtractSceneState">{{ t('chapter_tools.actions.extractScene') }}</el-button>
+					<el-button type="primary" plain class="memory-button" :loading="runningAction === 'organization_state'" :disabled="isBusy && runningAction !== 'organization_state'" @click="handleExtractOrganizationState">{{ t('chapter_tools.actions.extractOrganization') }}</el-button>
+					<el-button type="primary" plain class="memory-button" :loading="runningAction === 'item_state'" :disabled="isBusy && runningAction !== 'item_state'" @click="handleExtractItemState">{{ t('chapter_tools.actions.extractItem') }}</el-button>
+					<el-button type="primary" plain class="memory-button" :loading="runningAction === 'concept_state'" :disabled="isBusy && runningAction !== 'concept_state'" @click="handleExtractConceptState">{{ t('chapter_tools.actions.extractConcept') }}</el-button>
 				</div>
 			</div>
 		</el-card>
@@ -157,6 +60,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { Box, Connection, Loading, Setting, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 
 import { getAIConfigOptions } from '@renderer/api/ai'
 import { useEditorStore, type ChapterExtractRunOptions } from '@renderer/stores/useEditorStore'
@@ -186,6 +90,7 @@ const DEFAULT_EXTRACT_CONFIG = {
 } satisfies ChapterExtractConfigState
 
 const editorStore = useEditorStore()
+const { t } = useI18n()
 
 const llmConfigs = ref<Array<{ id: number; display_name: string }>>([])
 const runningAction = ref<ExtractionAction>('')
@@ -200,21 +105,21 @@ const selectedModelName = computed(() => {
 })
 
 const runningActionLabel = computed(() => {
-	switch (runningAction.value) {
+		switch (runningAction.value) {
 		case 'dynamic':
-			return '提取角色动态'
+			return t('chapter_tools.actions.extractDynamic')
 		case 'relations':
-			return '提取关系入图'
+			return t('chapter_tools.actions.extractRelations')
 		case 'scene_state':
-			return '提取场景状态'
+			return t('chapter_tools.actions.extractScene')
 		case 'organization_state':
-			return '提取组织状态'
+			return t('chapter_tools.actions.extractOrganization')
 		case 'item_state':
-			return '提取物品状态'
+			return t('chapter_tools.actions.extractItem')
 		case 'concept_state':
-			return '提取概念掌握'
+			return t('chapter_tools.actions.extractConcept')
 		default:
-			return '提取'
+			return t('chapter_tools.actions.extract')
 	}
 })
 
@@ -282,18 +187,18 @@ function resetEditingConfigToPreset() {
 function saveConfig() {
 	const nextConfig = sanitizeConfig(editingConfig)
 	if (!nextConfig.llm_config_id) {
-		ElMessage.warning('请先选择模型')
+		ElMessage.warning(t('chapter_tools.selectModelFirst'))
 		return
 	}
 	Object.assign(extractConfig, nextConfig)
 	writeSavedConfig(nextConfig)
 	settingsVisible.value = false
-	ElMessage.success('提取模型配置已保存到本地')
+	ElMessage.success(t('chapter_tools.configSaved'))
 }
 
 function buildExtractOptions(): ChapterExtractRunOptions | null {
 	if (!extractConfig.llm_config_id) {
-		ElMessage.warning('请先选择模型')
+		ElMessage.warning(t('chapter_tools.selectModelFirst'))
 		return null
 	}
 	return {
@@ -355,7 +260,6 @@ onMounted(async () => {
 	hydrateConfig()
 })
 </script>
-
 <style scoped>
 .chapter-tools-panel {
 	padding: 16px;

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, shallowRef } from 'vue'
+import { i18n } from '@renderer/i18n'
 import { getProjects, type ProjectRead } from '@renderer/api/projects'
 import { getCardsForProject, type CardRead } from '@renderer/api/cards'
 import type {
@@ -258,7 +259,7 @@ export const useAssistantStore = defineStore('assistant', () => {
   function updateActiveCard(card: CardRead | null, projectId: number) {
     if (!card) {
       activeCardContext.value = null
-      console.log('📋 [AssistantStore] 清空活动卡片')
+      console.log('[AssistantStore] clear active card')
       return
     }
     
@@ -370,7 +371,7 @@ export const useAssistantStore = defineStore('assistant', () => {
       const updatedAt = (card as any).updated_at
       const updatedDate = updatedAt ? new Date(updatedAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }) : ''
       const isCurrent = currentCardId && card.id === currentCardId
-      const marker = isCurrent ? ' ⭐当前' : ''
+      const marker = isCurrent ? ` ${i18n.global.t('assistant_store.current_marker')}` : ''
       
       lines.push(`${indent}[${typeName}] ${card.title} {id:${card.id} | 更新:${updatedDate}${marker}}`)
       
@@ -402,7 +403,7 @@ export const useAssistantStore = defineStore('assistant', () => {
     // 统计各类型卡片数量
     const stats: Record<string, number> = {}
     for (const card of cards) {
-      const typeName = (card as any).card_type?.name || '未分类'
+      const typeName = (card as any).card_type?.name || i18n.global.t('assistant_store.uncategorized')
       stats[typeName] = (stats[typeName] || 0) + 1
     }
     
@@ -417,7 +418,7 @@ export const useAssistantStore = defineStore('assistant', () => {
       project_name: projectName,
       total_cards: cards.length,
       stats,
-      tree_text: treeText || 'ROOT\n(暂无卡片)',
+      tree_text: treeText || `ROOT\n(${i18n.global.t('assistant_store.no_cards')})`,
       available_card_types: availableTypes,
       last_updated: Date.now(),
       version: cards.length  // 简单用卡片数量作为版本号
@@ -543,16 +544,16 @@ export const useAssistantStore = defineStore('assistant', () => {
                     op.type === 'edit' ? '✏️' : 
                     op.type === 'move' ? '📦' : 
                     '🗑️'
-      const action = op.type === 'create' ? '创建' : 
-                     op.type === 'edit' ? '编辑' : 
-                     op.type === 'move' ? '移动' : 
-                     '删除'
+      const action = op.type === 'create' ? i18n.global.t('assistant_store.actions.create') : 
+                     op.type === 'edit' ? i18n.global.t('assistant_store.actions.edit') : 
+                     op.type === 'move' ? i18n.global.t('assistant_store.actions.move') : 
+                     i18n.global.t('assistant_store.actions.delete')
       
       let line = `${idx + 1}. [${time}] ${emoji} ${action} "${op.cardTitle}" (${op.cardType} #${op.cardId})`
       
       // 如果有详细信息，添加到下一行
       if (op.detail) {
-        line += `\n   详情: ${op.detail}`
+        line += `\n   ${i18n.global.t('assistant_store.detail_label')}: ${op.detail}`
       }
       
       return line

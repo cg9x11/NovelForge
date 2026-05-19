@@ -3,10 +3,10 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>作品标签设定</span>
+          <span>{{ t('tags_editor.title') }}</span>
           <div>
-            <el-button type="primary" @click="handleRandomize">一键随机灵感</el-button>
-            <el-button type="success" :loading="isSaving" @click="saveTags">保存更改</el-button>
+            <el-button type="primary" @click="handleRandomize">{{ t('tags_editor.random_all') }}</el-button>
+            <el-button type="success" :loading="isSaving" @click="saveTags">{{ t('tags_editor.save_changes') }}</el-button>
           </div>
         </div>
       </template>
@@ -14,22 +14,22 @@
         <el-scrollbar>
           <div class="category-block">
             <div class="category-header">
-              <h3>主题标签</h3>
-              <el-button @click="randomizeTheme" type="primary" plain size="small">随机灵感</el-button>
+              <h3>{{ t('tags_editor.theme_tags') }}</h3>
+              <el-button @click="randomizeTheme" type="primary" plain size="small">{{ t('tags_editor.random_hint') }}</el-button>
             </div>
             <el-cascader
               :model-value="themeArray"
               @change="handleThemeChange"
               :options="themeOptions"
-              placeholder="请选择小说主题"
+              :placeholder="t('tags_editor.select_novel_theme')"
               style="width: 100%"
             />
           </div>
 
           <div class="category-block">
             <div class="category-header">
-              <h3>目标读者</h3>
-              <el-button @click="randomizeAudience" type="primary" plain size="small">随机灵感</el-button>
+              <h3>{{ t('tags_editor.target_audience') }}</h3>
+              <el-button @click="randomizeAudience" type="primary" plain size="small">{{ t('tags_editor.random_hint') }}</el-button>
             </div>
             <el-radio-group v-model="localData.audience">
               <el-radio v-for="opt in audienceOptions" :key="opt" :value="opt" border>{{ opt }}</el-radio>
@@ -38,8 +38,8 @@
 
           <div class="category-block">
             <div class="category-header">
-              <h3>写作人称</h3>
-              <el-button @click="randomizePerson" type="primary" plain size="small">随机灵感</el-button>
+              <h3>{{ t('tags_editor.narrative_person') }}</h3>
+              <el-button @click="randomizePerson" type="primary" plain size="small">{{ t('tags_editor.random_hint') }}</el-button>
             </div>
             <el-radio-group v-model="localData.narrative_person">
               <el-radio v-for="opt in personOptions" :key="opt" :value="opt" border>{{ opt }}</el-radio>
@@ -48,8 +48,8 @@
 
           <div class="category-block">
             <div class="category-header">
-              <h3>类别标签 (建议选择 3-5 个)</h3>
-              <el-button @click="randomizeStoryTags" type="primary" plain size="small">随机灵感</el-button>
+              <h3>{{ t('tags_editor.category_tags') }}</h3>
+              <el-button @click="randomizeStoryTags" type="primary" plain size="small">{{ t('tags_editor.random_hint') }}</el-button>
             </div>
             <div class="story-tags-grid">
               <div v-for="full in categoryOptions" :key="full" class="story-tag-item">
@@ -65,7 +65,7 @@
                   @change="(weight) => updateStoryTagWeight(full, weight as WeightLevel)"
                   size="small"
                   class="weight-input"
-                  placeholder="权重"
+                  :placeholder="t('tags_editor.weight_placeholder')"
                 >
                   <el-option v-for="w in WEIGHT_LEVELS" :key="w" :label="w" :value="w" />
                 </el-select>
@@ -75,8 +75,8 @@
 
           <div class="category-block">
             <div class="category-header">
-              <h3>情感关系</h3>
-              <el-button @click="randomizeRelationship" type="primary" plain size="small">随机灵感</el-button>
+              <h3>{{ t('tags_editor.relationships') }}</h3>
+              <el-button @click="randomizeRelationship" type="primary" plain size="small">{{ t('tags_editor.random_hint') }}</el-button>
             </div>
                           <el-radio-group v-model="localData.affection">
                 <el-radio v-for="tag in relationshipOptions" :key="tag" :value="tag" border>{{ tag }}</el-radio>
@@ -90,6 +90,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElCard, ElButton } from 'element-plus'
 import type { components } from '@renderer/types/generated'
 import { useCardStore } from '@renderer/stores/useCardStore'
@@ -109,10 +110,12 @@ import { listKnowledge } from '@renderer/api/setting'
 // Define types from generated schemas
 type CardRead = components['schemas']['CardRead']
 type Tags = components['schemas']['Tags']
-type WeightLevel = '低权重' | '中权重' | '高权重'
+type WeightLevel = string
 // 权重档位常量，统一来源
 const WEIGHT_LEVELS: WeightLevel[] = ['低权重', '中权重', '高权重']
 const DEFAULT_WEIGHT: WeightLevel = '中权重'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   card: CardRead
@@ -124,8 +127,8 @@ const isSaving = ref(false)
 // 本地可编辑数据
 const localData = reactive<Tags>({
   theme: '',
-  audience: '通用' as any,
-  narrative_person: '第三人称' as any,
+  audience: t('tags_editor.defaults.audience') as any,
+  narrative_person: t('tags_editor.defaults.person') as any,
   story_tags: [],
   affection: ''
 })
@@ -157,7 +160,7 @@ const saveTags = async () => {
   isSaving.value = true
   try {
     await cardStore.modifyCard(props.card.id, { content: localData });
-    ElMessage.success('已保存标签设置')
+    ElMessage.success(t('tags_editor.messages.saved'))
   } catch (error) {
     // 错误消息已在 store 处理
   } finally {
@@ -202,7 +205,7 @@ function handleStoryTagChange(checked: any, tagName: string) {
 function updateStoryTagWeight(tagName: string, weight: WeightLevel | undefined) {
   const tag = localData.story_tags.find(([name]) => name === tagName)
   if (tag && typeof weight === 'string') {
-    tag[1] = weight
+    tag[1] = weight as any
   }
 }
 
@@ -330,14 +333,14 @@ function parseKnowledge(text: string) {
   themeOptions.value = Object.keys(themes).map(k => ({ value: k, label: k, children: (themes[k] || []).map(s => ({ value: s, label: s })) }))
   categoryOptions.value = categories
   relationshipOptions.value = relationships
-  audienceOptions.value = audiences.length ? audiences : ['通用','男生','女生']
-  personOptions.value = persons.length ? persons : ['第一人称','第三人称']
+  audienceOptions.value = audiences.length ? audiences : [t('tags_editor.defaults.audience'), t('tags_editor.defaults.male'), t('tags_editor.defaults.female')]
+  personOptions.value = persons.length ? persons : [t('tags_editor.defaults.first_person'), t('tags_editor.defaults.third_person')]
 }
 
 onMounted(async () => {
   try {
     const list = await listKnowledge()
-    const kb = (list || []).find(k => k && k.name === '作品标签')
+    const kb = (list || []).find(k => k && k.name === t('tags_editor.title_plain'))
     if (kb && kb.content) parseKnowledge(kb.content)
   } catch {}
 })

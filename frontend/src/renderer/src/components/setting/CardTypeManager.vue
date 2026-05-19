@@ -1,98 +1,94 @@
 <template>
   <div class="card-type-manager">
-    <!-- 工具条：搜索 + 新增 -->
     <div class="toolbar">
-      <el-input v-model="query" placeholder="搜索类型（名称/描述）" clearable class="search" />
-      <el-button type="primary" @click="openEditor()">新增类型</el-button>
+      <el-input v-model="query" :placeholder="t('card_type_manager.searchPlaceholder')" clearable class="search" />
+      <el-button type="primary" @click="openEditor()">{{ t('card_type_manager.addType') }}</el-button>
     </div>
 
-    <!-- 列表 -->
     <el-table :data="filteredTypes" height="60vh" size="small" :border="false" v-loading="loading">
-      <el-table-column prop="name" label="名称" width="220" />
-      <el-table-column prop="description" label="描述" min-width="260" show-overflow-tooltip>
+      <el-table-column prop="name" :label="t('card_type_manager.columns.name')" width="220" />
+      <el-table-column prop="description" :label="t('card_type_manager.columns.description')" min-width="260" show-overflow-tooltip>
         <template #default="{ row }">
-          <span>{{ (row.description && String(row.description).trim()) ? row.description : '—' }}</span>
+          <span>{{ (row.description && String(row.description).trim()) ? row.description : t('common.na') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="AI" width="90">
+      <el-table-column :label="t('card_type_manager.columns.ai')" width="90">
         <template #default="{ row }">
-          <el-tag size="small" :type="row.is_ai_enabled ? 'success' : 'info'">{{ row.is_ai_enabled ? '启用' : '关闭' }}</el-tag>
+          <el-tag size="small" :type="row.is_ai_enabled ? 'success' : 'info'">{{ row.is_ai_enabled ? t('card_type_manager.enabled') : t('card_type_manager.disabled') }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="260" align="right">
+      <el-table-column :label="t('card_type_manager.columns.actions')" width="260" align="right">
         <template #default="{ row }">
-          <el-button size="small" @click="openEditor(row)">编辑</el-button>
-          <el-button size="small" type="primary" plain @click="openSchemaStudio(row)">编辑结构</el-button>
+          <el-button size="small" @click="openEditor(row)">{{ t('common.edit') }}</el-button>
+          <el-button size="small" type="primary" plain @click="openSchemaStudio(row)">{{ t('card_type_manager.editSchema') }}</el-button>
           <template v-if="!isBuiltInCardType(row)">
-            <el-popconfirm title="删除该类型？（若有引用将影响创建操作）" @confirm="removeType(row)">
+            <el-popconfirm :title="t('card_type_manager.deleteConfirm')" @confirm="removeType(row)">
               <template #reference>
-                <el-button size="small" type="danger" plain>删除</el-button>
+                <el-button size="small" type="danger" plain>{{ t('common.delete') }}</el-button>
               </template>
             </el-popconfirm>
           </template>
-          <el-button v-else size="small" type="danger" plain disabled>删除</el-button>
+          <el-button v-else size="small" type="danger" plain disabled>{{ t('common.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <!-- 编辑抽屉：基础信息 + 结构编辑入口 -->
-    <el-drawer v-model="drawer.visible" :title="drawer.editing ? '编辑卡片类型' : '新增卡片类型'" size="60%">
+    <el-drawer v-model="drawer.visible" :title="drawer.editing ? t('card_type_manager.editTypeTitle') : t('card_type_manager.addTypeTitle')" size="60%">
       <div class="editor-grid">
         <el-form label-position="top" :model="form">
-          <el-form-item label="名称"><el-input v-model="form.name" /></el-form-item>
-          <el-form-item label="描述"><el-input v-model="form.description" type="textarea" :rows="2" /></el-form-item>
-          <el-form-item label="是否启用AI"><el-switch v-model="form.is_ai_enabled" /></el-form-item>
-          <el-form-item label="是否单例"><el-switch v-model="form.is_singleton" /></el-form-item>
-          <el-form-item label="默认上下文模板"><el-input v-model="form.default_ai_context_template" type="textarea" :rows="4" /></el-form-item>
+          <el-form-item :label="t('card_type_manager.form.name')"><el-input v-model="form.name" /></el-form-item>
+          <el-form-item :label="t('card_type_manager.form.description')"><el-input v-model="form.description" type="textarea" :rows="2" /></el-form-item>
+          <el-form-item :label="t('card_type_manager.form.enableAI')"><el-switch v-model="form.is_ai_enabled" /></el-form-item>
+          <el-form-item :label="t('card_type_manager.form.singleton')"><el-switch v-model="form.is_singleton" /></el-form-item>
+          <el-form-item :label="t('card_type_manager.form.defaultContextTemplate')"><el-input v-model="form.default_ai_context_template" type="textarea" :rows="4" /></el-form-item>
 
           <template v-if="form.is_ai_enabled">
-            <div class="ai-section-title">AI 参数</div>
-            <el-form-item label="模型（LLM 配置）">
-              <el-select v-model="aiParams.llm_config_id" filterable placeholder="选择模型" style="width:100%">
+            <div class="ai-section-title">{{ t('card_type_manager.aiParams') }}</div>
+            <el-form-item :label="t('card_type_manager.form.model')">
+              <el-select v-model="aiParams.llm_config_id" filterable :placeholder="t('card_type_manager.selectModel')" style="width:100%">
                 <el-option v-for="c in llmConfigs" :key="c.id" :label="c.display_name || (c.provider + ':' + c.model_name)" :value="c.id" />
               </el-select>
             </el-form-item>
-            <el-form-item label="提示词">
-              <el-select v-model="aiParams.prompt_name" filterable placeholder="选择提示词" style="width:100%">
+            <el-form-item :label="t('card_type_manager.form.prompt')">
+              <el-select v-model="aiParams.prompt_name" filterable :placeholder="t('card_type_manager.selectPrompt')" style="width:100%">
                 <el-option v-for="p in prompts" :key="p.name" :label="p.name" :value="p.name" />
               </el-select>
             </el-form-item>
             <div class="ai-grid">
-              <el-form-item label="温度">
+              <el-form-item :label="t('card_type_manager.form.temperature')">
                 <el-input-number v-model="aiParams.temperature" :min="0" :max="2" :step="0.1" controls-position="right" style="width:100%" />
               </el-form-item>
-              <el-form-item label="最大 tokens">
+              <el-form-item :label="t('card_type_manager.form.maxTokens')">
                 <el-input-number v-model="aiParams.max_tokens" :min="1" :step="128" controls-position="right" style="width:100%" />
               </el-form-item>
-              <el-form-item label="超时 (秒)">
+              <el-form-item :label="t('card_type_manager.form.timeout')">
                 <el-input-number v-model="aiParams.timeout" :min="1" :max="600" :step="5" controls-position="right" style="width:100%" />
               </el-form-item>
             </div>
           </template>
 
-          <el-form-item label="UI 布局（可选）">
+          <el-form-item :label="t('card_type_manager.form.uiLayout')">
             <el-input v-model="uiLayoutText" type="textarea" :rows="6" placeholder='{ "sections": [ ... ] }' />
           </el-form-item>
         </el-form>
         <div class="mt-2">
-          <el-button type="primary" plain @click="openSchemaEditor">编辑结构（Schema）</el-button>
+          <el-button type="primary" plain @click="openSchemaEditor">{{ t('card_type_manager.editSchemaWithSuffix') }}</el-button>
         </div>
       </div>
       <template #footer>
-        <el-button @click="drawer.visible=false">取消</el-button>
-        <el-button type="primary" @click="saveType">保存</el-button>
+        <el-button @click="drawer.visible=false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="saveType">{{ t('common.save') }}</el-button>
       </template>
     </el-drawer>
 
     <SchemaStudio v-model:visible="studio.visible" :mode="'type'" :target-id="studio.typeId" :context-title="studio.typeName" @saved="onStudioSaved" />
-
-
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import type { components } from '@renderer/types/generated'
 import { useCardStore } from '@renderer/stores/useCardStore'
 import { schemaService } from '@renderer/api/schema'
@@ -107,6 +103,7 @@ type CardTypeUpdate = CTU
 function isBuiltInCardType(row: any): boolean { return !!row?.built_in }
 
 const cardStore = useCardStore()
+const { t } = useI18n()
 
 const loading = ref(false)
 const types = ref<CardTypeRead[]>([])
@@ -146,7 +143,7 @@ const studio = ref<{ visible: boolean; typeId: number; typeName: string }>({ vis
 function openSchemaStudio(row?: CardTypeRead) {
   const id = row?.id || drawer.value.id
   const name = row?.name || form.value?.name || ''
-  if (!id) { ElMessage.warning('请先保存类型的基础信息'); return }
+  if (!id) { ElMessage.warning(t('card_type_manager.messages.saveBasicInfoFirst')); return }
   studio.value = { visible: true, typeId: id as number, typeName: name }
 }
 
@@ -154,26 +151,26 @@ function openSchemaStudio(row?: CardTypeRead) {
 
 async function saveType(): Promise<void> {
   let ui_layout: any = undefined
-  try { ui_layout = uiLayoutText.value ? JSON.parse(uiLayoutText.value) : undefined } catch { ElMessage.error('UI 布局不是有效的 JSON'); return }
+  try { ui_layout = uiLayoutText.value ? JSON.parse(uiLayoutText.value) : undefined } catch { ElMessage.error(t('card_type_manager.messages.invalidUiLayoutJson')); return }
   const payload: Partial<CardTypeCreate & CardTypeUpdate> = { ...form.value, ui_layout } as any
   ;(payload as any).ai_params = form.value.is_ai_enabled ? aiParams.value : null
   try {
     if (drawer.value.editing) {
       const id = drawer.value.id
       await updateCardType(id, payload)
-      ElMessage.success('已更新卡片类型')
+      ElMessage.success(t('card_type_manager.messages.updated'))
     } else {
       await createCardType(payload)
-      ElMessage.success('已创建卡片类型')
+      ElMessage.success(t('card_type_manager.messages.created'))
     }
     drawer.value.visible = false
     await fetchTypes()
     await cardStore.fetchCardTypes()
     await schemaService.refreshSchemas()
-  } catch (e:any) { ElMessage.error('保存失败：' + (e?.message || e)) }
+  } catch (e:any) { ElMessage.error(t('card_type_manager.messages.saveFailed') + (e?.message || e)) }
 }
 
-async function removeType(row: CardTypeRead) { try { await deleteCardType(row.id as number); ElMessage.success('已删除'); await fetchTypes() } catch (e:any) { ElMessage.error('删除失败：' + (e?.message || e)) } }
+async function removeType(row: CardTypeRead) { try { await deleteCardType(row.id as number); ElMessage.success(t('card_type_manager.messages.deleted')); await fetchTypes() } catch (e:any) { ElMessage.error(t('card_type_manager.messages.deleteFailed') + (e?.message || e)) } }
 
 function onStudioSaved() { fetchTypes(); cardStore.fetchCardTypes(); schemaService.refreshSchemas() }
 

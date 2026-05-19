@@ -1,41 +1,41 @@
 <template>
-  <el-dialog v-model="visible" title="历史版本" width="80%">
+  <el-dialog v-model="visible" :title="t('card_versions.title')" width="80%">
     <div class="toolbar">
-      <el-button size="small" @click="reload">刷新</el-button>
-      <el-popconfirm title="清空该卡片的所有本地版本？" @confirm="clearAll">
+      <el-button size="small" @click="reload">{{ t('common.refresh') }}</el-button>
+      <el-popconfirm :title="t('card_versions.confirm_clear_all')" @confirm="clearAll">
         <template #reference>
-          <el-button size="small" type="danger" plain>清空全部</el-button>
+          <el-button size="small" type="danger" plain>{{ t('card_versions.clear_all') }}</el-button>
         </template>
       </el-popconfirm>
-      <span class="tip">历史版本仅保存在前端，最多保留最近20条。</span>
+      <span class="tip">{{ t('card_versions.tip') }}</span>
     </div>
 
     <el-table :data="versions" style="width:100%" height="50vh" size="small" v-loading="loading">
-      <el-table-column label="时间" width="200">
+      <el-table-column :label="t('common.time')" width="200">
         <template #default="{ row }">{{ format(row.createdAt) }}</template>
       </el-table-column>
-      <el-table-column prop="title" label="标题" width="240" />
-      <el-table-column label="摘要(内容)" width="320">
+      <el-table-column prop="title" :label="t('common.title')" width="240" />
+      <el-table-column :label="t('card_versions.content_summary')" width="320">
         <template #default="{ row }">
           <span class="summary">{{ summarize(row.content) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="摘要(上下文)" width="320">
+      <el-table-column :label="t('card_versions.context_summary')" width="320">
         <template #default="{ row }">
           <span class="summary">{{ summarizeCtx(row) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="260">
+      <el-table-column :label="t('common.actions')" width="260">
         <template #default="{ row }">
-          <el-button size="small" @click="preview(row)">预览</el-button>
-          <el-popconfirm title="恢复该版本并覆盖当前内容？" @confirm="restore(row)">
+          <el-button size="small" @click="preview(row)">{{ t('common.preview') }}</el-button>
+          <el-popconfirm :title="t('card_versions.confirm_restore')" @confirm="restore(row)">
             <template #reference>
-              <el-button size="small" type="primary">恢复</el-button>
+              <el-button size="small" type="primary">{{ t('card_versions.restore') }}</el-button>
             </template>
           </el-popconfirm>
-          <el-popconfirm title="删除该版本？" @confirm="remove(row)">
+          <el-popconfirm :title="t('card_versions.confirm_delete')" @confirm="remove(row)">
             <template #reference>
-              <el-button size="small" type="danger" plain>删除</el-button>
+              <el-button size="small" type="danger" plain>{{ t('common.delete') }}</el-button>
             </template>
           </el-popconfirm>
         </template>
@@ -43,31 +43,30 @@
     </el-table>
 
     <template #footer>
-      <el-button @click="visible=false">关闭</el-button>
+      <el-button @click="visible = false">{{ t('common.close') }}</el-button>
     </template>
 
-    <!-- 预览抽屉：改为并排差异高亮渲染 -->
-    <el-drawer v-model="drawerVisible" title="版本预览" size="70%">
+    <el-drawer v-model="drawerVisible" :title="t('card_versions.preview_title')" size="70%">
       <div class="preview-wrap2">
         <div class="pane">
-          <h4>内容对比</h4>
+          <h4>{{ t('card_versions.content_compare') }}</h4>
           <div class="diff-table">
-            <div class="diff-header">所选版本</div>
-            <div class="diff-header">当前</div>
-            <template v-for="(row, idx) in contentDiffRows" :key="'c-'+idx">
-              <pre class="diff-cell" :class="row.left?.type ? 'diff-' + row.left.type : 'diff-empty'">{{ row.left?.text || '' }}</pre>
-              <pre class="diff-cell" :class="row.right?.type ? 'diff-' + row.right.type : 'diff-empty'">{{ row.right?.text || '' }}</pre>
+            <div class="diff-header">{{ t('card_versions.selected_version') }}</div>
+            <div class="diff-header">{{ t('card_versions.current') }}</div>
+            <template v-for="(row, idx) in contentDiffRows" :key="`c-${idx}`">
+              <pre class="diff-cell" :class="row.left?.type ? `diff-${row.left.type}` : 'diff-empty'">{{ row.left?.text || '' }}</pre>
+              <pre class="diff-cell" :class="row.right?.type ? `diff-${row.right.type}` : 'diff-empty'">{{ row.right?.text || '' }}</pre>
             </template>
           </div>
         </div>
         <div class="pane">
-          <h4>上下文模板对比</h4>
+          <h4>{{ t('card_versions.context_compare') }}</h4>
           <div class="diff-table">
-            <div class="diff-header">所选版本</div>
-            <div class="diff-header">当前</div>
-            <template v-for="(row, idx) in contextDiffRows" :key="'x-'+idx">
-              <pre class="diff-cell" :class="row.left?.type ? 'diff-' + row.left.type : 'diff-empty'">{{ row.left?.text || '' }}</pre>
-              <pre class="diff-cell" :class="row.right?.type ? 'diff-' + row.right.type : 'diff-empty'">{{ row.right?.text || '' }}</pre>
+            <div class="diff-header">{{ t('card_versions.selected_version') }}</div>
+            <div class="diff-header">{{ t('card_versions.current') }}</div>
+            <template v-for="(row, idx) in contextDiffRows" :key="`x-${idx}`">
+              <pre class="diff-cell" :class="row.left?.type ? `diff-${row.left.type}` : 'diff-empty'">{{ row.left?.text || '' }}</pre>
+              <pre class="diff-cell" :class="row.right?.type ? `diff-${row.right.type}` : 'diff-empty'">{{ row.right?.text || '' }}</pre>
             </template>
           </div>
         </div>
@@ -78,16 +77,26 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { listVersions, clearVersions, deleteVersion, type CardVersionSnapshot } from '@renderer/services/versionService'
 import { ElMessage } from 'element-plus'
 import { cloneContextTemplates, CONTEXT_TEMPLATE_LABELS, type ContextTemplates } from '@renderer/services/contextSlots'
 
-const props = defineProps<{ projectId: number; cardId: number; modelValue: boolean; currentContent: any; currentContextTemplates: ContextTemplates }>()
-const emit = defineEmits(['update:modelValue','restore'])
+const { t } = useI18n()
+
+const props = defineProps<{
+  projectId: number
+  cardId: number
+  modelValue: boolean
+  currentContent: any
+  currentContextTemplates: ContextTemplates
+}>()
+
+const emit = defineEmits(['update:modelValue', 'restore'])
 
 const visible = ref(props.modelValue)
-watch(() => props.modelValue, v => visible.value = v)
-watch(visible, v => emit('update:modelValue', v))
+watch(() => props.modelValue, value => (visible.value = value))
+watch(visible, value => emit('update:modelValue', value))
 
 const versions = ref<CardVersionSnapshot[]>([])
 const loading = ref(false)
@@ -98,36 +107,49 @@ function reload() {
   loading.value = false
 }
 
-watch(() => props.cardId, reload, { immediate: true })
+watch(
+  () => [props.projectId, props.cardId, props.modelValue],
+  ([projectId, cardId, modelValue]) => {
+    if (projectId && cardId && modelValue) reload()
+  },
+  { immediate: true }
+)
 
-function format(iso: string) { return new Date(iso).toLocaleString() }
-function summarize(content: any) {
-  const s = JSON.stringify(content ?? {})
-  return s.length > 100 ? s.slice(0, 100) + '…' : s
+function format(dateLike: string) {
+  const date = new Date(dateLike)
+  if (Number.isNaN(date.getTime())) return dateLike
+  return date.toLocaleString()
 }
+
+function summarize(value: any) {
+  const text = typeof value === 'string' ? value : JSON.stringify(value ?? {}, null, 2)
+  return text.length > 120 ? `${text.slice(0, 120)}…` : text
+}
+
 function summarizeCtx(snapshot: CardVersionSnapshot) {
-  const s = [
+  const text = [
     `${CONTEXT_TEMPLATE_LABELS.generation}: ${String(snapshot.ai_context_template ?? '')}`,
     `${CONTEXT_TEMPLATE_LABELS.review}: ${String(snapshot.ai_context_template_review ?? '')}`,
   ].join('\n')
-  return s.length > 100 ? s.slice(0, 100) + '…' : s
+  return text.length > 100 ? `${text.slice(0, 100)}…` : text
 }
 
 function clearAll() {
   clearVersions(props.projectId, props.cardId)
   reload()
-  ElMessage.success('已清空该卡片的本地版本')
+  ElMessage.success(t('card_versions.cleared'))
 }
 
-function remove(v: CardVersionSnapshot) {
-  deleteVersion(props.projectId, props.cardId, v.id)
+function remove(version: CardVersionSnapshot) {
+  deleteVersion(props.projectId, props.cardId, version.id)
   reload()
-  ElMessage.success('已删除该版本')
+  ElMessage.success(t('card_versions.deleted'))
 }
 
 const drawerVisible = ref(false)
 const selectedText = ref('')
 const selectedCtx = ref<ContextTemplates>(cloneContextTemplates())
+
 const currentText = computed(() => JSON.stringify(props.currentContent ?? {}, null, 2))
 const currentCtx = computed(() =>
   [
@@ -136,65 +158,89 @@ const currentCtx = computed(() =>
   ].join('\n\n')
 )
 
-function preview(v: CardVersionSnapshot) {
-  selectedText.value = JSON.stringify(v.content ?? {}, null, 2)
+function preview(version: CardVersionSnapshot) {
+  selectedText.value = JSON.stringify(version.content ?? {}, null, 2)
   selectedCtx.value = cloneContextTemplates({
-    generation: v.ai_context_template,
-    review: v.ai_context_template_review,
+    generation: version.ai_context_template,
+    review: version.ai_context_template_review,
   })
   drawerVisible.value = true
 }
 
-function restore(v: CardVersionSnapshot) {
-  emit('restore', v)
+function restore(version: CardVersionSnapshot) {
+  emit('restore', version)
 }
 
-// 轻量行级差异算法（LCS 对齐）
-// 输入两段文本，按行拆分后计算最短编辑路径对齐，输出左右并排渲染所需的数据结构
-interface DiffPart { text: string; type: 'equal' | 'add' | 'del' }
-interface DiffRow { left?: DiffPart; right?: DiffPart }
+interface DiffPart {
+  text: string
+  type: 'equal' | 'add' | 'del'
+}
+
+interface DiffRow {
+  left?: DiffPart
+  right?: DiffPart
+}
 
 function computeDiffRows(left: string, right: string): DiffRow[] {
-  const a = (left || '').split('\n')
-  const b = (right || '').split('\n')
-  const m = a.length, n = b.length
-  // dp[i][j] 表示 a[0..i-1] 与 b[0..j-1] 的 LCS 长度
-  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0))
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1])
+  const leftLines = (left || '').split('\n')
+  const rightLines = (right || '').split('\n')
+  const leftCount = leftLines.length
+  const rightCount = rightLines.length
+  const dp: number[][] = Array.from({ length: leftCount + 1 }, () => Array(rightCount + 1).fill(0))
+
+  for (let leftIndex = 1; leftIndex <= leftCount; leftIndex++) {
+    for (let rightIndex = 1; rightIndex <= rightCount; rightIndex++) {
+      dp[leftIndex][rightIndex] =
+        leftLines[leftIndex - 1] === rightLines[rightIndex - 1]
+          ? dp[leftIndex - 1][rightIndex - 1] + 1
+          : Math.max(dp[leftIndex - 1][rightIndex], dp[leftIndex][rightIndex - 1])
     }
   }
-  // 回溯获取对齐路径
+
   const rows: DiffRow[] = []
-  let i = m, j = n
-  while (i > 0 && j > 0) {
-    if (a[i - 1] === b[j - 1]) {
-      rows.push({ left: { text: a[i - 1], type: 'equal' }, right: { text: b[j - 1], type: 'equal' } })
-      i--; j--
-    } else if (dp[i - 1][j] >= dp[i][j - 1]) {
-      rows.push({ left: { text: a[i - 1], type: 'del' } })
-      i--
+  let leftIndex = leftCount
+  let rightIndex = rightCount
+
+  while (leftIndex > 0 && rightIndex > 0) {
+    if (leftLines[leftIndex - 1] === rightLines[rightIndex - 1]) {
+      rows.push({
+        left: { text: leftLines[leftIndex - 1], type: 'equal' },
+        right: { text: rightLines[rightIndex - 1], type: 'equal' },
+      })
+      leftIndex--
+      rightIndex--
+    } else if (dp[leftIndex - 1][rightIndex] >= dp[leftIndex][rightIndex - 1]) {
+      rows.push({ left: { text: leftLines[leftIndex - 1], type: 'del' } })
+      leftIndex--
     } else {
-      rows.push({ right: { text: b[j - 1], type: 'add' } })
-      j--
+      rows.push({ right: { text: rightLines[rightIndex - 1], type: 'add' } })
+      rightIndex--
     }
   }
-  while (i > 0) { rows.push({ left: { text: a[i - 1], type: 'del' } }); i-- }
-  while (j > 0) { rows.push({ right: { text: b[j - 1], type: 'add' } }); j-- }
+
+  while (leftIndex > 0) {
+    rows.push({ left: { text: leftLines[leftIndex - 1], type: 'del' } })
+    leftIndex--
+  }
+  while (rightIndex > 0) {
+    rows.push({ right: { text: rightLines[rightIndex - 1], type: 'add' } })
+    rightIndex--
+  }
+
   rows.reverse()
   return rows
 }
 
-// 内容与上下文的并排差异结果
 const contentDiffRows = computed<DiffRow[]>(() => computeDiffRows(selectedText.value, currentText.value))
-const contextDiffRows = computed<DiffRow[]>(() => computeDiffRows(
-  [
-    `${CONTEXT_TEMPLATE_LABELS.generation}\n${selectedCtx.value.generation}`,
-    `${CONTEXT_TEMPLATE_LABELS.review}\n${selectedCtx.value.review}`,
-  ].join('\n\n'),
-  currentCtx.value
-))
+const contextDiffRows = computed<DiffRow[]>(() =>
+  computeDiffRows(
+    [
+      `${CONTEXT_TEMPLATE_LABELS.generation}\n${selectedCtx.value.generation}`,
+      `${CONTEXT_TEMPLATE_LABELS.review}\n${selectedCtx.value.review}`,
+    ].join('\n\n'),
+    currentCtx.value
+  )
+)
 </script>
 
 <style scoped>
@@ -203,8 +249,6 @@ const contextDiffRows = computed<DiffRow[]>(() => computeDiffRows(
 .preview-wrap2 { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(140px, auto); gap: 12px; }
 .pane { overflow: auto; border: 1px solid var(--el-border-color-light); border-radius: 6px; padding: 8px; }
 .summary { color: var(--el-text-color-secondary); }
-
-/* 差异渲染：两列并排，行级高亮 */
 .diff-table { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--el-border-color-light); border-radius: 4px; overflow: hidden; }
 .diff-header { background: var(--el-fill-color-light); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--el-border-color-light); }
 .diff-cell { margin: 0; white-space: pre-wrap; word-break: break-word; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; padding: 2px 6px; border-left: 3px solid transparent; border-bottom: 1px solid var(--el-border-color-extra-light); }
@@ -212,4 +256,4 @@ const contextDiffRows = computed<DiffRow[]>(() => computeDiffRows(
 .diff-add { background: rgba(46, 204, 113, 0.12); border-left-color: #2ecc71; }
 .diff-del { background: rgba(231, 76, 60, 0.13); border-left-color: #e74c3c; }
 .diff-empty { background: var(--el-fill-color-blank); }
-</style> 
+</style>

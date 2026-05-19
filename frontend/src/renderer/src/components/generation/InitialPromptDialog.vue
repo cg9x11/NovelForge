@@ -1,34 +1,34 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="开始生成卡片"
+    :title="t('initial_prompt.title')"
     width="500px"
     :close-on-click-modal="false"
   >
     <div class="dialog-content">
       <p class="hint-text">
-        你可以提供一些生成偏好或要求（可选）
+        {{ t('initial_prompt.optional_hint') }}
       </p>
       <p class="hint-subtext">
-        直接点击"开始生成"，AI 会自主决定生成内容
+        {{ t('initial_prompt.direct_generate_hint') }}
       </p>
 
       <el-checkbox v-model="useExistingContent" class="content-option">
-        基于现有内容继续生成（如果卡片已有部分内容）
+        {{ t('initial_prompt.continue_existing') }}
       </el-checkbox>
 
       <el-input
         v-model="userPrompt"
         type="textarea"
         :rows="4"
-        placeholder="例如：年轻武者，擅长剑术，性格沉稳..."
+        :placeholder="t('initial_prompt.placeholder')"
         maxlength="500"
         show-word-limit
         @keyup.ctrl.enter="handleStartGenerate"
       />
 
       <div class="example-hints">
-        <span class="example-label">示例：</span>
+        <span class="example-label">{{ t('initial_prompt.example') }}</span>
         <el-tag
           v-for="example in examples"
           :key="example"
@@ -44,17 +44,17 @@
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="handleCancel">
-          取消
+          {{ t('common.cancel') }}
         </el-button>
         <el-button @click="handleSkip">
-          跳过，直接生成
+          {{ t('initial_prompt.skip_and_generate') }}
         </el-button>
         <el-button
           type="primary"
           :disabled="!userPrompt.trim()"
           @click="handleStartGenerate"
         >
-          开始生成
+          {{ t('initial_prompt.start_generate') }}
         </el-button>
       </div>
     </template>
@@ -63,8 +63,11 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 // ==================== Props & Emits ====================
+
+const { t } = useI18n()
 
 const props = defineProps<{
   visible: boolean
@@ -85,9 +88,9 @@ const useExistingContent = ref(false)
 
 // 示例提示（根据卡片类型动态调整）
 const examples = ref<string[]>([
-  '年轻武者，擅长剑术',
-  '神秘的魔法师，精通元素魔法',
-  '经验丰富的商人，善于谈判'
+  t('initial_prompt.examples.character_1'),
+  t('initial_prompt.examples.character_2'),
+  t('initial_prompt.examples.character_3')
 ])
 
 // ==================== 方法 ====================
@@ -138,27 +141,27 @@ watch(() => props.cardTypeName, (typeName) => {
   // 可以根据不同的卡片类型提供不同的示例
   if (typeName.includes('角色') || typeName.includes('Character')) {
     examples.value = [
-      '年轻武者，擅长剑术',
-      '神秘的魔法师，精通元素魔法',
-      '经验丰富的商人，善于谈判'
+      t('initial_prompt.examples.character_1'),
+      t('initial_prompt.examples.character_2'),
+      t('initial_prompt.examples.character_3')
     ]
   } else if (typeName.includes('章节') || typeName.includes('Chapter')) {
     examples.value = [
-      '紧张刺激的战斗场景',
-      '温馨的日常对话',
-      '关键的剧情转折'
+      t('initial_prompt.examples.chapter_1'),
+      t('initial_prompt.examples.chapter_2'),
+      t('initial_prompt.examples.chapter_3')
     ]
   } else if (typeName.includes('大纲') || typeName.includes('Outline')) {
     examples.value = [
-      '三幕式结构',
-      '英雄之旅模式',
-      '多线叙事'
+      t('initial_prompt.examples.outline_1'),
+      t('initial_prompt.examples.outline_2'),
+      t('initial_prompt.examples.outline_3')
     ]
   } else {
     examples.value = [
-      '简洁明了',
-      '详细完整',
-      '富有创意'
+      t('initial_prompt.examples.generic_1'),
+      t('initial_prompt.examples.generic_2'),
+      t('initial_prompt.examples.generic_3')
     ]
   }
 })

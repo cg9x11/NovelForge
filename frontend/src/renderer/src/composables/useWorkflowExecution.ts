@@ -5,6 +5,7 @@
  */
 
 import { reactive, readonly, computed } from 'vue'
+import { i18n } from '@renderer/i18n'
 
 export enum WorkflowState {
   IDLE = 'idle',           // 空闲状态
@@ -66,10 +67,11 @@ export function useWorkflowExecution() {
     const allowedStates = validTransitions[currentState]
 
     if (!allowedStates.includes(newState)) {
-      throw new Error(
-        `非法状态转换: ${currentState} -> ${newState}. ` +
-        `允许的转换: ${allowedStates.join(', ')}`
-      )
+      throw new Error(i18n.global.t('workflow_execution.invalid_transition', {
+        from: currentState,
+        to: newState,
+        allowed: allowedStates.join(', ')
+      }))
     }
 
     console.log(`[WorkflowExecution] 状态转换: ${currentState} -> ${newState}`)

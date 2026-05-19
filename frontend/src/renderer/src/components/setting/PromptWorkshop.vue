@@ -1,84 +1,81 @@
-<template>
+﻿<template>
   <div class="prompt-workshop">
     <div class="toolbar">
-      <h2>提示词工坊</h2>
-      <el-button type="primary" @click="handleCreate">新建提示词</el-button>
+      <h2>{{ t('prompt_workshop.title') }}</h2>
+      <el-button type="primary" @click="handleCreate">{{ t('prompt_workshop.new_prompt') }}</el-button>
     </div>
     <el-table :data="prompts" style="width: 100%" v-loading="loading">
-      <el-table-column prop="name" label="名称" width="180" />
-      <el-table-column prop="description" label="描述" />
-      <el-table-column label="操作" width="220">
+      <el-table-column prop="name" :label="t('prompt_workshop.name')" width="180" />
+      <el-table-column prop="description" :label="t('prompt_workshop.description')" />
+      <el-table-column :label="t('common.actions')" width="220">
         <template #default="{ row }">
-          <el-button size="small" @click="handleEdit(row)">编辑</el-button>
-          <el-popconfirm title="删除该提示词？" @confirm="handleDelete(row.id)" v-if="!isBuiltInPrompt(row)">
+          <el-button size="small" @click="handleEdit(row)">{{ t('common.edit') }}</el-button>
+          <el-popconfirm :title="t('prompt_workshop.delete_popconfirm')" @confirm="handleDelete(row.id)" v-if="!isBuiltInPrompt(row)">
             <template #reference>
-              <el-button size="small" type="danger" :disabled="isBuiltInPrompt(row)">删除</el-button>
+              <el-button size="small" type="danger" :disabled="isBuiltInPrompt(row)">{{ t('common.delete') }}</el-button>
             </template>
           </el-popconfirm>
-          <el-button v-else size="small" type="danger" plain disabled>删除</el-button>
+          <el-button v-else size="small" type="danger" plain disabled>{{ t('common.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <!-- 抽屉编辑器 -->
     <el-drawer v-model="drawerVisible" :title="dialogTitle" size="60%" append-to-body>
       <el-form :model="currentPrompt" label-width="90px" ref="promptForm" class="form-grid">
-        <el-form-item label="名称" prop="name" :rules="{ required: true, message: '请输入名称', trigger: 'blur' }">
+        <el-form-item :label="t('prompt_workshop.name')" prop="name" :rules="{ required: true, message: t('prompt_workshop.validation.name_required'), trigger: 'blur' }">
           <el-input v-model="currentPrompt.name" />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
+        <el-form-item :label="t('prompt_workshop.description')" prop="description">
           <el-input v-model="currentPrompt.description" type="textarea" :rows="2" />
         </el-form-item>
-        <el-form-item label="结构化编辑">
+        <el-form-item :label="t('prompt_workshop.structured_edit')">
           <el-switch v-model="useStructured" />
-          <span class="hint">（开启后按 Role/Skills/Goals/Knowledge/OutputFormat 分区编辑，保存时会自动组合模板并写入数据库）</span>
+          <span class="hint">{{ t('prompt_workshop.structured_hint') }}</span>
         </el-form-item>
 
-        <!-- 结构化编辑模式 -->
         <template v-if="useStructured">
           <el-divider content-position="left">Role</el-divider>
-          <el-input v-model="structured.role" placeholder="如：小说创作助手" />
+          <el-input v-model="structured.role" :placeholder="t('prompt_workshop.role_placeholder')" />
 
           <el-divider content-position="left">Skills</el-divider>
-          <el-input v-model="structured.skills" type="textarea" :rows="2" placeholder="可写要点，换行分隔" />
+          <el-input v-model="structured.skills" type="textarea" :rows="2" :placeholder="t('prompt_workshop.skills_placeholder')" />
 
           <el-divider content-position="left">Goals</el-divider>
-          <el-input v-model="structured.goals" type="textarea" :rows="4" placeholder="每行一个目标，或用序号/短句" />
+          <el-input v-model="structured.goals" type="textarea" :rows="4" :placeholder="t('prompt_workshop.goals_placeholder')" />
 
-          <el-divider content-position="left">Knowledge（可选）</el-divider>
+          <el-divider content-position="left">{{ t('prompt_workshop.knowledge_optional') }}</el-divider>
           <div class="knowledge-grid">
             <div class="row">
-              <span class="label">引用方式：</span>
+              <span class="label">{{ t('prompt_workshop.reference_mode') }}</span>
               <el-radio-group v-model="knowledgeMode" size="small">
-                <el-radio-button label="id">按ID</el-radio-button>
-                <el-radio-button label="name">按名称</el-radio-button>
+                <el-radio-button label="id">{{ t('prompt_workshop.by_id') }}</el-radio-button>
+                <el-radio-button label="name">{{ t('prompt_workshop.by_name') }}</el-radio-button>
               </el-radio-group>
-              <span class="hint" style="margin-left:8px">将插入 @KB{ id=... } 或 @KB{ name=... }，生成时后端会动态注入最新内容</span>
+              <span class="hint" style="margin-left:8px">{{ t('prompt_workshop.kb_hint') }}</span>
             </div>
-            <el-select v-model="selectedKnowledgeIds" multiple filterable placeholder="选择要引用的知识库（可多选）" style="width:100%">
+            <el-select v-model="selectedKnowledgeIds" multiple filterable :placeholder="t('prompt_workshop.select_kb_placeholder')" style="width:100%">
               <el-option v-for="kb in knowledgeItems" :key="kb.id" :label="kb.name" :value="kb.id" />
             </el-select>
           </div>
 
-          <el-divider content-position="left">OutputFormat（可选）</el-divider>
-          <el-input v-model="structured.outputFormat" type="textarea" :rows="2" placeholder="默认：请严格根据提供的Json Schema返回结果" />
+          <el-divider content-position="left">{{ t('prompt_workshop.output_format_optional') }}</el-divider>
+          <el-input v-model="structured.outputFormat" type="textarea" :rows="2" :placeholder="t('prompt_workshop.output_format_placeholder')" />
 
-          <el-divider content-position="left">预览</el-divider>
+          <el-divider content-position="left">{{ t('prompt_workshop.preview') }}</el-divider>
           <el-input :model-value="composedTemplate" type="textarea" :rows="10" readonly />
         </template>
 
-        <!-- 原始模板模式 -->
         <template v-else>
-          <el-form-item label="模板" prop="template" :rules="{ required: true, message: '请输入模板内容', trigger: 'blur' }">
+          <el-form-item :label="t('prompt_workshop.template')" prop="template" :rules="{ required: true, message: t('prompt_workshop.validation.template_required'), trigger: 'blur' }">
             <el-input v-model="currentPrompt.template" type="textarea" :rows="14" />
-            <div class="template-hint">使用 <code>${variable}</code> 的形式来定义占位符，例如 <code>${text_content}</code>。</div>
+            <div class="template-hint" v-html="t('prompt_workshop.template_hint')" />
           </el-form-item>
         </template>
       </el-form>
       <template #footer>
         <div class="drawer-footer">
-          <el-button @click="drawerVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSave" :loading="saving">保存</el-button>
+          <el-button @click="drawerVisible = false">{{ t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleSave" :loading="saving">{{ t('common.save') }}</el-button>
         </div>
       </template>
     </el-drawer>
@@ -86,7 +83,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import { listKnowledge, type Knowledge, listPrompts, createPrompt, updatePrompt, deletePrompt } from '@renderer/api/setting'
@@ -99,7 +97,8 @@ interface Prompt {
   built_in?: boolean
 }
 
-const DEFAULT_OUTPUT_FORMAT = '请严格根据提供的Json Schema返回结果'
+const { t } = useI18n()
+const DEFAULT_OUTPUT_FORMAT = t('prompt_workshop.default_output_format')
 
 const prompts = ref<Prompt[]>([])
 const loading = ref(false)
@@ -108,20 +107,14 @@ const saving = ref(false)
 const currentPrompt = ref<Partial<Prompt>>({})
 const promptForm = ref<FormInstance>()
 
-const dialogTitle = computed(() => (currentPrompt.value.id ? '编辑提示词' : '新建提示词'))
-
+const dialogTitle = computed(() => (currentPrompt.value.id ? t('prompt_workshop.edit_prompt') : t('prompt_workshop.new_prompt')))
 const isBuiltInPrompt = (row: Prompt) => !!row.built_in
 
-// 结构化编辑相关
 const useStructured = ref(false)
 const structured = ref({ role: '', skills: '', goals: '', knowledge: '', outputFormat: DEFAULT_OUTPUT_FORMAT })
-
-// 知识库选择与模式
 const knowledgeItems = ref<Knowledge[]>([])
 const selectedKnowledgeIds = ref<number[]>([])
 const knowledgeMode = ref<'id' | 'name'>('name')
-
-// 组合预览
 const composedTemplate = computed(() => composeTemplate(structured.value))
 
 function composeTemplate(s: { role: string; skills: string; goals: string; knowledge?: string; outputFormat?: string }) {
@@ -130,18 +123,16 @@ function composeTemplate(s: { role: string; skills: string; goals: string; knowl
   if (s.skills?.trim()) lines.push(`- Skills: ${s.skills.trim()}`)
   if (s.goals?.trim()) {
     lines.push('- Goals:')
-    // 将多行 goals 做缩进
-    const gl = s.goals.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
-    for (const g of gl) lines.push(`    - ${g}`)
+    const goalLines = s.goals.split(/\r?\n/).map(line => line.trim()).filter(Boolean)
+    for (const goal of goalLines) lines.push(`    - ${goal}`)
   }
-  // 知识库占位符引用
   if (selectedKnowledgeIds.value.length) {
     lines.push('\n- knowledge:')
-    for (const kid of selectedKnowledgeIds.value) {
-      const item = knowledgeItems.value.find(k => k.id === kid)
+    for (const knowledgeId of selectedKnowledgeIds.value) {
+      const item = knowledgeItems.value.find(knowledge => knowledge.id === knowledgeId)
       if (!item) continue
       if (knowledgeMode.value === 'id') {
-        lines.push(`    - @KB{ id=${kid} }  # ${item.name}`)
+        lines.push(`    - @KB{ id=${knowledgeId} }  # ${item.name}`)
       } else {
         lines.push(`    - @KB{ name=${item.name} }`)
       }
@@ -155,8 +146,8 @@ async function fetchPrompts() {
   loading.value = true
   try {
     prompts.value = await listPrompts()
-  } catch (error) {
-    ElMessage.error('加载提示词列表失败')
+  } catch {
+    ElMessage.error(t('prompt_workshop.messages.load_failed'))
   } finally {
     loading.value = false
   }
@@ -171,7 +162,7 @@ async function fetchKnowledgeList() {
 }
 
 function resetStructuredDefaults() {
-  structured.value = { role: '', skills: '', goals: '', knowledge: '', outputFormat: DEFAULT_OUTPUT_FORMAT }
+  structured.value = { role: '', skills: '', goals: '', knowledge: '', outputFormat: t('prompt_workshop.default_output_format') }
   selectedKnowledgeIds.value = []
   knowledgeMode.value = 'name'
 }
@@ -183,30 +174,29 @@ function handleCreate() {
   drawerVisible.value = true
 }
 
-function parseKnowledgeBlock(tpl: string) {
-  // 提取 knowledge 区块
-  const k = /-\s*knowledge:\s*([\s\S]*?)(?:\n-\s*OutputFormat\s*[:：]|$)/i.exec(tpl)
+function parseKnowledgeBlock(template: string) {
+  const knowledgeMatch = /-\s*knowledge:\s*([\s\S]*?)(?:\n-\s*OutputFormat\s*[:：]|$)/i.exec(template)
   const ids: number[] = []
   let mode: 'id' | 'name' = 'name'
-  if (k && k[1]) {
-    const block = k[1]
+  if (knowledgeMatch && knowledgeMatch[1]) {
+    const block = knowledgeMatch[1]
     const idReg = /@KB\{\s*id\s*=\s*(\d+)\s*\}/gi
     const nameReg = /@KB\{\s*name\s*=\s*([^}]+)\}/gi
-    let m: RegExpExecArray | null
-    while ((m = idReg.exec(block))) {
-      const id = Number(m[1])
+    let match: RegExpExecArray | null
+    while ((match = idReg.exec(block))) {
+      const id = Number(match[1])
       if (!Number.isNaN(id)) ids.push(id)
     }
     if (!ids.length) {
       const names: string[] = []
-      while ((m = nameReg.exec(block))) {
-        const n = (m[1] || '').trim().replace(/^['"]|['"]$/g, '')
-        if (n) names.push(n)
+      while ((match = nameReg.exec(block))) {
+        const name = (match[1] || '').trim().replace(/^[']|[']$/g, '')
+        if (name) names.push(name)
       }
       if (names.length) {
         mode = 'name'
-        for (const n of names) {
-          const found = knowledgeItems.value.find(kb => kb.name === n)
+        for (const name of names) {
+          const found = knowledgeItems.value.find(knowledge => knowledge.name === name)
           if (found) ids.push(found.id)
         }
       }
@@ -218,29 +208,26 @@ function parseKnowledgeBlock(tpl: string) {
   knowledgeMode.value = mode
 }
 
-async function tryParseStructured(tpl?: string) {
-  if (!tpl) return resetStructuredDefaults()
-  // 粗略解析，仅在常见格式时填充字段，解析失败保持默认
+async function tryParseStructured(template?: string) {
+  if (!template) return resetStructuredDefaults()
   try {
-    const r = /-\s*Role:\s*(.*)/i.exec(tpl)
-    const s = /-\s*Skills?:\s*([\s\S]*?)(?:\n-\s*Goals?:|\n-\s*knowledge:|\n-\s*OutputFormat\s*[:：]|$)/i.exec(tpl)
-    const g = /-\s*Goals?:\s*([\s\S]*?)(?:\n-\s*knowledge:|\n-\s*OutputFormat\s*[:：]|$)/i.exec(tpl)
-    const o = /-\s*OutputFormat\s*[:：]\s*([\s\S]*)/i.exec(tpl)
-    structured.value.role = r?.[1]?.trim() || ''
-    structured.value.skills = (s?.[1] || '').trim()
-    structured.value.goals = (g?.[1] || '').replace(/^\s*-\s*/gm, '').trim()
-    structured.value.outputFormat = (o?.[1] || DEFAULT_OUTPUT_FORMAT).trim()
-    // 解析知识库引用
-    parseKnowledgeBlock(tpl)
+    const roleMatch = /-\s*Role:\s*(.*)/i.exec(template)
+    const skillsMatch = /-\s*Skills?:\s*([\s\S]*?)(?:\n-\s*Goals?:|\n-\s*knowledge:|\n-\s*OutputFormat\s*[:：]|$)/i.exec(template)
+    const goalsMatch = /-\s*Goals?:\s*([\s\S]*?)(?:\n-\s*knowledge:|\n-\s*OutputFormat\s*[:：]|$)/i.exec(template)
+    const outputMatch = /-\s*OutputFormat\s*[:：]\s*([\s\S]*)/i.exec(template)
+    structured.value.role = roleMatch?.[1]?.trim() || ''
+    structured.value.skills = (skillsMatch?.[1] || '').trim()
+    structured.value.goals = (goalsMatch?.[1] || '').replace(/^\s*-\s*/gm, '').trim()
+    structured.value.outputFormat = (outputMatch?.[1] || t('prompt_workshop.default_output_format')).trim()
+    parseKnowledgeBlock(template)
   } catch {
     resetStructuredDefaults()
   }
 }
 
-async function handleEdit(prompt: any) {
+async function handleEdit(prompt: Prompt) {
   currentPrompt.value = { ...prompt }
   await fetchKnowledgeList()
-  // 尝试解析为结构化表单，若失败则回退到原始模板模式
   await tryParseStructured(prompt.template)
   useStructured.value = false
   drawerVisible.value = true
@@ -249,49 +236,50 @@ async function handleEdit(prompt: any) {
 async function handleSave() {
   if (!promptForm.value) return
   await promptForm.value.validate(async (valid) => {
-    if (valid) {
-      saving.value = true
-      try {
-        const payload: any = { ...currentPrompt.value }
-        // 若是结构化编辑，则组合模板写回
-        if (useStructured.value) {
-          payload.template = composeTemplate(structured.value)
-        }
-        if (payload.id) {
-          await updatePrompt(payload.id, payload)
-        } else {
-          await createPrompt(payload)
-        }
-        ElMessage.success('保存成功')
-        drawerVisible.value = false
-        fetchPrompts()
-      } catch (error) {
-        ElMessage.error('保存失败')
-      } finally {
-        saving.value = false
+    if (!valid) return
+    saving.value = true
+    try {
+      const payload: any = { ...currentPrompt.value }
+      if (useStructured.value) {
+        payload.template = composeTemplate(structured.value)
       }
+      if (payload.id) {
+        await updatePrompt(payload.id, payload)
+      } else {
+        await createPrompt(payload)
+      }
+      ElMessage.success(t('prompt_workshop.messages.save_success'))
+      drawerVisible.value = false
+      fetchPrompts()
+    } catch {
+      ElMessage.error(t('prompt_workshop.messages.save_failed'))
+    } finally {
+      saving.value = false
     }
   })
 }
 
 async function handleDelete(id: number) {
   try {
-    await ElMessageBox.confirm('确定要删除这个提示词吗？', '警告', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('prompt_workshop.messages.delete_confirm'), t('common.warning'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning',
     })
     await deletePrompt(id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('prompt_workshop.messages.delete_success'))
     fetchPrompts()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+      ElMessage.error(t('prompt_workshop.messages.delete_failed'))
     }
   }
 }
 
-onMounted(async () => { await fetchKnowledgeList(); await fetchPrompts() })
+onMounted(async () => {
+  await fetchKnowledgeList()
+  await fetchPrompts()
+})
 </script>
 
 <style scoped>
@@ -304,4 +292,4 @@ onMounted(async () => { await fetchKnowledgeList(); await fetchPrompts() })
 .knowledge-grid { display: flex; flex-direction: column; gap: 8px; }
 .row { display: flex; align-items: center; gap: 8px; }
 .label { color: var(--el-text-color-regular); }
-</style> 
+</style>

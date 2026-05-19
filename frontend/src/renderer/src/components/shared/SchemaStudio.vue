@@ -10,38 +10,38 @@
       <div class="left">
         <template v-if="mode==='type'">
           <el-form label-position="top" class="modelname-form">
-            <el-form-item label="模型名称">
-              <el-input v-model="modelName" placeholder="不填则默认等于卡片类型名" />
+            <el-form-item :label="t('schema_studio.model_name')">
+              <el-input v-model="modelName" :placeholder="t('schema_studio.model_name_placeholder')" />
             </el-form-item>
           </el-form>
         </template>
-        <div class="pane-header">结构构建器</div>
+        <div class="pane-header">{{ t('schema_studio.schema_builder') }}</div>
         <OutputModelBuilder v-model="builderFields" :models="relationTargets" :current-model-name="contextTitle" />
       </div>
       <div class="right">
         <div class="subpane">
-          <div class="pane-header">表单预览</div>
+          <div class="pane-header">{{ t('schema_studio.form_preview') }}</div>
           <div class="preview">
             <ModelDrivenForm v-if="schemaObject" :schema="schemaObject" v-model="previewModel" />
-            <div v-else class="placeholder">暂无 Schema</div>
+            <div v-else class="placeholder">{{ t('schema_studio.no_schema') }}</div>
           </div>
         </div>
         <div class="subpane">
-          <div class="pane-header">Schema JSON</div>
+          <div class="pane-header">{{ t('schema_studio.schema_json') }}</div>
           <el-input type="textarea" :rows="12" :model-value="schemaText" readonly />
         </div>
       </div>
     </div>
     <template #footer>
       <div class="footer-actions">
-        <el-button @click="emit('update:visible', false)">关闭</el-button>
+        <el-button @click="emit('update:visible', false)">{{ t('common.close') }}</el-button>
         <template v-if="mode==='card'">
-          <el-button @click="restoreFollowType" type="warning" plain>恢复跟随类型</el-button>
-          <el-button @click="applyToType" type="primary" plain>应用到类型</el-button>
-          <el-button @click="saveForCard" type="primary">仅此卡生效</el-button>
+          <el-button @click="restoreFollowType" type="warning" plain>{{ t('schema_studio.restore_follow_type') }}</el-button>
+          <el-button @click="applyToType" type="primary" plain>{{ t('schema_studio.apply_to_type') }}</el-button>
+          <el-button @click="saveForCard" type="primary">{{ t('schema_studio.save_for_card') }}</el-button>
         </template>
         <template v-else>
-          <el-button type="primary" @click="saveForType">保存到类型</el-button>
+          <el-button type="primary" @click="saveForType">{{ t('schema_studio.save_for_type') }}</el-button>
         </template>
       </div>
     </template>
@@ -50,16 +50,21 @@
 
 <script setup lang="ts">
 import { ref, computed, onBeforeUnmount, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import OutputModelBuilder from '../setting/OutputModelBuilder.vue'
 import ModelDrivenForm from '../dynamic-form/ModelDrivenForm.vue'
 import { schemaToBuilder, builderToSchema, type BuilderField } from '@renderer/utils/outputModelSchemaUtils'
 import { ElMessage } from 'element-plus'
 import { getCardTypeSchema, updateCardTypeSchema, getCardSchema, updateCardSchema, applyCardSchemaToType, listCardTypes, updateCardType } from '@renderer/api/setting'
 
+const { t } = useI18n()
+
 const props = defineProps<{ visible: boolean; mode: 'type' | 'card'; targetId: number; contextTitle?: string }>()
 const emit = defineEmits<{ 'update:visible': [boolean]; 'saved': []; 'close': [] }>()
 
-const headerTitle = computed(() => props.mode === 'type' ? `类型结构编辑：${props.contextTitle || props.targetId}` : `实例结构编辑：${props.contextTitle || props.targetId}`)
+const headerTitle = computed(() => props.mode === 'type'
+  ? t('schema_studio.type_title', { value: props.contextTitle || props.targetId })
+  : t('schema_studio.card_title', { value: props.contextTitle || props.targetId }))
 
 const builderFields = ref<BuilderField[]>([])
 const relationTargets = ref<Array<{ name: string; json_schema?: any }>>([])
@@ -129,7 +134,7 @@ async function loadSchema() {
       }
     } catch {}
   } catch (e:any) {
-    ElMessage.error('加载 Schema 失败')
+    ElMessage.error(t('schema_studio.messages.load_failed'))
   }
 }
 
@@ -140,34 +145,34 @@ async function saveForType() {
       await updateCardType(props.targetId, { model_name: modelName.value || null } as any)
     }
     await updateCardTypeSchema(props.targetId, schemaObject.value || {})
-    ElMessage.success('已保存到类型结构')
+    ElMessage.success(t('schema_studio.messages.saved_to_type'))
     emit('saved')
-  } catch (e:any) { ElMessage.error('保存失败') }
+  } catch (e:any) { ElMessage.error(t('schema_studio.messages.save_failed')) }
 }
 
 async function saveForCard() {
   try {
     await updateCardSchema(props.targetId, schemaObject.value || {})
-    ElMessage.success('已保存，仅此卡生效')
+    ElMessage.success(t('schema_studio.messages.saved_for_card'))
     emit('saved')
-  } catch (e:any) { ElMessage.error('保存失败') }
+  } catch (e:any) { ElMessage.error(t('schema_studio.messages.save_failed')) }
 }
 
 async function restoreFollowType() {
   try {
     await updateCardSchema(props.targetId, null)
-    ElMessage.success('已恢复跟随类型')
+    ElMessage.success(t('schema_studio.messages.restored_follow_type'))
     await loadSchema()
     emit('saved')
-  } catch (e:any) { ElMessage.error('操作失败') }
+  } catch (e:any) { ElMessage.error(t('schema_studio.messages.action_failed')) }
 }
 
 async function applyToType() {
   try {
     await applyCardSchemaToType(props.targetId)
-    ElMessage.success('已应用到类型')
+    ElMessage.success(t('schema_studio.messages.applied_to_type'))
     emit('saved')
-  } catch (e:any) { ElMessage.error('应用失败') }
+  } catch (e:any) { ElMessage.error(t('schema_studio.messages.apply_failed')) }
 }
 
 function handleKey(e: KeyboardEvent) {
