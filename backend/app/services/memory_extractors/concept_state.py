@@ -35,8 +35,8 @@ def _load_existing_concept_card(card: Card) -> ConceptCard:
 
 _SPEC = StructuredCardExtractorSpec(
     code="concept_state",
-    name="概念掌握提取",
-    prompt_name="概念掌握提取",
+    name="concept_state_extraction",
+    prompt_name="concept_state_extraction",
     card_type_name="概念卡",
     output_model=ConceptStateExtraction,
     list_field_name="concepts",

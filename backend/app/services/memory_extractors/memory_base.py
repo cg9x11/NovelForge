@@ -161,7 +161,7 @@ class StructuredCardMemoryExtractor:
         extra_context: str | None = None,
         context: dict[str, Any] | None = None,
     ) -> BaseModel:
-        prompt = prompt_service.get_prompt_by_name(session, self.prompt_name)
+        prompt = prompt_service.get_prompt_by_identifier(session, self.prompt_name)
         if not prompt:
             raise ValueError(f"未找到提示词: {self.prompt_name}")
 

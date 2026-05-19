@@ -39,8 +39,8 @@ def _load_existing_scene_card(card: Card) -> SceneCard:
 
 _SPEC = StructuredCardExtractorSpec(
     code="scene_state",
-    name="场景状态提取",
-    prompt_name="场景状态提取",
+    name="scene_state_extraction",
+    prompt_name="scene_state_extraction",
     card_type_name="场景卡",
     output_model=SceneStateExtraction,
     list_field_name="scenes",

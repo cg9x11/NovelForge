@@ -25,8 +25,8 @@ QUALITY_GATE_PATTERN = re.compile(
 )
 
 DEFAULT_REVIEW_PROFILE = "generic_card_review"
-REVIEW_RESULT_CARD_TYPE_NAME = "内容审核卡片"
-REVIEW_RESULT_FOLDER_CARD_TYPE_NAME = "文件夹"
+REVIEW_RESULT_CARD_TYPE_NAME = "review_result_card"
+REVIEW_RESULT_FOLDER_CARD_TYPE_NAME = "folder"
 REVIEW_RESULT_FOLDER_TITLE = "审核结果"
 
 
@@ -50,7 +50,7 @@ def _resolve_review_profile_code(review_profile: str | None) -> str:
 
 
 def _build_system_prompt(session: Session, prompt_name: str) -> str:
-    prompt = prompt_service.get_prompt_by_name(session, prompt_name)
+    prompt = prompt_service.get_prompt_by_identifier(session, prompt_name)
     if not prompt or not prompt.template:
         raise HTTPException(status_code=400, detail=f"未找到提示词名称: {prompt_name}")
     return prompt_service.inject_knowledge(session, str(prompt.template))

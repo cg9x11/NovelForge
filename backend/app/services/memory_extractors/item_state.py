@@ -35,8 +35,8 @@ def _load_existing_item_card(card: Card) -> ItemCard:
 
 _SPEC = StructuredCardExtractorSpec(
     code="item_state",
-    name="物品状态提取",
-    prompt_name="物品状态提取",
+    name="item_state_extraction",
+    prompt_name="item_state_extraction",
     card_type_name="物品卡",
     output_model=ItemStateExtraction,
     list_field_name="items",

@@ -41,8 +41,8 @@ def _load_existing_organization_card(card: Card) -> OrganizationCard:
 
 _SPEC = StructuredCardExtractorSpec(
     code="organization_state",
-    name="组织状态提取",
-    prompt_name="组织状态提取",
+    name="organization_state_extraction",
+    prompt_name="organization_state_extraction",
     card_type_name="组织卡",
     output_model=OrganizationStateExtraction,
     list_field_name="organizations",

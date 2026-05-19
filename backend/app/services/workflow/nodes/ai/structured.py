@@ -105,7 +105,7 @@ class StructuredGenerateNode(BaseNode[StructuredGenerateInput, StructuredGenerat
         # 加载提示词模板（如果配置了）
         card_prompt_content = None
         if inputs.prompt_template:
-            prompt = prompt_service.get_prompt_by_name(session, inputs.prompt_template)
+            prompt = prompt_service.get_prompt_by_identifier(session, inputs.prompt_template)
             if prompt and prompt.template:
                 card_prompt_content = prompt.template
         
