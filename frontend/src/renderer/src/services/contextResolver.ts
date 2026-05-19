@@ -182,15 +182,15 @@ function getNearestAncestorOfType(cards: CardRead[], card: CardRead | undefined,
 
 // 针对实体卡（角色/场景/组织/物品/概念）：若 life_span 为“短期”，且候选卡不在当前卡片所在分卷下，则忽略
 function filterShortLivedEntityAcrossVolumes(cards: CardRead[], currentCard: CardRead | undefined, list: CardRead[]): CardRead[] {
-  const entityTypes = new Set(['角色卡', '场景卡', '组织卡', '物品卡', '概念卡'])
+  const entityTypes = new Set(['character_card', 'scene_card', 'organization_card', 'item_card', 'concept_card'])
   if (!currentCard) return list
-  const currentVol = getNearestAncestorOfType(cards, currentCard, '分卷大纲')
+  const currentVol = getNearestAncestorOfType(cards, currentCard, 'volume_outline')
   const currentVolId = currentVol?.id
   return list.filter(c => {
-    if (!entityTypes.has(c.card_type?.name || '')) return true
+    if (!entityTypes.has(getCardTypeKey(c.card_type) || '')) return true
     const lifeSpan = (c.content as any)?.life_span
     if (lifeSpan !== '短期') return true
-    const vol = getNearestAncestorOfType(cards, c, '分卷大纲')
+    const vol = getNearestAncestorOfType(cards, c, 'volume_outline')
     return (vol?.id ?? null) === (currentVolId ?? null)
   })
 }
