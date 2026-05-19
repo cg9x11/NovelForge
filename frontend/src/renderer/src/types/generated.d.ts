@@ -3031,6 +3031,8 @@ export interface components {
         };
         /** KnowledgeCreate */
         KnowledgeCreate: {
+            /** Key */
+            key?: string | null;
             /** Name */
             name: string;
             /** Description */
@@ -3040,6 +3042,8 @@ export interface components {
         };
         /** KnowledgeRead */
         KnowledgeRead: {
+            /** Key */
+            key?: string | null;
             /** Name */
             name: string;
             /** Description */
@@ -3056,6 +3060,8 @@ export interface components {
         };
         /** KnowledgeUpdate */
         KnowledgeUpdate: {
+            /** Key */
+            key?: string | null;
             /** Name */
             name?: string | null;
             /** Description */

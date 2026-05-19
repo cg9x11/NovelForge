@@ -268,7 +268,7 @@ function isReasoningBucketOpen(key: string): boolean {
 const currentSession = ref<AssistantChatSession>({
   id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   projectId: 0,
-  title: '新对话',
+  title: String(t('assistant.new_chat')),
   createdAt: Date.now(),
   updatedAt: Date.now(),
   messages: []

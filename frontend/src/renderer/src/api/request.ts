@@ -1,7 +1,6 @@
 import { i18n } from '@renderer/i18n'
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { ElMessage, ElLoading } from 'element-plus'
-import { tr } from '@renderer/utils/i18n'
 
 // 后端API的基础URL
 // 约定：
@@ -51,7 +50,7 @@ function translateBackendError(detail: any, fallback?: string): string {
         break
     }
   }
-  return tr(fallback || 'Request failed')
+  return fallback || String(i18n.global.t('errors.requestFailed'))
 }
 
 class HttpClient {
@@ -69,7 +68,7 @@ class HttpClient {
           if (this.loadingCount === 0) {
             this.loadingInstance = ElLoading.service({
               lock: true,
-              text: tr('Loading...'),
+              text: String(i18n.global.t('common.loading')),
               background: 'rgba(0, 0, 0, 0.7)'
             })
           }
@@ -110,7 +109,7 @@ class HttpClient {
         // 避免误判业务对象中的 status 字段（如 WorkflowRunRead.status）
         if (res.status === 'success' || res.status === 'error') {
           if (res.status === 'error') {
-            ElMessage.error(tr(res.message || 'Operation failed'))
+            ElMessage.error(res.message || String(i18n.global.t('common.operation_failed')))
             return Promise.reject(new Error(res.message || 'Error'))
           }
           return res.data
@@ -135,14 +134,14 @@ class HttpClient {
           if (Array.isArray(validationErrors)) {
             const errorMessages = validationErrors.map((err: any) => {
               const fieldName = err.loc.slice(1).join(' -> ')
-              return `${tr('Field')} '${fieldName}': ${err.msg}`
+              return `${i18n.global.t('common.field')} '${fieldName}': ${err.msg}`
             }).join('<br/>')
-            ElMessage({ type: 'error', dangerouslyUseHTMLString: true, message: `<strong>${tr('Input validation failed:')}</strong><br/>${errorMessages}`, duration: 5000 })
+            ElMessage({ type: 'error', dangerouslyUseHTMLString: true, message: `<strong>${i18n.global.t('errors.inputValidationFailed')}</strong><br/>${errorMessages}`, duration: 5000 })
           } else {
-            ElMessage.error(tr('Unknown validation error'))
+            ElMessage.error(String(i18n.global.t('errors.unknownValidationError')))
           }
         } else {
-          const errorMessage = translateBackendError(error.response?.data?.detail, error.response?.data?.message || error.message || 'Request failed')
+          const errorMessage = translateBackendError(error.response?.data?.detail, error.response?.data?.message || error.message || String(i18n.global.t('errors.requestFailed')))
           ElMessage.error(errorMessage)
         }
         console.error('请求错误:', error.response?.data || error)

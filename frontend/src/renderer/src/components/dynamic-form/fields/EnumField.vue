@@ -37,13 +37,6 @@ const { t } = useI18n()
 const knowledgeOptions = ref<Array<string | number>>([])
 const isLoading = ref(false)
 
-const ENTITY_TYPE_LABELS: Record<string, string> = {
-  character: '角色',
-  scene: '场景',
-  organization: '组织',
-  item: '物品',
-  concept: '概念',
-}
 
 watch(
   () => props.schema['x-knowledge-source'],
@@ -78,17 +71,17 @@ const resolvedOptions = computed(() => {
 })
 
 const placeholder = computed(() => {
-  return props.schema.description || `请选择 ${props.label}`
+  return props.schema.description || t('dynamic_form.fields.select_placeholder', { label: props.label })
 })
 
 const noDataText = computed(() => {
   if (isLoading.value) {
-    return '正在加载选项'
+    return t('dynamic_form.fields.loading_options')
   }
   if (props.schema['x-knowledge-source']) {
-    return '未找到可用选项，请先在知识库中维护'
+    return t('dynamic_form.fields.no_knowledge_options')
   }
-  return '暂无可选项'
+  return t('dynamic_form.fields.no_options')
 })
 
 function getOptionLabel(item: string | number): string {

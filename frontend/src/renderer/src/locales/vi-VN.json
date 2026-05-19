@@ -51,7 +51,9 @@
     "disabled": "Tắt",
     "na": "N/A",
     "details": "Chi tiết",
-    "back": "Quay lại"
+    "back": "Quay lại",
+    "loading": "Đang tải...",
+    "field": "Trường"
   },
   "dashboard": {
     "title": "Tủ sách của tôi",
@@ -1064,7 +1066,7 @@
   },
   "tags_editor": {
     "title": "Thiết lập thẻ tác phẩm",
-    "title_plain": "",
+    "title_plain": "Tags tác phẩm",
     "random_all": "Ngẫu nhiên toàn bộ ý tưởng",
     "save_changes": "Lưu thay đổi",
     "theme_tags": "Thẻ chủ đề",
@@ -1853,7 +1855,10 @@
   },
   "errors": {
     "promptNotFound": "Không tìm thấy prompt: {name}",
-    "promptNameNotFound": "Không tìm thấy tên prompt: {name}"
+    "promptNameNotFound": "Không tìm thấy tên prompt: {name}",
+    "requestFailed": "Yêu cầu thất bại",
+    "inputValidationFailed": "Kiểm tra dữ liệu nhập thất bại:",
+    "unknownValidationError": "Lỗi kiểm tra dữ liệu không xác định"
   },
   "agent_message_list": {
     "thinking_in_progress": "?ang suy ngh??",
@@ -1886,6 +1891,16 @@
       "loading_options": "?ang t?i t?y ch?n",
       "no_knowledge_options": "Kh?ng t?m th?y t?y ch?n. Vui l?ng duy tr? trong Kho tri th?c tr??c",
       "no_options": "Ch?a c? t?y ch?n"
+    }
+  },
+  "agent_composer": {
+    "placeholder": "Nhập nội dung"
+  },
+  "simple_markdown": {
+    "verdict": {
+      "pass": "Cơ bản đạt",
+      "revise": "Nên chỉnh sửa",
+      "block": "Chặn rủi ro cao"
     }
   }
 }

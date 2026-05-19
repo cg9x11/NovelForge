@@ -67,7 +67,7 @@
                   class="weight-input"
                   :placeholder="t('tags_editor.weight_placeholder')"
                 >
-                  <el-option v-for="w in WEIGHT_LEVELS" :key="w" :label="w" :value="w" />
+                  <el-option v-for="w in WEIGHT_LEVELS" :key="w" :label="getWeightLabel(w)" :value="w" />
                 </el-select>
               </div>
             </div>
@@ -182,6 +182,14 @@ function handleThemeChange(value: any) {
 // 类别标签逻辑
 function isStoryTagSelected(tagName: string) {
   return localData.story_tags.some(([name]) => name === tagName)
+}
+
+
+function getWeightLabel(weight: WeightLevel): string {
+  if (weight === '低权重') return String(t('tags_editor.weights.low'))
+  if (weight === '中权重') return String(t('tags_editor.weights.medium'))
+  if (weight === '高权重') return String(t('tags_editor.weights.high'))
+  return weight
 }
 
 function getStoryTagWeight(tagName: string): WeightLevel {
@@ -340,7 +348,7 @@ function parseKnowledge(text: string) {
 onMounted(async () => {
   try {
     const list = await listKnowledge()
-    const kb = (list || []).find(k => k && k.name === t('tags_editor.title_plain'))
+    const kb = (list || []).find(k => k && (k.key === 'work_tags' || k.name === t('tags_editor.title_plain')))
     if (kb && kb.content) parseKnowledge(kb.content)
   } catch {}
 })

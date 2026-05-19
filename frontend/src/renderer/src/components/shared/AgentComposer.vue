@@ -5,7 +5,7 @@
       type="textarea"
       :rows="rows"
       :resize="resize"
-      :placeholder="placeholder"
+      :placeholder="resolvedPlaceholder"
       :disabled="disabled"
       @keydown="handleKeydown"
       :class="['composer-input', inputClass]"
@@ -18,6 +18,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(defineProps<{
   modelValue: string
@@ -27,17 +28,21 @@ const props = withDefaults(defineProps<{
   resize?: 'none' | 'both' | 'horizontal' | 'vertical'
   inputClass?: string
 }>(), {
-  placeholder: '请输入内容',
+  placeholder: '',
   disabled: false,
   rows: 3,
   resize: 'none',
   inputClass: '',
 })
 
+const { t } = useI18n()
+
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
   (e: 'keydown', event: KeyboardEvent): void
 }>()
+
+const resolvedPlaceholder = computed(() => props.placeholder || t('agent_composer.placeholder'))
 
 const innerValue = computed({
   get: () => props.modelValue,

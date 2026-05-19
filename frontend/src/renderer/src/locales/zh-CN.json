@@ -51,7 +51,9 @@
     "disabled": "Disabled",
     "na": "?",
     "details": "Details",
-    "back": "Back"
+    "back": "Back",
+    "loading": "加载中...",
+    "field": "字段"
   },
   "dashboard": {
     "title": "My Bookshelf",
@@ -1058,7 +1060,7 @@
   },
   "tags_editor": {
     "title": "Work Tags Setup",
-    "title_plain": "????",
+    "title_plain": "作品标签",
     "random_all": "Randomize All Ideas",
     "save_changes": "Save Changes",
     "theme_tags": "Theme Tags",
@@ -1081,9 +1083,9 @@
       "saved": "Tag settings saved"
     },
     "weights": {
-      "low": "Low Weight",
-      "medium": "Medium Weight",
-      "high": "High Weight"
+      "low": "低权重",
+      "medium": "中权重",
+      "high": "高权重"
     }
   },
   "context_panel": {
@@ -1844,10 +1846,22 @@
     },
     "assembledSuccess": "Context assembled",
     "assembledFailed": "Assemble failed"
-  }
-,
+  },
   "errors": {
     "promptNotFound": "Prompt not found: {name}",
-    "promptNameNotFound": "Prompt name not found: {name}"
+    "promptNameNotFound": "Prompt name not found: {name}",
+    "requestFailed": "请求失败",
+    "inputValidationFailed": "输入校验失败:",
+    "unknownValidationError": "未知校验错误"
+  },
+  "agent_composer": {
+    "placeholder": "请输入内容"
+  },
+  "simple_markdown": {
+    "verdict": {
+      "pass": "基本通过",
+      "revise": "建议修改",
+      "block": "高风险拦截"
+    }
   }
 }

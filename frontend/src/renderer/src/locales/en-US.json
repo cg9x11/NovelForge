@@ -51,7 +51,9 @@
     "disabled": "Disabled",
     "na": "?",
     "details": "Details",
-    "back": "Back"
+    "back": "Back",
+    "loading": "Loading...",
+    "field": "Field"
   },
   "dashboard": {
     "title": "My Bookshelf",
@@ -1064,7 +1066,7 @@
   },
   "tags_editor": {
     "title": "Work Tags Setup",
-    "title_plain": "????",
+    "title_plain": "Work Tags",
     "random_all": "Randomize All Ideas",
     "save_changes": "Save Changes",
     "theme_tags": "Theme Tags",
@@ -1853,7 +1855,10 @@
   },
   "errors": {
     "promptNotFound": "Prompt not found: {name}",
-    "promptNameNotFound": "Prompt name not found: {name}"
+    "promptNameNotFound": "Prompt name not found: {name}",
+    "requestFailed": "Request failed",
+    "inputValidationFailed": "Input validation failed:",
+    "unknownValidationError": "Unknown validation error"
   },
   "agent_message_list": {
     "thinking_in_progress": "Thinking?",
@@ -1886,6 +1891,16 @@
       "loading_options": "Loading options",
       "no_knowledge_options": "No options found. Please maintain them in Knowledge Base first",
       "no_options": "No options available"
+    }
+  },
+  "agent_composer": {
+    "placeholder": "Enter content"
+  },
+  "simple_markdown": {
+    "verdict": {
+      "pass": "Mostly passed",
+      "revise": "Needs revision",
+      "block": "High-risk block"
     }
   }
 }

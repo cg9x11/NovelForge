@@ -55,6 +55,6 @@ const isLongText = computed(() => {
 })
 
 const placeholder = computed(() => {
-  return props.schema.description || `请输入 ${props.label}`
+  return props.schema.description || t('dynamic_form.fields.input_placeholder', { label: props.label })
 })
 </script>
