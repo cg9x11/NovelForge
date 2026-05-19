@@ -47,12 +47,12 @@ async def assistant_chat(
             logger.warning(f"[Assistant API] React 模式启用但未找到 {react_prompt_name}，退回标准提示词 {prompt_name}")
             p = prompt_service.get_prompt_by_name(session, prompt_name)
             if not p or not p.template:
-                raise HTTPException(status_code=400, detail=f"未找到提示词: {prompt_name}")
+                raise HTTPException(status_code=400, detail=f"Prompt not found: {prompt_name}")
             system_prompt = str(p.template)
     else:
         p = prompt_service.get_prompt_by_name(session, prompt_name)
         if not p or not p.template:
-            raise HTTPException(status_code=400, detail=f"未找到提示词: {prompt_name}")
+            raise HTTPException(status_code=400, detail=f"Prompt not found: {prompt_name}")
         system_prompt = str(p.template)
     
     # 所有模式统一走 LangChain ChatModel + Tools 管线
