@@ -207,7 +207,7 @@ class MemoryService:
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
     ) -> RelationExtraction:
-        prompt = prompt_service.get_prompt_by_identifier(self.session, prompt_name)
+        prompt = prompt_service.get_prompt_by_name(self.session, prompt_name)
         system_prompt = prompt.template
 
         schema_json = RelationExtraction.model_json_schema()
@@ -247,7 +247,7 @@ class MemoryService:
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
     ) -> UpdateDynamicInfo:
-        prompt = prompt_service.get_prompt_by_identifier(self.session, prompt_name)
+        prompt = prompt_service.get_prompt_by_name(self.session, prompt_name)
         if not prompt:
             raise ValueError(f"未找到提示词: {prompt_name}")
         system_prompt = prompt.template
@@ -324,7 +324,7 @@ class MemoryService:
 
     async def extract_relations_llm(self, text: str, participants: Optional[List[ParticipantTyped]] = None, llm_config_id: int = 1, timeout: Optional[float] = None, prompt_name: Optional[str] = "关系提取") -> RelationExtraction:
         # 优先使用默认提示词，如果不存在则回退到硬编码版本
-        prompt = prompt_service.get_prompt_by_identifier(self.session, prompt_name)
+        prompt = prompt_service.get_prompt_by_name(self.session, prompt_name)
         system_prompt = prompt.template
         
         # 将输出模型的 JSON Schema 附加到系统提示词中
@@ -352,7 +352,7 @@ class MemoryService:
 
     async def extract_dynamic_info_from_text(self, text: str, participants: Optional[List[ParticipantTyped]] = None, llm_config_id: int = 1, timeout: Optional[float] = None, prompt_name: Optional[str] = "角色动态信息提取", project_id: Optional[int] = None, extra_context: Optional[str] = None) -> UpdateDynamicInfo:
         """从文本中抽取角色动态信息。participants 仅作为优先参考，不作为硬限制。"""
-        prompt = prompt_service.get_prompt_by_identifier(self.session, prompt_name)
+        prompt = prompt_service.get_prompt_by_name(self.session, prompt_name)
         if not prompt:
             raise ValueError(f"未找到提示词: {prompt_name}")
         system_prompt = prompt.template
