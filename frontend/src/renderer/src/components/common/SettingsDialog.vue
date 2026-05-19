@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import LLMConfigManager from '../setting/LLMConfigManager.vue'
 import Versions from '../Versions.vue'
 import PromptWorkshop from '../setting/PromptWorkshop.vue'
@@ -7,7 +7,6 @@ import CardTypeManager from '../setting/CardTypeManager.vue'
 import KnowledgeManager from '../setting/KnowledgeManager.vue'
 import AssistantSettings from '../setting/AssistantSettings.vue'
 import { useUpdateStore } from '@renderer/stores/useUpdateStore'
-import { useLocaleStore, type AppLocale } from '@renderer/stores/useLocaleStore'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{ modelValue: boolean }>()
@@ -18,14 +17,8 @@ const activeTab = ref('llm')
 import { useAppStore } from '@renderer/stores/useAppStore'
 const appStore = useAppStore()
 const updateStore = useUpdateStore()
-const localeStore = useLocaleStore()
 const { t } = useI18n()
 activeTab.value = appStore.settingsInitialTab || 'llm'
-
-const currentLocale = computed({
-  get: () => localeStore.locale,
-  set: (value: AppLocale) => localeStore.setLocale(value)
-})
 
 function handleClose() {
   emit('update:modelValue', false)
@@ -79,14 +72,6 @@ watch(() => props.modelValue, async (open) => { if (open) { await nextTick(); em
             </el-badge>
           </template>
           <Versions />
-          <div class="about-toolbar">
-            <span class="locale-label">{{ t('app.language') }}</span>
-            <el-select v-model="currentLocale" style="width: 200px">
-              <el-option value="zh-CN" :label="t('app.language_zh')" />
-              <el-option value="en-US" :label="t('app.language_en')" />
-              <el-option value="vi-VN" :label="t('app.language_vi')" />
-            </el-select>
-          </div>
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -95,8 +80,6 @@ watch(() => props.modelValue, async (open) => { if (open) { await nextTick(); em
 
 <style scoped>
 .settings-container { height: 78vh; }
-.about-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-.locale-label { font-size: 13px; color: var(--el-text-color-regular); }
 .settings-tabs { height: 100%; }
 :deep(.el-dialog__body) { padding-top: 8px; }
 :deep(.el-tabs__content) { height: 100%; overflow-y: auto; }

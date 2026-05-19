@@ -1,11 +1,19 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useUpdateStore } from '@renderer/stores/useUpdateStore'
+import { useLocaleStore, type AppLocale } from '@renderer/stores/useLocaleStore'
 import { ElMessage } from 'element-plus'
 import { Refresh, Download } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const updateStore = useUpdateStore()
+const localeStore = useLocaleStore()
+
+const currentLocale = computed({
+  get: () => localeStore.locale,
+  set: (value: AppLocale) => localeStore.setLocale(value)
+})
 
 const handleManualCheck = async () => {
   try {
@@ -81,6 +89,22 @@ const formatTime = (date: Date | null) => {
       </div>
     </el-card>
 
+    <el-card shadow="never" class="language-settings-card">
+      <template #header>
+        <div class="card-header">
+          <span>{{ t('versions.system_settings') }}</span>
+        </div>
+      </template>
+      <div class="setting-item language-setting-item">
+        <span class="setting-label">{{ t('app.language') }}</span>
+        <el-select v-model="currentLocale" style="width: 200px">
+          <el-option value="zh-CN" :label="t('app.language_zh')" />
+          <el-option value="en-US" :label="t('app.language_en')" />
+          <el-option value="vi-VN" :label="t('app.language_vi')" />
+        </el-select>
+      </div>
+    </el-card>
+
     <el-card v-if="updateStore.hasUpdate" shadow="never" class="new-version-card">
       <template #header>
         <div class="card-header">
@@ -153,6 +177,10 @@ const formatTime = (date: Date | null) => {
 }
 
 .setting-item:last-child {
+  border-bottom: none;
+}
+
+.language-setting-item {
   border-bottom: none;
 }
 

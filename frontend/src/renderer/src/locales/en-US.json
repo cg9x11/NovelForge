@@ -1355,7 +1355,8 @@
       "check_failed": "Check failed, please verify network connection",
       "auto_check_enabled": "Auto-check updates enabled",
       "auto_check_disabled": "Auto-check updates disabled"
-    }
+    },
+    "system_settings": "System"
   },
   "context_drawer": {
     "title": "Context Injection",
