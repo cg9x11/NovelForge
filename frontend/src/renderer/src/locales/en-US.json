@@ -53,7 +53,8 @@
     "details": "Details",
     "back": "Back",
     "loading": "Loading...",
-    "field": "Field"
+    "field": "Field",
+    "key": "Key"
   },
   "dashboard": {
     "title": "My Bookshelf",
@@ -861,6 +862,13 @@
       "delete_confirm": "Are you sure you want to delete this prompt?",
       "delete_success": "Deleted successfully",
       "delete_failed": "Delete failed"
+    },
+    "sections": {
+      "role": "Role",
+      "skills": "Skills",
+      "goals": "Goals",
+      "knowledge": "Knowledge",
+      "output_format": "Output Format"
     }
   },
   "node_block": {
@@ -1439,7 +1447,7 @@
     },
     "messages": {
       "loadFailed": "Failed to load knowledge base",
-      "fillNameAndContent": "Please fill in name and content",
+      "fillNameAndContent": "Please fill key, name, and content",
       "updated": "Updated",
       "created": "Created",
       "saveFailed": "Save failed",

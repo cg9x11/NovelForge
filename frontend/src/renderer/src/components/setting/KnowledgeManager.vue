@@ -6,7 +6,7 @@
     </div>
 
     <el-table :data="items" height="60vh" size="small" v-loading="loading">
-      <el-table-column prop="key" label="Key" width="170" show-overflow-tooltip />
+      <el-table-column prop="key" :label="t('common.key')" width="170" show-overflow-tooltip />
       <el-table-column prop="name" :label="t('knowledge_manager.columns.name')" width="90" />
       <el-table-column prop="description" :label="t('knowledge_manager.columns.description')" min-width="150" />
       <el-table-column :label="t('knowledge_manager.columns.builtIn')" width="80">
@@ -28,7 +28,7 @@
 
     <el-dialog v-model="editor.visible" :title="editor.editing ? t('knowledge_manager.editKnowledge') : t('knowledge_manager.newKnowledge')" width="50%" append-to-body>
       <el-form label-position="top" :model="editor.form">
-        <el-form-item label="Key"><el-input v-model="(editor.form as any).key" :disabled="editor.editing && editor.form.built_in" /></el-form-item>
+        <el-form-item :label="t('common.key')"><el-input v-model="(editor.form as any).key" :disabled="editor.editing && editor.form.built_in" /></el-form-item>
         <el-form-item :label="t('knowledge_manager.form.name')"><el-input v-model="editor.form.name" :disabled="editor.editing && editor.form.built_in" /></el-form-item>
         <el-form-item :label="t('knowledge_manager.form.description')"><el-input v-model="editor.form.description" type="textarea" :rows="2" /></el-form-item>
         <el-form-item :label="t('knowledge_manager.form.content')"><el-input v-model="editor.form.content" type="textarea" :rows="14" /></el-form-item>

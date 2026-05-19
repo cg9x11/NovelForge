@@ -6,7 +6,7 @@
     </div>
 
     <el-table :data="filteredTypes" height="60vh" size="small" :border="false" v-loading="loading">
-      <el-table-column prop="key" label="Key" width="170" show-overflow-tooltip />
+      <el-table-column prop="key" :label="t('common.key')" width="170" show-overflow-tooltip />
       <el-table-column prop="name" :label="t('card_type_manager.columns.name')" width="220" />
       <el-table-column prop="description" :label="t('card_type_manager.columns.description')" min-width="260" show-overflow-tooltip>
         <template #default="{ row }">
@@ -37,7 +37,7 @@
     <el-dialog v-model="drawer.visible" :title="drawer.editing ? t('card_type_manager.editTypeTitle') : t('card_type_manager.addTypeTitle')" width="50%" append-to-body destroy-on-close class="setting-editor-dialog">
       <div class="editor-grid">
         <el-form label-position="top" size="small" :model="form">
-          <el-form-item label="Key"><el-input v-model="form.key" /></el-form-item>
+          <el-form-item :label="t('common.key')"><el-input v-model="form.key" /></el-form-item>
           <el-form-item :label="t('card_type_manager.form.name')"><el-input v-model="form.name" /></el-form-item>
           <el-form-item :label="t('card_type_manager.form.description')"><el-input v-model="form.description" type="textarea" :rows="2" /></el-form-item>
           <el-form-item :label="t('card_type_manager.form.enableAI')"><el-switch v-model="form.is_ai_enabled" /></el-form-item>

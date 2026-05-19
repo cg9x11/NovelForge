@@ -5,7 +5,7 @@
       <el-button type="primary" size="small" @click="handleCreate">{{ t('prompt_workshop.new_prompt') }}</el-button>
     </div>
     <el-table :data="prompts" height="60vh" size="small" style="width: 100%" v-loading="loading">
-      <el-table-column prop="key" label="Key" width="190" show-overflow-tooltip />
+      <el-table-column prop="key" :label="t('common.key')" width="190" show-overflow-tooltip />
       <el-table-column prop="name" :label="t('prompt_workshop.name')" width="180" />
       <el-table-column prop="description" :label="t('prompt_workshop.description')" />
       <el-table-column :label="t('common.actions')" width="220">
@@ -23,7 +23,7 @@
 
     <el-dialog v-model="drawerVisible" :title="dialogTitle" width="50%" append-to-body destroy-on-close class="setting-editor-dialog">
       <el-form :model="currentPrompt" label-width="90px" size="small" ref="promptForm" class="form-grid">
-        <el-form-item label="Key" prop="key">
+        <el-form-item :label="t('common.key')" prop="key">
           <el-input v-model="(currentPrompt as any).key" />
         </el-form-item>
         <el-form-item :label="t('prompt_workshop.name')" prop="name" :rules="{ required: true, message: t('prompt_workshop.validation.name_required'), trigger: 'blur' }">
@@ -38,13 +38,13 @@
         </el-form-item>
 
         <template v-if="useStructured">
-          <el-divider content-position="left">Role</el-divider>
+          <el-divider content-position="left">{{ t('prompt_workshop.sections.role') }}</el-divider>
           <el-input v-model="structured.role" :placeholder="t('prompt_workshop.role_placeholder')" />
 
-          <el-divider content-position="left">Skills</el-divider>
+          <el-divider content-position="left">{{ t('prompt_workshop.sections.skills') }}</el-divider>
           <el-input v-model="structured.skills" type="textarea" :rows="2" :placeholder="t('prompt_workshop.skills_placeholder')" />
 
-          <el-divider content-position="left">Goals</el-divider>
+          <el-divider content-position="left">{{ t('prompt_workshop.sections.goals') }}</el-divider>
           <el-input v-model="structured.goals" type="textarea" :rows="4" :placeholder="t('prompt_workshop.goals_placeholder')" />
 
           <el-divider content-position="left">{{ t('prompt_workshop.knowledge_optional') }}</el-divider>

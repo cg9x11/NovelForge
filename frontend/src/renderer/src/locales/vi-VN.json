@@ -53,7 +53,8 @@
     "details": "Chi tiết",
     "back": "Quay lại",
     "loading": "Đang tải...",
-    "field": "Trường"
+    "field": "Trường",
+    "key": "Key"
   },
   "dashboard": {
     "title": "Tủ sách của tôi",
@@ -861,6 +862,13 @@
       "delete_confirm": "Bạn có chắc muốn xóa prompt này không?",
       "delete_success": "Xóa thành công",
       "delete_failed": "Xóa thất bại"
+    },
+    "sections": {
+      "role": "Vai trò",
+      "skills": "Kỹ năng",
+      "goals": "Mục tiêu",
+      "knowledge": "Tri thức",
+      "output_format": "Định dạng đầu ra"
     }
   },
   "node_block": {
@@ -1439,7 +1447,7 @@
     },
     "messages": {
       "loadFailed": "Tải kho tri thức thất bại",
-      "fillNameAndContent": "Hãy điền tên và nội dung",
+      "fillNameAndContent": "Hãy điền key, tên và nội dung",
       "updated": "Đã cập nhật",
       "created": "Đã tạo",
       "saveFailed": "Lưu thất bại",
