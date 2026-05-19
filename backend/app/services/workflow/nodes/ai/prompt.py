@@ -6,12 +6,10 @@
 from typing import Any, Dict, Optional, Union, AsyncIterator
 from pydantic import BaseModel, Field
 from loguru import logger
-from sqlmodel import select
 
 from ...registry import register_node
 from ..base import BaseNode
-from app.services.prompt_service import get_prompt, render_prompt
-from app.db.models import Prompt
+from app.services.prompt_service import get_prompt, get_prompt_by_identifier, render_prompt
 
 
 class PromptLoadInput(BaseModel):
@@ -53,10 +51,7 @@ class PromptLoadNode(BaseNode[PromptLoadInput, PromptLoadOutput]):
             if isinstance(inputs.prompt_id, int):
                 prompt_obj = get_prompt(self.context.session, inputs.prompt_id)
             else:
-                # 按名称查找
-                statement = select(Prompt).where(Prompt.name == inputs.prompt_id)
-                results = self.context.session.exec(statement)
-                prompt_obj = results.first()
+                prompt_obj = get_prompt_by_identifier(self.context.session, str(inputs.prompt_id))
             
             if not prompt_obj:
                 raise ValueError(f"未找到提示词: {inputs.prompt_id}")

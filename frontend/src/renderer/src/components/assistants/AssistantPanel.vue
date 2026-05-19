@@ -221,7 +221,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import { generateContinuationStreaming, renderPromptWithKnowledge } from '@renderer/api/ai'
+import { DEFAULT_ASSISTANT_PROMPT_KEY, generateContinuationStreaming, renderPromptWithKnowledge } from '@renderer/api/ai'
 import { listLLMConfigs, type LLMConfigRead } from '@renderer/api/setting'
 import { Plus, Promotion, ChatDotRound, Delete, Clock, Document, Close, VideoPause } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -417,7 +417,7 @@ async function startStreaming(targetIdx: number) {
   }
 
   const chatRequest = buildAssistantChatRequest()
-  const promptName = (props.promptName && props.promptName.trim()) ? props.promptName : t('assistant.default_prompt')
+  const promptName = (props.promptName && props.promptName.trim()) ? props.promptName : DEFAULT_ASSISTANT_PROMPT_KEY
 
   streamCtl = generateContinuationStreaming({
     ...chatRequest,

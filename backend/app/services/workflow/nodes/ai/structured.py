@@ -1,7 +1,7 @@
-"""结构化生成节点
+﻿"""ç»“æž„åŒ–ç”ŸæˆèŠ‚ç‚¹
 
-利用指令流生成服务（Instruction Generator）实现结构化数据的生成。
-支持自动校验、自动修复和 Pydantic 模型输出。
+åˆ©ç”¨æŒ‡ä»¤æµç”ŸæˆæœåŠ¡ï¼ˆInstruction Generatorï¼‰å®žçŽ°ç»“æž„åŒ–æ•°æ®çš„ç”Ÿæˆã€‚
+æ”¯æŒè‡ªåŠ¨æ ¡éªŒã€è‡ªåŠ¨ä¿®å¤å’Œ Pydantic æ¨¡åž‹è¾“å‡ºã€‚
 """
 
 from typing import Any, Dict, Optional, List, AsyncIterator, TYPE_CHECKING
@@ -23,37 +23,37 @@ from sqlmodel import select
 
 
 class StructuredGenerateInput(BaseModel):
-    """结构化生成输入"""
-    user_prompt: str = Field(..., description="用户提示词")
-    llm_config_id: int = Field(..., description="LLM配置ID", json_schema_extra={"x-component": "LLMSelect"})
-    response_model_id: str = Field(..., description="响应模型", json_schema_extra={"x-component": "ResponseModelSelect"})
-    context: Optional[Dict[str, Any]] = Field(None, description="上下文数据/初始数据")
-    schema_extra: Optional[Dict[str, Any]] = Field(None, description="额外的 Schema 定义 (可选)")
-    max_retry: int = Field(3, description="最大重试/修复次数")
-    prompt_template: Optional[str] = Field(None, description="提示词模版名称(可选)", json_schema_extra={"x-component": "PromptSelect"})
-    temperature: float = Field(0.7, description="温度参数")
-    max_tokens: Optional[int] = Field(None, description="最大token数")
-    timeout: int = Field(60, description="超时时间(秒)")
-    fail_soft: bool = Field(False, description="失败时是否降级返回空结果而非抛错")
+    """ç»“æž„åŒ–ç”Ÿæˆè¾“å…¥"""
+    user_prompt: str = Field(..., description="ç”¨æˆ·æç¤ºè¯")
+    llm_config_id: int = Field(..., description="LLMé…ç½®ID", json_schema_extra={"x-component": "LLMSelect"})
+    response_model_id: str = Field(..., description="å“åº”æ¨¡åž‹", json_schema_extra={"x-component": "ResponseModelSelect"})
+    context: Optional[Dict[str, Any]] = Field(None, description="ä¸Šä¸‹æ–‡æ•°æ®/åˆå§‹æ•°æ®")
+    schema_extra: Optional[Dict[str, Any]] = Field(None, description="é¢å¤–çš„ Schema å®šä¹‰ (å¯é€‰)")
+    max_retry: int = Field(3, description="æœ€å¤§é‡è¯•/ä¿®å¤æ¬¡æ•°")
+    prompt_template: Optional[str] = Field(None, description="æç¤ºè¯æ¨¡ç‰ˆåç§°(å¯é€‰)", json_schema_extra={"x-component": "PromptSelect"})
+    temperature: float = Field(0.7, description="æ¸©åº¦å‚æ•°")
+    max_tokens: Optional[int] = Field(None, description="æœ€å¤§tokenæ•°")
+    timeout: int = Field(60, description="è¶…æ—¶æ—¶é—´(ç§’)")
+    fail_soft: bool = Field(False, description="å¤±è´¥æ—¶æ˜¯å¦é™çº§è¿”å›žç©ºç»“æžœè€ŒéžæŠ›é”™")
     use_instruction_flow: bool = Field(
         False,
-        description="是否使用指令流模式（复杂结构推荐开启，简单结构可关闭以使用原生结构化）",
+        description="æ˜¯å¦ä½¿ç”¨æŒ‡ä»¤æµæ¨¡å¼ï¼ˆå¤æ‚ç»“æž„æŽ¨èå¼€å¯ï¼Œç®€å•ç»“æž„å¯å…³é—­ä»¥ä½¿ç”¨åŽŸç”Ÿç»“æž„åŒ–ï¼‰",
     )
 
 
 class StructuredGenerateOutput(BaseModel):
-    """结构化生成输出"""
-    data: Dict[str, Any] = Field(..., description="生成的结构化数据")
-    logs: List[Dict[str, Any]] = Field(..., description="生成过程日志")
+    """ç»“æž„åŒ–ç”Ÿæˆè¾“å‡º"""
+    data: Dict[str, Any] = Field(..., description="ç”Ÿæˆçš„ç»“æž„åŒ–æ•°æ®")
+    logs: List[Dict[str, Any]] = Field(..., description="ç”Ÿæˆè¿‡ç¨‹æ—¥å¿—")
 
 @register_node
 class StructuredGenerateNode(BaseNode[StructuredGenerateInput, StructuredGenerateOutput]):
-    """结构化生成节点"""
+    """ç»“æž„åŒ–ç”ŸæˆèŠ‚ç‚¹"""
     
     node_type = "AI.StructuredGenerate"
     category = "ai"
-    label = "结构化生成"
-    description = "生成符合指定 Schema 的结构化数据 (支持自动修复)"
+    label = "ç»“æž„åŒ–ç”Ÿæˆ"
+    description = "ç”Ÿæˆç¬¦åˆæŒ‡å®š Schema çš„ç»“æž„åŒ–æ•°æ® (æ”¯æŒè‡ªåŠ¨ä¿®å¤)"
     
     input_model = StructuredGenerateInput
     output_model = StructuredGenerateOutput
@@ -64,12 +64,12 @@ class StructuredGenerateNode(BaseNode[StructuredGenerateInput, StructuredGenerat
         config: Dict[str, Any],
         session=None,
     ) -> Optional[Dict[str, Any]]:
-        """声明输出 `data` 字段的 schema 契约。
+        """å£°æ˜Žè¾“å‡º `data` å­—æ®µçš„ schema å¥‘çº¦ã€‚
 
-        契约格式：
+        å¥‘çº¦æ ¼å¼ï¼š
         {
             "kind": "structured_output",
-            "schema_id": "角色卡",
+            "schema_id": "è§’è‰²å¡",
             "data_path": "data"
         }
         """
@@ -87,30 +87,30 @@ class StructuredGenerateNode(BaseNode[StructuredGenerateInput, StructuredGenerat
         self,
         inputs: StructuredGenerateInput
     ) -> AsyncIterator[StructuredGenerateOutput]:
-        """执行生成"""
+        """æ‰§è¡Œç”Ÿæˆ"""
         session = self.context.session
         user_prompt = inputs.user_prompt
         current_data = inputs.context or {}
         
-        # 1. 获取目标 Schema
+        # 1. èŽ·å–ç›®æ ‡ Schema
         target_schema = self._get_schema(session, inputs)
         if not target_schema:
-            raise ValueError(f"无法加载模型 Schema: {inputs.response_model_id}")
+            raise ValueError(f"æ— æ³•åŠ è½½æ¨¡åž‹ Schema: {inputs.response_model_id}")
             
-        # 2. 准备参数
-        # 组装完整 Schema (处理 $ref)
+        # 2. å‡†å¤‡å‚æ•°
+        # ç»„è£…å®Œæ•´ Schema (å¤„ç† $ref)
         full_schema = compose_full_schema(session, target_schema)
 
-        # 加载提示词模板（如果配置了）
+        # åŠ è½½æç¤ºè¯æ¨¡æ¿ï¼ˆå¦‚æžœé…ç½®äº†ï¼‰
         card_prompt_content = None
         if inputs.prompt_template:
-            prompt = prompt_service.get_prompt_by_name(session, inputs.prompt_template)
+            prompt = prompt_service.get_prompt_by_identifier(session, inputs.prompt_template)
             if prompt and prompt.template:
                 card_prompt_content = prompt.template
         
-        logger.info(f"[AI.Structured] 开始生成: model={inputs.response_model_id}")
+        logger.info(f"[AI.Structured] å¼€å§‹ç”Ÿæˆ: model={inputs.response_model_id}")
 
-        # 3. 调用指令流聚合生成（节点层保持非流式）
+        # 3. è°ƒç”¨æŒ‡ä»¤æµèšåˆç”Ÿæˆï¼ˆèŠ‚ç‚¹å±‚ä¿æŒéžæµå¼ï¼‰
         try:
             dynamic_output = build_model_from_json_schema(
                 f"WorkflowStructured_{inputs.response_model_id}",
@@ -134,11 +134,11 @@ class StructuredGenerateNode(BaseNode[StructuredGenerateInput, StructuredGenerat
         except Exception as e:
             if inputs.fail_soft:
                 logger.warning(
-                    f"[AI.Structured] 生成失败但启用 fail_soft，返回降级结果: model={inputs.response_model_id}, err={e}"
+                    f"[AI.Structured] ç”Ÿæˆå¤±è´¥ä½†å¯ç”¨ fail_softï¼Œè¿”å›žé™çº§ç»“æžœ: model={inputs.response_model_id}, err={e}"
                 )
                 yield StructuredGenerateOutput(data=current_data or {}, logs=[{"type": "error", "text": str(e)}])
                 return
-            logger.exception(f"[AI.Structured] 执行异常")
+            logger.exception(f"[AI.Structured] æ‰§è¡Œå¼‚å¸¸")
             raise
 
         result_data = generated["result"].model_dump(mode="json")
@@ -149,7 +149,7 @@ class StructuredGenerateNode(BaseNode[StructuredGenerateInput, StructuredGenerat
         )
 
     def _get_schema(self, session, inputs: StructuredGenerateInput) -> Optional[Dict[str, Any]]:
-        """根据配置获取 JSON Schema
+        """æ ¹æ®é…ç½®èŽ·å– JSON Schema
         """
         
         stmt = select(CardType).where(CardType.name == inputs.response_model_id)
@@ -162,3 +162,4 @@ class StructuredGenerateNode(BaseNode[StructuredGenerateInput, StructuredGenerat
             return builtin_model.model_json_schema(ref_template="#/$defs/{model}")
                 
         return None
+

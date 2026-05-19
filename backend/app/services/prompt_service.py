@@ -14,6 +14,68 @@ def get_prompt_by_name(session: Session, prompt_name: str) -> Optional[Prompt]:
     statement = select(Prompt).where(Prompt.name == prompt_name)
     return session.exec(statement).first()
 
+
+PROMPT_KEY_TO_NAME: Dict[str, str] = {
+    'idea_chat': '灵感对话',
+    'idea_chat_react': '灵感对话-React',
+    'workflow_agent': '工作流智能体',
+    'workflow_agent_react': '工作流智能体-React',
+    'one_sentence': '一句话梗概',
+    'paragraph_outline': '一段话大纲',
+    'world_building': '世界观设定',
+    'blueprint': '核心蓝图',
+    'volume_outline': '分卷大纲',
+    'stage_outline': '阶段大纲',
+    'chapter_outline': '章节大纲',
+    'writing_guide': '写作指南',
+    'content_generation': '内容生成',
+    'relationship_extraction': '关系提取',
+    'character_dynamic_info_extraction': '角色动态信息提取',
+    'scene_state_extraction': '场景状态提取',
+    'organization_state_extraction': '组织状态提取',
+    'item_state_extraction': '物品状态提取',
+    'concept_state_extraction': '概念掌握提取',
+    'general_review': '通用审核',
+    'chapter_review': '章节审核',
+    'stage_review': '阶段审核',
+    'special_ability_generation': '金手指生成',
+}
+
+PROMPT_ALIAS_TO_KEY: Dict[str, str] = {
+    '灵感对话': 'idea_chat',
+    'trò chuyện ý tưởng': 'idea_chat',
+    'idea chat': 'idea_chat',
+    '灵感对话-react': 'idea_chat_react',
+    'idea chat-react': 'idea_chat_react',
+    'trò chuyện ý tưởng-react': 'idea_chat_react',
+    '工作流智能体': 'workflow_agent',
+    'workflow agent': 'workflow_agent',
+    'tác tử workflow': 'workflow_agent',
+    '工作流智能体-react': 'workflow_agent_react',
+    'workflow agent-react': 'workflow_agent_react',
+    'tác tử workflow-react': 'workflow_agent_react',
+}
+
+
+def resolve_prompt_name(identifier: str) -> str:
+    if not identifier:
+        return identifier
+    normalized = identifier.strip()
+    lowered = normalized.lower()
+    if lowered in PROMPT_KEY_TO_NAME:
+        return PROMPT_KEY_TO_NAME[lowered]
+    if lowered in PROMPT_ALIAS_TO_KEY:
+        return PROMPT_KEY_TO_NAME.get(PROMPT_ALIAS_TO_KEY[lowered], normalized)
+    return normalized
+
+
+def get_prompt_by_identifier(session: Session, identifier: str) -> Optional[Prompt]:
+    resolved_name = resolve_prompt_name(identifier)
+    prompt = get_prompt_by_name(session, resolved_name)
+    if prompt:
+        return prompt
+    return get_prompt_by_name(session, identifier)
+
 def get_prompts(session: Session, skip: int = 0, limit: int = 100) -> List[Prompt]:
     """获取提示词列表"""
     statement = select(Prompt).offset(skip).limit(limit)

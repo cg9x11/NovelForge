@@ -70,6 +70,16 @@ export interface AIConfigOptions {
   response_models: string[]
 }
 
+export const DEFAULT_ASSISTANT_PROMPT_KEY = 'idea_chat'
+
+export function normalizePromptIdentifier(prompt?: string | null): string {
+  const value = (prompt || '').trim()
+  if (!value) return ''
+  const normalized = value.toLowerCase()
+  if (normalized === '????' || normalized === 'tr? chuy?n ? t??ng' || normalized === 'idea chat') return DEFAULT_ASSISTANT_PROMPT_KEY
+  return value
+}
+
 // 使用后端生成的类型
 export type AssembleContextRequest = components['schemas']['AssembleContextRequest']
 type AssembleContextResponseBase = components['schemas']['AssembleContextResponse']
@@ -131,10 +141,11 @@ export function generateContinuationStreaming(
   onClose: () => void,
   onError?: (err: any) => void
 ) {
-  const endpoint = params.prompt_name === '灵感对话'
+  const promptKey = normalizePromptIdentifier(params.prompt_name)
+  const endpoint = promptKey === DEFAULT_ASSISTANT_PROMPT_KEY
     ? `${API_BASE_URL}/ai/assistant/chat`
     : `${API_BASE_URL}/ai/generate/continuation`
-  return createStreamingRequest(endpoint, params, onData, onClose, onError)
+  return createStreamingRequest(endpoint, { ...params, prompt_name: promptKey }, onData, onClose, onError)
 }
 
 // 伏笔建议（占位）

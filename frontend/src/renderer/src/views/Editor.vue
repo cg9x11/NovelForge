@@ -179,7 +179,7 @@
             <AssistantPanel
               :resolved-context="assistantResolvedContext"
               :llm-config-id="assistantParams.llm_config_id as any"
-              :prompt-name="t('assistant.default_prompt')"
+              :prompt-name="DEFAULT_ASSISTANT_PROMPT_KEY"
               :temperature="assistantParams.temperature as any"
               :max_tokens="assistantParams.max_tokens as any"
               :timeout="assistantParams.timeout as any"
@@ -233,7 +233,7 @@
         v-else
         :resolved-context="assistantResolvedContext"
         :llm-config-id="assistantParams.llm_config_id as any"
-        :prompt-name="t('assistant.default_prompt')"
+        :prompt-name="DEFAULT_ASSISTANT_PROMPT_KEY"
         :temperature="assistantParams.temperature as any"
         :max_tokens="assistantParams.max_tokens as any"
         :timeout="assistantParams.timeout as any"
@@ -386,7 +386,7 @@ import SchemaStudio from '@renderer/components/shared/SchemaStudio.vue'
 import { getCardSchema, createCardType } from '@renderer/api/setting'
 import { getProjects } from '@renderer/api/projects'
 import { getCardsForProject, copyCard, getCardAIParams, searchCards } from '@renderer/api/cards'
-import { generateAIContent } from '@renderer/api/ai'
+import { DEFAULT_ASSISTANT_PROMPT_KEY, generateAIContent } from '@renderer/api/ai'
 import type { AssistantRef, ChapterExcerptRef, ReviewResultRef } from '@renderer/api/ai'
  
  // Mock components that will be created later
@@ -1454,7 +1454,7 @@ const assistantResolvedContext = ref<string>('')
 const assistantEffectiveSchema = ref<any>(null)
 const assistantSelectionCleared = ref<boolean>(false)
 
-const assistantParams = ref<{ llm_config_id: number | null; prompt_name: string | null; temperature: number | null; max_tokens: number | null; timeout: number | null }>({ llm_config_id: null, prompt_name: t('assistant.default_prompt'), temperature: null, max_tokens: null, timeout: null })
+const assistantParams = ref<{ llm_config_id: number | null; prompt_name: string | null; temperature: number | null; max_tokens: number | null; timeout: number | null }>({ llm_config_id: null, prompt_name: DEFAULT_ASSISTANT_PROMPT_KEY, temperature: null, max_tokens: null, timeout: null })
 const isChapterContent = computed(() => {
   return activeCard.value?.card_type?.name === '章节正文'
 })
@@ -1586,7 +1586,7 @@ async function refreshAssistantContext() {
       const eff = (ai?.effective_params || {}) as any
       assistantParams.value = {
         llm_config_id: eff.llm_config_id ?? null,
-        prompt_name: (eff.prompt_name ?? t('assistant.default_prompt')) as any,
+        prompt_name: (eff.prompt_name ?? DEFAULT_ASSISTANT_PROMPT_KEY) as any,
         temperature: eff.temperature ?? null,
         max_tokens: eff.max_tokens ?? null,
         timeout: eff.timeout ?? null,
@@ -1596,7 +1596,7 @@ async function refreshAssistantContext() {
       const p = (card?.ai_params || {}) as any
       assistantParams.value = {
         llm_config_id: p.llm_config_id ?? null,
-        prompt_name: (p.prompt_name ?? t('assistant.default_prompt')) as any,
+        prompt_name: (p.prompt_name ?? DEFAULT_ASSISTANT_PROMPT_KEY) as any,
         temperature: p.temperature ?? null,
         max_tokens: p.max_tokens ?? null,
         timeout: p.timeout ?? null,
@@ -1663,7 +1663,7 @@ async function onAssistantFinalize(e: CustomEvent) {
     if (!card) return
     const summary: string = (e as any)?.detail?.summary || ''
     const llmId = assistantParams.value.llm_config_id
-    const promptName = (assistantParams.value.prompt_name || t('generation.defaults.prompt_name')) as string
+    const promptName = (assistantParams.value.prompt_name || DEFAULT_ASSISTANT_PROMPT_KEY) as string
     const schema = assistantEffectiveSchema.value
     const ctx = assistantResolvedContext.value || ''
     if (!llmId) { ElMessage.warning(t('editor.messages.select_model_first')); return }

@@ -1,4 +1,4 @@
-import re
+﻿import re
 from datetime import datetime
 from typing import List, Optional
 
@@ -19,14 +19,14 @@ from app.services.ai.core import llm_service
 from app.services.review.review_prompt_builders import build_review_prompt
 
 QUALITY_GATE_PATTERN = re.compile(
-    r"(?:结论|quality\s*gate)(?:\*\*)?\s*[:：]\s*(?:\*\*)?(pass|revise|block)(?:\*\*)?",
+    r"(?:ç»“è®º|quality\s*gate)(?:\*\*)?\s*[:ï¼š]\s*(?:\*\*)?(pass|revise|block)(?:\*\*)?",
     re.IGNORECASE,
 )
 
 DEFAULT_REVIEW_PROFILE = "generic_card_review"
-REVIEW_RESULT_CARD_TYPE_NAME = "内容审核卡片"
-REVIEW_RESULT_FOLDER_CARD_TYPE_NAME = "文件夹"
-REVIEW_RESULT_FOLDER_TITLE = "审核结果"
+REVIEW_RESULT_CARD_TYPE_NAME = "å†…å®¹å®¡æ ¸å¡ç‰‡"
+REVIEW_RESULT_FOLDER_CARD_TYPE_NAME = "æ–‡ä»¶å¤¹"
+REVIEW_RESULT_FOLDER_TITLE = "å®¡æ ¸ç»“æžœ"
 
 
 def parse_quality_gate(result_text: str) -> str:
@@ -49,7 +49,7 @@ def _resolve_review_profile_code(review_profile: str | None) -> str:
 
 
 def _build_system_prompt(session: Session, prompt_name: str) -> str:
-    prompt = prompt_service.get_prompt_by_name(session, prompt_name)
+    prompt = prompt_service.get_prompt_by_identifier(session, prompt_name)
     if not prompt or not prompt.template:
         raise HTTPException(status_code=400, detail={"error_code": "PROMPT_NAME_NOT_FOUND", "prompt_name": prompt_name})
     return prompt_service.inject_knowledge(session, str(prompt.template))
@@ -59,7 +59,7 @@ def _get_review_card_type_or_500(session: Session) -> CardType:
     stmt = select(CardType).where(CardType.name == REVIEW_RESULT_CARD_TYPE_NAME)
     card_type = session.exec(stmt).first()
     if not card_type:
-        raise HTTPException(status_code=500, detail=f"缺少卡片类型: {REVIEW_RESULT_CARD_TYPE_NAME}")
+        raise HTTPException(status_code=500, detail=f"ç¼ºå°‘å¡ç‰‡ç±»åž‹: {REVIEW_RESULT_CARD_TYPE_NAME}")
     return card_type
 
 
@@ -107,7 +107,7 @@ def _get_or_create_review_folder_card(session: Session, project_id: int) -> Card
 
 
 def _resolve_review_card_title(target_title: str) -> str:
-    return f"{(target_title or '未命名目标').strip() or '未命名目标'} · 审核结果"
+    return f"{(target_title or 'æœªå‘½åç›®æ ‡').strip() or 'æœªå‘½åç›®æ ‡'} Â· å®¡æ ¸ç»“æžœ"
 
 
 def _build_review_card_content(
@@ -254,10 +254,10 @@ async def run_review(session: Session, request: ReviewRunRequest) -> ReviewRunRe
     card = _get_target_card_or_404(session, request.card_id)
     project_id = request.project_id or getattr(card, "project_id", None)
     if not project_id:
-        raise HTTPException(status_code=400, detail="缺少 project_id")
+        raise HTTPException(status_code=400, detail="ç¼ºå°‘ project_id")
 
     review_profile = _resolve_review_profile_code(request.review_profile)
-    prompt_name = request.prompt_name or "通用审核"
+    prompt_name = request.prompt_name or "é€šç”¨å®¡æ ¸"
     system_prompt = _build_system_prompt(session, prompt_name)
     user_prompt = build_review_prompt(request)
 
@@ -381,7 +381,8 @@ def delete_review_result_card(session: Session, review_card_id: int) -> bool:
         return False
     review_card_type = _get_review_card_type_or_500(session)
     if card.card_type_id != review_card_type.id:
-        raise HTTPException(status_code=400, detail="目标卡片不是审核结果卡片")
+        raise HTTPException(status_code=400, detail="ç›®æ ‡å¡ç‰‡ä¸æ˜¯å®¡æ ¸ç»“æžœå¡ç‰‡")
     session.delete(card)
     session.commit()
     return True
+
