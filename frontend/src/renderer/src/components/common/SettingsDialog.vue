@@ -56,14 +56,6 @@ watch(() => props.modelValue, async (open) => { if (open) { await nextTick(); em
     @close="handleClose"
   >
     <div class="settings-container">
-      <div class="locale-row">
-        <span class="locale-label">{{ t('app.language') }}</span>
-        <el-select v-model="currentLocale" style="width: 200px">
-          <el-option value="zh-CN" :label="t('app.language_zh')" />
-          <el-option value="en-US" :label="t('app.language_en')" />
-          <el-option value="vi-VN" :label="t('app.language_vi')" />
-        </el-select>
-      </div>
       <el-tabs v-model="activeTab" tab-position="left" class="settings-tabs">
         <el-tab-pane :label="t('settingsDialog.tabs.llm')" name="llm">
           <LLMConfigManager ref="llmManagerRef" />
@@ -86,6 +78,14 @@ watch(() => props.modelValue, async (open) => { if (open) { await nextTick(); em
               <span>{{ t('settingsDialog.tabs.about') }}</span>
             </el-badge>
           </template>
+          <div class="about-toolbar">
+            <span class="locale-label">{{ t('app.language') }}</span>
+            <el-select v-model="currentLocale" style="width: 200px">
+              <el-option value="zh-CN" :label="t('app.language_zh')" />
+              <el-option value="en-US" :label="t('app.language_en')" />
+              <el-option value="vi-VN" :label="t('app.language_vi')" />
+            </el-select>
+          </div>
           <Versions />
         </el-tab-pane>
       </el-tabs>
@@ -95,7 +95,7 @@ watch(() => props.modelValue, async (open) => { if (open) { await nextTick(); em
 
 <style scoped>
 .settings-container { height: 78vh; }
-.locale-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.about-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
 .locale-label { font-size: 13px; color: var(--el-text-color-regular); }
 .settings-tabs { height: 100%; }
 :deep(.el-dialog__body) { padding-top: 8px; }
