@@ -1276,7 +1276,7 @@
     "deleted": "Đã xóa phiên bản"
   },
   "card_type_manager": {
-    "searchPlaceholder": "Tìm loại (tên/mã t?)",
+    "searchPlaceholder": "Tìm loại (tên/mã thẻ)",
     "addType": "Thêm loại",
     "enabled": "Bật",
     "disabled": "Tắt",
