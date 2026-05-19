@@ -257,7 +257,7 @@ async def run_review(session: Session, request: ReviewRunRequest) -> ReviewRunRe
         raise HTTPException(status_code=400, detail="ç¼ºå°‘ project_id")
 
     review_profile = _resolve_review_profile_code(request.review_profile)
-    prompt_name = request.prompt_name or "é€šç”¨å®¡æ ¸"
+    prompt_name = request.prompt_name or "general_review"
     system_prompt = _build_system_prompt(session, prompt_name)
     user_prompt = build_review_prompt(request)
 

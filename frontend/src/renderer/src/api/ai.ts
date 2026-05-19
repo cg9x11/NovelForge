@@ -72,11 +72,19 @@ export interface AIConfigOptions {
 
 export const DEFAULT_ASSISTANT_PROMPT_KEY = 'idea_chat'
 
+function normalizeForCompare(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
 export function normalizePromptIdentifier(prompt?: string | null): string {
   const value = (prompt || '').trim()
   if (!value) return ''
-  const normalized = value.toLowerCase()
-  if (normalized === '????' || normalized === 'tr? chuy?n ? t??ng' || normalized === 'idea chat') return DEFAULT_ASSISTANT_PROMPT_KEY
+  const normalized = normalizeForCompare(value)
+  if (normalized === 'idea chat' || normalized === 'tro chuyen y tuong') return DEFAULT_ASSISTANT_PROMPT_KEY
   return value
 }
 

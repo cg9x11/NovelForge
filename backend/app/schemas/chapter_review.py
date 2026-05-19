@@ -72,7 +72,7 @@ class ReviewRunRequest(BaseModel):
     facts_info: Optional[str] = None
     content_snapshot: Optional[str] = Field(default=None, description="可选存储的审核目标快照")
     llm_config_id: int
-    prompt_name: str = Field(default="通用审核")
+    prompt_name: str = Field(default="general_review")
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
     timeout: Optional[float] = None

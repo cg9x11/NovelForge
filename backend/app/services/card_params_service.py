@@ -6,6 +6,7 @@
 from typing import Dict, Any
 from sqlmodel import Session
 from app.db.models import Card, LLMConfig
+from app.services.prompt_service import resolve_prompt_key
 from loguru import logger
 
 
@@ -33,6 +34,9 @@ def merge_effective_ai_params(session: Session, card: Card) -> Dict[str, Any]:
     
     # 合并参数
     effective = {**base, **override}
+
+    if effective.get("prompt_name"):
+        effective["prompt_name"] = resolve_prompt_key(str(effective.get("prompt_name")))
     
     # 补齐 llm_config_id（如果缺失）
     if effective.get("llm_config_id") in (None, 0, "0", ""):
@@ -52,3 +56,12 @@ def merge_effective_ai_params(session: Session, card: Card) -> Dict[str, Any]:
             pass
     
     return effective
+
+
+def normalize_ai_params(ai_params: Dict[str, Any] | None) -> Dict[str, Any] | None:
+    if not isinstance(ai_params, dict):
+        return ai_params
+    normalized = {**ai_params}
+    if normalized.get("prompt_name"):
+        normalized["prompt_name"] = resolve_prompt_key(str(normalized.get("prompt_name")))
+    return normalized
