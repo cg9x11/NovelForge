@@ -19,7 +19,7 @@
 					</el-form-item>
 					<el-form-item :label="t('ai_per_card.prompt')">
 						<el-select v-model="editing.prompt_name" :placeholder="t('ai_per_card.select_prompt')" filterable style="width: 240px;" :teleported="false">
-							<el-option v-for="p in (aiOptions?.prompts || [])" :key="p.id" :label="p.name" :value="p.name" />
+							<el-option v-for="p in (aiOptions?.prompts || [])" :key="p.id" :label="p.name" :value="p.key || p.name" />
 						</el-select>
 					</el-form-item>
 					<el-form-item :label="t('ai_per_card.temperature')">
@@ -57,6 +57,7 @@ import { getAIConfigOptions, type AIConfigOptions } from '@renderer/api/ai'
 import { getCardAIParams, updateCardAIParams, applyCardAIParamsToType } from '@renderer/api/setting'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import { getCardTypeKey } from '@renderer/utils/cardType'
 
 const props = defineProps<{ cardId: number; cardTypeName?: string }>()
 const { t } = useI18n()
@@ -108,17 +109,17 @@ watch(() => props.cardId, async (id) => {
 
 function getPresetForType(typeName?: string): PerCardAIParams {
 	const map: Record<string, PerCardAIParams> = {
-		'金手指': { prompt_name: '金手指生成', temperature: 0.6, max_tokens: 1024, timeout: 60 },
-		'一句话梗概': { prompt_name: '一句话梗概', temperature: 0.6, max_tokens: 1024, timeout: 60 },
-		'世界观设定': { prompt_name: '世界观设定', temperature: 0.6, max_tokens: 8192, timeout: 120 },
-		'核心蓝图': { prompt_name: '核心蓝图', temperature: 0.6, max_tokens: 8192, timeout: 120 },
-		'分卷大纲': { prompt_name: '分卷大纲', temperature: 0.6, max_tokens: 8192, timeout: 120 },
-		'阶段大纲': { prompt_name: '阶段大纲', temperature: 0.6, max_tokens: 8192, timeout: 120 },
-		'章节大纲': { prompt_name: '章节大纲', temperature: 0.6, max_tokens: 4096, timeout: 60 },
-		'写作指南': { prompt_name: '写作指南', temperature: 0.7, max_tokens: 8192, timeout: 60 },
-		'章节正文': { prompt_name: '内容生成', temperature: 0.7, max_tokens: 8192, timeout: 60 },
+		special_ability: { prompt_name: 'special_ability_generation', temperature: 0.6, max_tokens: 1024, timeout: 60 },
+		one_sentence: { prompt_name: 'one_sentence', temperature: 0.6, max_tokens: 1024, timeout: 60 },
+		world_building: { prompt_name: 'world_building', temperature: 0.6, max_tokens: 8192, timeout: 120 },
+		blueprint: { prompt_name: 'blueprint', temperature: 0.6, max_tokens: 8192, timeout: 120 },
+		volume_outline: { prompt_name: 'volume_outline', temperature: 0.6, max_tokens: 8192, timeout: 120 },
+		stage_outline: { prompt_name: 'stage_outline', temperature: 0.6, max_tokens: 8192, timeout: 120 },
+		chapter_outline: { prompt_name: 'chapter_outline', temperature: 0.6, max_tokens: 4096, timeout: 60 },
+		writing_guide: { prompt_name: 'writing_guide', temperature: 0.7, max_tokens: 8192, timeout: 60 },
+		chapter_body: { prompt_name: 'content_generation', temperature: 0.7, max_tokens: 8192, timeout: 60 },
 	}
-	return map[typeName || ''] || {}
+	return map[getCardTypeKey({ name: typeName }) || ''] || {}
 }
 
 function saveLocal() {
