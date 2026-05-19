@@ -2069,7 +2069,7 @@ export interface components {
             /**
              * Prompt Name
              * @description 系统提示词名称
-             * @default 灵感对话
+             * @default idea_chat
              */
             prompt_name: string;
             /**
@@ -3998,7 +3998,7 @@ export interface components {
             llm_config_id: number;
             /**
              * Prompt Name
-             * @default 通用审核
+             * @default general_review
              */
             prompt_name: string;
             /** Temperature */
