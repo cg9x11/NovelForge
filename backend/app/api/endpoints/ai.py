@@ -124,7 +124,7 @@ async def get_ai_config_options(session: Session = Depends(get_session)):
 
 @router.get("/prompts/render", summary="渲染并注入知识库的提示词模板")
 async def render_prompt_with_knowledge(name: str, session: Session = Depends(get_session)):
-    p = prompt_service.get_prompt_by_name(session, name)
+    p = prompt_service.get_prompt_by_identifier(session, name)
     if not p or not p.template:
         raise HTTPException(status_code=404, detail=f"未找到提示词: {name}")
     try:
@@ -159,7 +159,7 @@ async def generate_ai_content(
         raise HTTPException(status_code=400, detail=f"动态创建模型失败: {e}")
 
     # 获取提示词
-    prompt = prompt_service.get_prompt_by_name(session, request.prompt_name)
+    prompt = prompt_service.get_prompt_by_identifier(session, request.prompt_name)
     if not prompt:
         raise HTTPException(status_code=400, detail=f"未找到提示词名称: {request.prompt_name}")
 
@@ -230,7 +230,7 @@ async def generate_continuation(
         # 强制从 prompt_name 读取模板作为 system prompt
         if not request.prompt_name:
             raise HTTPException(status_code=400, detail="续写必须指定 prompt_name")
-        p = prompt_service.get_prompt_by_name(session, request.prompt_name)
+        p = prompt_service.get_prompt_by_identifier(session, request.prompt_name)
         if not p or not p.template:
             raise HTTPException(status_code=400, detail=f"未找到提示词名称: {request.prompt_name}")
         # 注入知识库
@@ -310,7 +310,7 @@ async def generate_with_instruction_stream(
             if request.prompt_template:
                 from app.services import prompt_service
                 from loguru import logger
-                prompt = prompt_service.get_prompt_by_name(session, request.prompt_template)
+                prompt = prompt_service.get_prompt_by_identifier(session, request.prompt_template)
                 if prompt and prompt.template:
                     card_prompt_content = prompt_service.inject_knowledge(session, str(prompt.template))
                     logger.info(f"[卡片生成] 加载提示词模板: {request.prompt_template}, 长度: {len(card_prompt_content)}")

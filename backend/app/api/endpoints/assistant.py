@@ -38,19 +38,19 @@ async def assistant_chat(
     react_enabled = bool(getattr(request, "react_mode_enabled", False))
 
     if react_enabled:
-        react_prompt_name = f"{prompt_name}-React"
-        p = prompt_service.get_prompt_by_name(session, react_prompt_name)
+        react_prompt_name = f"{prompt_service.resolve_prompt_key(prompt_name)}_react"
+        p = prompt_service.get_prompt_by_identifier(session, react_prompt_name)
         if p and p.template:
             system_prompt = str(p.template)
             logger.info(f"[Assistant API] React 模式启用，使用提示词 {react_prompt_name}")
         else:
             logger.warning(f"[Assistant API] React 模式启用但未找到 {react_prompt_name}，退回标准提示词 {prompt_name}")
-            p = prompt_service.get_prompt_by_name(session, prompt_name)
+            p = prompt_service.get_prompt_by_identifier(session, prompt_name)
             if not p or not p.template:
                 raise HTTPException(status_code=400, detail=f"未找到提示词: {prompt_name}")
             system_prompt = str(p.template)
     else:
-        p = prompt_service.get_prompt_by_name(session, prompt_name)
+        p = prompt_service.get_prompt_by_identifier(session, prompt_name)
         if not p or not p.template:
             raise HTTPException(status_code=400, detail=f"未找到提示词: {prompt_name}")
         system_prompt = str(p.template)
