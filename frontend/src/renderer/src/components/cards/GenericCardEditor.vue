@@ -58,13 +58,13 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item
-                  v-for="prompt in reviewPrompts"
-                  :key="prompt"
-                  :command="prompt"
+                  v-for="prompt in reviewPromptOptions"
+                  :key="prompt.value"
+                  :command="prompt.value"
                 >
                   <div class="prompt-item">
-                    <span>{{ prompt }}</span>
-                    <el-icon v-if="prompt === currentReviewPrompt" class="check-icon"><Select /></el-icon>
+                    <span>{{ prompt.label }}</span>
+                    <el-icon v-if="prompt.value === currentReviewPrompt" class="check-icon"><Select /></el-icon>
                   </div>
                 </el-dropdown-item>
               </el-dropdown-menu>
@@ -473,36 +473,45 @@ const selectedModelName = computed(() => {
 const paramSummary = computed(() => {
   const p = perCardParams.value || editingParams.value
   const model = selectedModelName.value ? `${t('codemirror.status.model')}:${selectedModelName.value}` : `${t('codemirror.status.model')}:${t('codemirror.status.not_set')}`
-  const prompt = p?.prompt_name ? `${t('generic_card.ai_labels.prompt')}:${p.prompt_name}` : `${t('generic_card.ai_labels.prompt')}:${t('codemirror.status.not_set')}`
+  const prompt = p?.prompt_name ? `${t('generic_card.ai_labels.prompt')}:${getPromptLabel(p.prompt_name)}` : `${t('generic_card.ai_labels.prompt')}:${t('codemirror.status.not_set')}`
   const temperature = p?.temperature != null ? `${t('codemirror.status.temperature')}:${p.temperature}` : ''
   const m = p?.max_tokens != null ? `max_tokens:${p.max_tokens}` : ''
   return [model, prompt, t, m].filter(Boolean).join(' · ')
 })
 
-const reviewPrompts = computed(() => {
-  const names = (aiOptions.value?.prompts || []).map(item => item.name).filter(Boolean)
-  return names.length > 0 ? names : [t('generic_card.review_dialog.default_prompt')]
+const reviewPromptOptions = computed(() => {
+  const prompts = aiOptions.value?.prompts || []
+  const options = prompts
+    .map(item => ({ value: item.key || item.name, label: item.name }))
+    .filter(item => Boolean(item.value))
+  return options.length > 0
+    ? options
+    : [{ value: 'general_review', label: t('generic_card.review_dialog.default_prompt') }]
 })
 
 const currentReviewPrompt = ref('')
 
-function getDefaultReviewPromptForCardType(cardTypeName?: string | null): string {
-  if (cardTypeName === '????') return t('generic_card.review_dialog.stage_prompt')
-  return t('generic_card.review_dialog.default_prompt')
+function getDefaultReviewPromptForCardType(): string {
+  return isStageOutlineCard.value ? 'stage_review' : 'general_review'
+}
+
+function getPromptLabel(promptValue: string): string {
+  return reviewPromptOptions.value.find(prompt => prompt.value === promptValue)?.label || promptValue
 }
 
 function syncReviewPrompt(force = false) {
-  const prompts = reviewPrompts.value
+  const prompts = reviewPromptOptions.value
   if (!prompts.length) return
-  const defaultPrompt = getDefaultReviewPromptForCardType(props.card.card_type?.name)
-  if (force || !prompts.includes(currentReviewPrompt.value)) {
-    currentReviewPrompt.value = prompts.includes(defaultPrompt) ? defaultPrompt : prompts[0]
+  const values = prompts.map(prompt => prompt.value)
+  const defaultPrompt = getDefaultReviewPromptForCardType()
+  if (force || !values.includes(currentReviewPrompt.value)) {
+    currentReviewPrompt.value = values.includes(defaultPrompt) ? defaultPrompt : values[0]
   }
 }
 
 function handleReviewPromptChange(promptName: string) {
   currentReviewPrompt.value = promptName
-  ElMessage.success(t('generic_card.messages.switched_review_prompt', { prompt: promptName }))
+  ElMessage.success(t('generic_card.messages.switched_review_prompt', { prompt: getPromptLabel(promptName) }))
 }
 
 function formatReviewVerdict(verdict?: QualityGate | null | string): string {
@@ -957,7 +966,7 @@ async function executeReview() {
       facts_info: formatFactsFromContext(props.prefetched).trim() || undefined,
       content_snapshot: stringifyReviewTarget(currentContent),
       llm_config_id: p.llm_config_id,
-      prompt_name: currentReviewPrompt.value || getDefaultReviewPromptForCardType(props.card.card_type?.name),
+      prompt_name: currentReviewPrompt.value || getDefaultReviewPromptForCardType(),
       meta: {
         source: 'generic_card_editor',
         card_type_name: props.card.card_type?.name || '',

@@ -133,7 +133,8 @@ export function generateContinuationStreaming(
   onClose: () => void,
   onError?: (err: any) => void
 ) {
-  const endpoint = params.prompt_name === '灵感对话'
+  const isAssistantPrompt = params.prompt_name === DEFAULT_ASSISTANT_PROMPT_KEY
+  const endpoint = isAssistantPrompt
     ? `${API_BASE_URL}/ai/assistant/chat`
     : `${API_BASE_URL}/ai/generate/continuation`
   return createStreamingRequest(endpoint, params, onData, onClose, onError)
