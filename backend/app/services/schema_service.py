@@ -16,34 +16,64 @@ from loguru import logger
 # --- Schema 引用收集 ---
 
 FIELD_TITLE_ZH_MAP: Dict[str, str] = {
-    "content": "内容",
-    "theme": "主题",
-    "audience": "目标读者",
-    "narrative_person": "叙事人称",
-    "story_tags": "故事标签",
-    "affection": "情感关系",
-    "name": "名称",
-    "description": "描述",
-    "special_abilities_thinking": "金手指设计思考",
-    "special_abilities": "金手指",
-    "one_sentence_thinking": "一句话梗概思考",
-    "one_sentence": "一句话梗概",
-    "overview_thinking": "大纲扩展思考",
-    "overview": "概述",
-    "world_view_thinking": "世界观设计思考",
-    "world_view": "世界观",
-    "title": "标题",
-    "entity_type": "实体类型",
-    "life_span": "生命跨度",
-    "role_type": "角色类型",
-    "born_scene": "出生场景",
-    "personality": "性格",
-    "core_drive": "核心驱动力",
-    "character_arc": "角色弧光",
-    "influence": "影响力",
-    "relationship": "关系",
-    "dynamic_info": "动态信息",
-    "last_appearance": "最后出场时间",
+    "content": "N?i dung",
+    "theme": "Ch? ??",
+    "audience": "??c gi? m?c ti?u",
+    "narrative_person": "Ng?i k?",
+    "story_tags": "Tags truy?n",
+    "affection": "Quan h? t?nh c?m",
+    "name": "T?n",
+    "description": "M? t?",
+    "special_abilities_thinking": "Suy ngh? thi?t k? b?n tay v?ng",
+    "special_abilities": "B?n tay v?ng",
+    "one_sentence_thinking": "Suy ngh? t?m t?t m?t c?u",
+    "one_sentence": "T?m t?t m?t c?u",
+    "overview_thinking": "Suy ngh? m? r?ng ?? c??ng",
+    "overview": "T?ng quan",
+    "power_structure": "C?u tr?c quy?n l?c",
+    "currency_system": "H? th?ng ti?n t?",
+    "background": "B?i c?nh",
+    "major_power_camps": "Phe th? l?c ch?nh",
+    "world_view_thinking": "Suy ngh? thi?t k? th? gi?i quan",
+    "world_view": "Th? gi?i quan",
+    "volume_count": "T?ng s? quy?n",
+    "character_thinking": "Suy ngh? thi?t k? nh?n v?t",
+    "character_cards": "Th? nh?n v?t",
+    "scene_thinking": "Suy ngh? thi?t k? b?i c?nh",
+    "scene_cards": "Th? b?i c?nh",
+    "organization_thinking": "Suy ngh? thi?t k? t? ch?c",
+    "organization_cards": "Th? t? ch?c",
+    "volume_number": "S? quy?n",
+    "title": "Ti?u ??",
+    "main_target": "M?c ti?u tuy?n ch?nh",
+    "branch_line": "Tuy?n ph?",
+    "new_character_cards": "Th? nh?n v?t m?i",
+    "new_scene_cards": "Th? b?i c?nh m?i",
+    "stage_count": "S? giai ?o?n",
+    "character_action_list": "Danh s?ch h?nh ??ng nh?n v?t",
+    "entity_snapshot": "?nh ch?p tr?ng th?i th?c th?",
+    "stage_number": "S? giai ?o?n",
+    "chapter_number": "S? ch??ng",
+    "entity_list": "Danh s?ch th?c th?",
+    "stage_name": "T?n giai ?o?n",
+    "reference_chapter": "Ph?m vi ch??ng tham chi?u",
+    "analysis": "Ph?n t?ch",
+    "chapter_outline_list": "Danh s?ch ?? c??ng ch??ng",
+    "entity_type": "Lo?i th?c th?",
+    "life_span": "V?ng ??i",
+    "role_type": "Vai tr?",
+    "born_scene": "B?i c?nh xu?t hi?n",
+    "personality": "T?nh c?ch",
+    "core_drive": "??ng l?c c?t l?i",
+    "character_arc": "Cung ph?t tri?n nh?n v?t",
+    "influence": "?nh h??ng",
+    "relationship": "Quan h?",
+    "dynamic_info": "Th?ng tin ??ng",
+    "category": "Danh m?c",
+    "current_state": "Tr?ng th?i hi?n t?i",
+    "power_or_effect": "S?c m?nh ho?c hi?u ?ng",
+    "rule_definition": "??nh ngh?a quy t?c",
+    "mastery_hint": "G?i ? n?m b?t",
 }
 
 _CJK_RE = re.compile(r"[\u4e00-\u9fff]")
@@ -80,12 +110,13 @@ def localize_schema_titles(schema: Any) -> Any:
                 for field_name, field_schema in properties.items():
                     if isinstance(field_schema, dict):
                         current_title = str(field_schema.get("title") or "")
-                        if not _contains_cjk(current_title):
-                            localized = FIELD_TITLE_ZH_MAP.get(field_name) or _derive_title_from_description(
-                                field_schema.get("description")
-                            )
-                            if localized:
-                                field_schema["title"] = localized
+                        localized = FIELD_TITLE_ZH_MAP.get(field_name)
+                        if localized and (not current_title or _contains_cjk(current_title)):
+                            field_schema["title"] = localized
+                        elif not current_title:
+                            derived = _derive_title_from_description(field_schema.get("description"))
+                            if derived:
+                                field_schema["title"] = derived
 
             for defs_key in ("$defs", "definitions"):
                 defs = node.get(defs_key)

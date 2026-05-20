@@ -73,6 +73,7 @@ const builderFields = ref<BuilderField[]>([])
 const relationTargets = ref<Array<{ name: string; json_schema?: any }>>([])
 const previewModel = ref<any>({})
 const modelName = ref<string>('')
+const cjkRe = /[\u4e00-\u9fff]/
 // 保留原始 schema，用于保护复杂字段（如 dynamic_info）的结构不被简化覆盖
 const originalSchema = ref<any | null>(null)
 
@@ -112,7 +113,10 @@ const schemaText = computed(() => {
 
 
 function translateSchemaForDisplay(value: any): any {
-  if (typeof value === 'string') return translateText(value, localeStore.locale)
+  if (typeof value === 'string') {
+    const translated = translateText(value, localeStore.locale)
+    return cjkRe.test(translated) ? '' : translated
+  }
   if (Array.isArray(value)) return value.map((item) => translateSchemaForDisplay(item))
   if (value && typeof value === 'object') {
     const out: Record<string, any> = {}

@@ -101,6 +101,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: BuilderField[]] }>()
 
 const baseKinds: Array<BuilderField['kind']> = ['string', 'number', 'integer', 'boolean', 'tuple']
 const tupleKinds: Array<NonNullable<BuilderField['tupleItems']>[number]> = ['string','number','integer','boolean']
+const cjkRe = /[\u4e00-\u9fff]/
 
 const localFields = ref<BuilderField[]>(props.modelValue?.map(cloneField) || [])
 const syncingFromProps = ref(false)
@@ -115,10 +116,14 @@ watch(localFields, (v) => { if (!syncingFromProps.value) emit('update:modelValue
 const targetModels = computed(() => props.models || [])
 
 function tr(value?: string | null): string { return translateText(String(value || ''), localeStore.locale) }
+function cleanDisplayText(value?: string | null, fallback = ''): string {
+  const translated = tr(value)
+  return cjkRe.test(translated) ? fallback : translated
+}
 function cloneField(f: BuilderField): BuilderField {
   const next = JSON.parse(JSON.stringify(f))
-  if (next.label) next.label = tr(next.label)
-  if (next.description) next.description = tr(next.description)
+  if (next.label) next.label = cleanDisplayText(next.label, next.name || '')
+  if (next.description) next.description = cleanDisplayText(next.description)
   return next
 }
 function addField() { localFields.value.push({ name: '', label: '', kind: 'string', isArray: false, required: false, aiExclude: false, relation: { targetModelName: null }, description: '', example: '', tupleItems: [] }) }

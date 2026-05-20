@@ -12,6 +12,7 @@ def list_card_types_brief(session: Session) -> List[Dict[str, Any]]:
     return [
         {
             "id": row.id,
+            "key": row.key,
             "name": row.name,
             "model_name": row.model_name,
             "description": row.description,
@@ -32,6 +33,8 @@ def find_card_type(
 
     rows = session.exec(select(CardType)).all()
     for row in rows:
+        if row.key == target:
+            return row
         if row.name == target:
             return row
         if allow_model_name and row.model_name == target:
@@ -59,12 +62,14 @@ def get_card_type_schema_payload(
             "success": False,
             "error": "schema_not_defined",
             "card_type": matched.name,
+            "card_type_key": matched.key,
             "model_name": matched.model_name,
         }
 
     return {
         "success": True,
         "card_type": matched.name,
+        "card_type_key": matched.key,
         "model_name": matched.model_name,
         "schema": schema,
     }
