@@ -17,7 +17,7 @@
           style="width:100%"
         >
           <el-option :label="t('project_dialog.blank_project')" :value="null" />
-          <el-option v-for="tpl in projectTemplates" :key="tpl.template" :label="tpl.workflow_name" :value="tpl.template" />
+          <el-option v-for="tpl in projectTemplates" :key="tpl.template" :label="tr(tpl.workflow_name)" :value="tpl.template" />
         </el-select>
       </el-form-item>
       <button type="submit" style="display:none"></button>
@@ -38,6 +38,8 @@ import type { FormInstance, FormRules } from 'element-plus'
 import type { components } from '@renderer/types/generated'
 import { getProjectTemplates } from '@renderer/api/workflows'
 import { useI18n } from 'vue-i18n'
+import { useLocaleStore } from '@renderer/stores/useLocaleStore'
+import { translateText } from '@renderer/locales/runtimeTranslations'
 
 type Project = components['schemas']['ProjectRead']
 type ProjectCreate = components['schemas']['ProjectCreate']
@@ -51,6 +53,8 @@ interface ProjectTemplate {
 }
 
 const { t } = useI18n()
+const localeStore = useLocaleStore()
+const tr = (value?: string | null) => translateText(String(value || ''), localeStore.locale)
 
 const visible = ref(false)
 const formRef = ref<FormInstance>()
