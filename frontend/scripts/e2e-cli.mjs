@@ -215,6 +215,24 @@ async function assertNoCjk(page, label) {
   return data
 }
 
+const smokeText = {
+  dashboard: e2eLocale === 'vi-VN' ? ['T\u1ee7 s\u00e1ch', 'D\u1ef1 \u00e1n'] : ['My Bookshelf', 'Project'],
+  createProject: e2eLocale === 'vi-VN' ? ['D\u1ef1 \u00e1n m\u1edbi', 'T\u1ea1o d\u1ef1 \u00e1n'] : ['New Project', 'Create Project'],
+  createButton: e2eLocale === 'vi-VN' ? 'D\u1ef1 \u00e1n m\u1edbi' : 'New Project',
+  projectTemplate: e2eLocale === 'vi-VN' ? ['Project Template', 'b\u00f4ng tuy\u1ebft'] : ['Project Template', 'Snowflake'],
+  workflowButton: e2eLocale === 'vi-VN' ? 'Quy tr\u00ecnh' : 'Workflow',
+  workflowLibrary: e2eLocale === 'vi-VN'
+    ? ['Th\u01b0 vi\u1ec7n node', 'Tr\u00ec ho\u00e3n', 'Ch\u1ecdn d\u1ef1 \u00e1n', 'T\u1ea1o th\u1ebb']
+    : ['Node', 'Nodes', 'Logic', 'Delay', 'Select Project', 'Create Card'],
+  delayNode: e2eLocale === 'vi-VN' ? 'Tr\u00ec ho\u00e3n' : 'Delay',
+  delayParams: e2eLocale === 'vi-VN' ? ['D\u1eef li\u1ec7u \u0111\u1ea7u v\u00e0o', 'S\u1ed1 gi\u00e2y tr\u1ec5'] : ['Input data', 'Delay seconds'],
+  back: e2eLocale === 'vi-VN' ? 'Quay l\u1ea1i' : 'Back',
+  settingsButtonTitle: e2eLocale === 'vi-VN' ? 'C\u00e0i \u0111\u1eb7t' : 'Settings',
+  settings: e2eLocale === 'vi-VN' ? ['C\u00e0i \u0111\u1eb7t', 'LLM', 'Kho tri th\u1ee9c', 'Prompt'] : ['Settings', 'LLM', 'Knowledge', 'Prompt', 'About'],
+  ideasButton: e2eLocale === 'vi-VN' ? '\u00dd t\u01b0\u1edfng' : 'Ideas',
+  ideas: e2eLocale === 'vi-VN' ? ['Quay l\u1ea1i', 'Chuy\u1ec3n', 'th\u1ebb'] : ['Back', 'Transfer', 'Ideas', 'Card']
+}
+
 async function smoke() {
   await ensureBackend()
   await ensureFrontend()
@@ -225,26 +243,29 @@ async function smoke() {
   page.on('pageerror', (error) => log('pageerror', error.message))
   try {
     await page.setViewportSize({ width: 1280, height: 860 })
-    await expectAnyText(page, ['My Bookshelf', 'Project'], 'dashboard text')
+    await page.goto(new URL(page.url()).origin + '/', { waitUntil: 'domcontentloaded' })
+    await expectAnyText(page, smokeText.dashboard, 'dashboard text')
     await saveSnapshot(page, '01-dashboard')
     await saveScreenshot(page, '01-dashboard')
 
-    const createLabels = ['New Project', 'Create Project']
-    const createFound = await expectAnyText(page, createLabels, 'create project entry')
-    await clickText(page, createFound.found)
-    await expectAnyText(page, ['Project Template', 'Snowflake'], 'project dialog/template')
+    await expectAnyText(page, smokeText.createProject, 'create project entry')
+    await page.getByRole('button', { name: smokeText.createButton }).click()
+    await page.locator('.el-dialog').first().waitFor({ state: 'visible', timeout: 20000 })
     await saveSnapshot(page, '02-create-project')
+    await expectAnyText(page, smokeText.projectTemplate, 'project dialog/template')
     await saveScreenshot(page, '02-create-project')
     await page.keyboard.press('Escape')
     await page.reload({ waitUntil: 'domcontentloaded' })
-    await expectAnyText(page, ['My Bookshelf', 'Project'], 'dashboard after dialog')
+    await expectAnyText(page, smokeText.dashboard, 'dashboard after dialog')
 
-    await page.getByRole('button', { name: 'Workflow' }).click()
+    await page.getByRole('button', { name: smokeText.workflowButton }).click()
     await waitFor(async () => (await snapshot(page)).text !== '', 'post-workflow click')
     await saveSnapshot(page, '03-workflow-before-assert')
-    await expectAnyText(page, ['Node', 'Nodes', 'Logic', 'Delay', 'Select Project', 'Create Card'], 'workflow node library')
-    await clickText(page, 'Delay')
-    await expectAnyText(page, ['Input data', 'Delay seconds'], 'workflow node params')
+    await expectAnyText(page, smokeText.workflowLibrary, 'workflow node library')
+    await saveSnapshot(page, '03-workflow-library')
+    await page.locator('.node-item').filter({ hasText: smokeText.delayNode }).first().click()
+    await saveSnapshot(page, '03-workflow-after-node-click')
+    await expectAnyText(page, smokeText.delayParams, 'workflow node params')
     const workflowState = await page.evaluate(() => {
       const library = document.querySelector('.node-library, [class*="node-library"], [class*="NodeLibrary"], .library-section') || document.querySelector('aside')
       const rect = library?.getBoundingClientRect()
@@ -261,22 +282,22 @@ async function smoke() {
     await saveScreenshot(page, '03-workflow')
     await assertNoCjk(page, 'workflow')
 
-    await page.getByRole('button', { name: 'Back' }).click()
-    await expectAnyText(page, ['My Bookshelf', 'Project'], 'dashboard before settings')
-    await page.locator('button[title="Settings"]').click()
-    await expectAnyText(page, ['Settings', 'LLM', 'Knowledge', 'Prompt', 'About'], 'settings dialog')
+    await page.getByRole('button', { name: smokeText.back }).click()
+    await expectAnyText(page, smokeText.dashboard, 'dashboard before settings')
+    await page.locator(`button[title="${smokeText.settingsButtonTitle}"]`).click()
+    await expectAnyText(page, smokeText.settings, 'settings dialog')
     await saveSnapshot(page, '04-settings')
     await saveScreenshot(page, '04-settings')
     await assertNoCjk(page, 'settings')
     await page.keyboard.press('Escape')
 
-    await page.getByRole('button', { name: 'Ideas' }).click()
-    await expectAnyText(page, ['Back', 'Transfer', 'Ideas', 'Card'], 'ideas home')
+    await page.getByRole('button', { name: smokeText.ideasButton }).click()
+    await expectAnyText(page, smokeText.ideas, 'ideas home')
     await saveSnapshot(page, '05-ideas')
     await saveScreenshot(page, '05-ideas')
     await assertNoCjk(page, 'ideas')
-    await page.getByRole('button', { name: 'Back' }).first().click()
-    await expectAnyText(page, ['My Bookshelf', 'Project'], 'dashboard after ideas')
+    await page.getByRole('button', { name: smokeText.back }).first().click()
+    await expectAnyText(page, smokeText.dashboard, 'dashboard after ideas')
 
     await page.evaluate(async (base) => {
       const response = await fetch(`${base}/api/llm-configs/test`, {

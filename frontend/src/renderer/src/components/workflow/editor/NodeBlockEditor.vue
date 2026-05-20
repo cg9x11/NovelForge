@@ -522,24 +522,26 @@ const FIELD_LABELS = {
     field_path: 'Field path', old_text: 'Old text', new_text: 'New text', template: 'Template name', on_create: 'Trigger on create', on_update: 'Trigger on update',
     user_prompt: 'User prompt', system_prompt: 'System prompt', prompt_id: 'Prompt ID or name', variables: 'Template variables', response_model_id: 'Response model', context: 'Context data',
     schema_extra: 'Extra schema', max_retry: 'Max retries', max_retries: 'Max retries', prompt_template: 'Prompt template', temperature: 'Temperature', max_tokens: 'Max tokens', timeout: 'Timeout seconds',
-    fail_soft: 'Soft fail', use_instruction_flow: 'Use instruction flow', topic: 'Debate topic', max_rounds: 'Max debate rounds', agent_1_name: 'Agent 1 name',
+    fail_soft: 'Soft fail', use_instruction_flow: 'Use instruction flow', instruction: 'Instruction', history: 'Conversation history', participants: 'Participants',
+    role_name: 'Agent role name', tools: 'Tools', max_steps: 'Max reasoning steps', topic: 'Debate topic', max_rounds: 'Max debate rounds', agent_1_name: 'Agent 1 name',
     agent_1_system_prompt: 'Agent 1 system prompt', agent_1_llm_config: 'Agent 1 LLM config', agent_2_name: 'Agent 2 name', agent_2_system_prompt: 'Agent 2 system prompt',
     agent_2_llm_config: 'Agent 2 LLM config', concurrency: 'Concurrency', cache_key: 'Cache key', overlap_size: 'Overlap size', initial_carry: 'Initial carry state',
     carry_extract_expr: 'Carry extract expression', delay: 'Delay seconds', enable_progress: 'Enable progress', data: 'Data list', batch_size: 'Batch size', parallel: 'Parallel processing'
   },
   'vi-VN': {
-    input: 'D? li?u ??u v?o', seconds: 'S? gi?y tr?', tasks: 'T?c v? b?t ??ng b?', condition: 'Bi?u th?c ?i?u ki?n', message: 'Th?ng b?o l?i', expression: 'Bi?u th?c Python',
-    project_id: 'ID d? ?n', project_name: 'T?n d? ?n', llm_config_id: 'ID c?u h?nh LLM', llm_name: 'T?n LLM',
-    root_path: '???ng d?n g?c ti?u thuy?t', file_pattern: 'M?u t?n file', volume_pattern: 'M?u th? m?c t?p', chapter_pattern: 'M?u t?n ch??ng',
-    target: 'Tham chi?u th?', card_id: 'ID th?', type_name: 'T?n lo?i th?', card_type: 'Lo?i th?', title: 'Ti?u ?? th?', content: 'N?i dung th?', parent: 'Th? cha', parent_id: 'ID th? cha',
-    content_merge: 'N?i dung c?n g?p', card: 'Th? c?n x?a', limit: 'Gi?i h?n', items: 'Danh s?ch d? li?u', title_template: 'M?u ti?u ??', content_template: 'M?u n?i dung', match_by: 'Gh?p theo',
-    field_path: '???ng d?n tr??ng', old_text: 'V?n b?n c?', new_text: 'V?n b?n m?i', template: 'T?n m?u', on_create: 'K?ch ho?t khi t?o', on_update: 'K?ch ho?t khi c?p nh?t',
-    user_prompt: 'Prompt ng??i d?ng', system_prompt: 'Prompt h? th?ng', prompt_id: 'ID ho?c t?n prompt', variables: 'Bi?n m?u', response_model_id: 'M? h?nh ph?n h?i', context: 'D? li?u ng? c?nh',
-    schema_extra: 'Schema b? sung', max_retry: 'S? l?n th? l?i t?i ?a', max_retries: 'S? l?n th? l?i t?i ?a', prompt_template: 'M?u prompt', temperature: 'Nhi?t ??', max_tokens: 'S? token t?i ?a', timeout: 'Th?i gian ch? (gi?y)',
-    fail_soft: 'L?i m?m', use_instruction_flow: 'D?ng lu?ng h??ng d?n', topic: 'Ch? ?? tranh lu?n', max_rounds: 'S? v?ng tranh lu?n t?i ?a', agent_1_name: 'T?n agent 1',
-    agent_1_system_prompt: 'Prompt h? th?ng agent 1', agent_1_llm_config: 'C?u h?nh LLM agent 1', agent_2_name: 'T?n agent 2', agent_2_system_prompt: 'Prompt h? th?ng agent 2',
-    agent_2_llm_config: 'C?u h?nh LLM agent 2', concurrency: 'S? lu?ng ??ng th?i', cache_key: 'Kh?a cache', overlap_size: 'K?ch th??c ch?ng l?p', initial_carry: 'Tr?ng th?i carry ban ??u',
-    carry_extract_expr: 'Bi?u th?c tr?ch xu?t carry', delay: 'S? gi?y tr?', enable_progress: 'B?t ti?n ??', data: 'Danh s?ch d? li?u', batch_size: 'K?ch th??c batch', parallel: 'X? l? song song'
+    input: 'D\u1eef li\u1ec7u \u0111\u1ea7u v\u00e0o', seconds: 'S\u1ed1 gi\u00e2y tr\u1ec5', tasks: 'T\u00e1c v\u1ee5 b\u1ea5t \u0111\u1ed3ng b\u1ed9', condition: 'Bi\u1ec3u th\u1ee9c \u0111i\u1ec1u ki\u1ec7n', message: 'Th\u00f4ng b\u00e1o l\u1ed7i', expression: 'Bi\u1ec3u th\u1ee9c Python',
+    project_id: 'ID d\u1ef1 \u00e1n', project_name: 'T\u00ean d\u1ef1 \u00e1n', llm_config_id: 'ID c\u1ea5u h\u00ecnh LLM', llm_name: 'T\u00ean LLM',
+    root_path: '\u0110\u01b0\u1eddng d\u1eabn g\u1ed1c ti\u1ec3u thuy\u1ebft', file_pattern: 'M\u1eabu t\u00ean file', volume_pattern: 'M\u1eabu th\u01b0 m\u1ee5c t\u1eadp', chapter_pattern: 'M\u1eabu t\u00ean ch\u01b0\u01a1ng',
+    target: 'Tham chi\u1ebfu th\u1ebb', card_id: 'ID th\u1ebb', type_name: 'T\u00ean lo\u1ea1i th\u1ebb', card_type: 'Lo\u1ea1i th\u1ebb', title: 'Ti\u00eau \u0111\u1ec1 th\u1ebb', content: 'N\u1ed9i dung th\u1ebb', parent: 'Th\u1ebb cha', parent_id: 'ID th\u1ebb cha',
+    content_merge: 'N\u1ed9i dung c\u1ea7n g\u1ed9p', card: 'Th\u1ebb c\u1ea7n x\u00f3a', limit: 'Gi\u1edbi h\u1ea1n', items: 'Danh s\u00e1ch d\u1eef li\u1ec7u', title_template: 'M\u1eabu ti\u00eau \u0111\u1ec1', content_template: 'M\u1eabu n\u1ed9i dung', match_by: 'Gh\u00e9p theo',
+    field_path: '\u0110\u01b0\u1eddng d\u1eabn tr\u01b0\u1eddng', old_text: 'V\u0103n b\u1ea3n c\u0169', new_text: 'V\u0103n b\u1ea3n m\u1edbi', template: 'T\u00ean m\u1eabu', on_create: 'K\u00edch ho\u1ea1t khi t\u1ea1o', on_update: 'K\u00edch ho\u1ea1t khi c\u1eadp nh\u1eadt',
+    user_prompt: 'Prompt ng\u01b0\u1eddi d\u00f9ng', system_prompt: 'Prompt h\u1ec7 th\u1ed1ng', prompt_id: 'ID ho\u1eb7c t\u00ean prompt', variables: 'Bi\u1ebfn m\u1eabu', response_model_id: 'M\u00f4 h\u00ecnh ph\u1ea3n h\u1ed3i', context: 'D\u1eef li\u1ec7u ng\u1eef c\u1ea3nh',
+    schema_extra: 'Schema b\u1ed5 sung', max_retry: 'S\u1ed1 l\u1ea7n th\u1eed l\u1ea1i t\u1ed1i \u0111a', max_retries: 'S\u1ed1 l\u1ea7n th\u1eed l\u1ea1i t\u1ed1i \u0111a', prompt_template: 'M\u1eabu prompt', temperature: 'Nhi\u1ec7t \u0111\u1ed9', max_tokens: 'S\u1ed1 token t\u1ed1i \u0111a', timeout: 'Th\u1eddi gian ch\u1edd (gi\u00e2y)',
+    fail_soft: 'L\u1ed7i m\u1ec1m', use_instruction_flow: 'D\u00f9ng lu\u1ed3ng h\u01b0\u1edbng d\u1eabn', instruction: 'H\u01b0\u1edbng d\u1eabn', history: 'L\u1ecbch s\u1eed h\u1ed9i tho\u1ea1i', participants: 'Nh\u00e2n v\u1eadt tham gia',
+    role_name: 'T\u00ean vai tr\u00f2 agent', tools: 'C\u00f4ng c\u1ee5', max_steps: 'S\u1ed1 b\u01b0\u1edbc suy lu\u1eadn t\u1ed1i \u0111a', topic: 'Ch\u1ee7 \u0111\u1ec1 tranh lu\u1eadn', max_rounds: 'S\u1ed1 v\u00f2ng tranh lu\u1eadn t\u1ed1i \u0111a', agent_1_name: 'T\u00ean agent 1',
+    agent_1_system_prompt: 'Prompt h\u1ec7 th\u1ed1ng agent 1', agent_1_llm_config: 'C\u1ea5u h\u00ecnh LLM agent 1', agent_2_name: 'T\u00ean agent 2', agent_2_system_prompt: 'Prompt h\u1ec7 th\u1ed1ng agent 2',
+    agent_2_llm_config: 'C\u1ea5u h\u00ecnh LLM agent 2', concurrency: 'S\u1ed1 lu\u1ed3ng \u0111\u1ed3ng th\u1eddi', cache_key: 'Kh\u00f3a cache', overlap_size: 'K\u00edch th\u01b0\u1edbc ch\u1ed3ng l\u1ea5p', initial_carry: 'Tr\u1ea1ng th\u00e1i carry ban \u0111\u1ea7u',
+    carry_extract_expr: 'Bi\u1ec3u th\u1ee9c tr\u00edch xu\u1ea5t carry', delay: 'S\u1ed1 gi\u00e2y tr\u1ec5', enable_progress: 'B\u1eadt ti\u1ebfn \u0111\u1ed9', data: 'Danh s\u00e1ch d\u1eef li\u1ec7u', batch_size: 'K\u00edch th\u01b0\u1edbc batch', parallel: 'X\u1eed l\u00fd song song'
   }
 }
 

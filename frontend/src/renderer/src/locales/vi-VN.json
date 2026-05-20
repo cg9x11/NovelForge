@@ -565,7 +565,7 @@
       "update_persistence_failed": "Cập nhật thiết lập lưu trữ thất bại",
       "paused": "Workflow đã tạm dừng",
       "resumed": "Workflow đã tiếp tục",
-      "node_added": "?? th?m node"
+      "node_added": "Đã thêm node"
     },
     "runs": {
       "title": "Lịch sử chạy workflow",
