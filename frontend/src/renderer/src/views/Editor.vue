@@ -14,7 +14,7 @@
           <ul class="types-list">
             <li v-for="t in cardStore.cardTypes" :key="t.id" class="type-item" draggable="true"
                 @dragstart="onTypeDragStart(t)">
-              <span class="type-name">{{ t.name }}</span>
+              <span class="type-name">{{ trRuntime(t.name) }}</span>
             </li>
           </ul>
         </el-scrollbar>
@@ -110,7 +110,7 @@
                   <el-icon class="card-icon"> 
                     <component :is="getIconByCardType(data.card_type || data.__groupTypeKey || data.__groupType)" />
                   </el-icon>
-                  <span class="label">{{ node.label || data.title }}</span>
+                  <span class="label">{{ trRuntime(node.label || data.title) }}</span>
                   <span v-if="data.children && data.children.length > 0" class="child-count">{{ data.children.length }}</span>
                 </div>
                 <template #dropdown>
@@ -185,7 +185,7 @@
               :timeout="assistantParams.timeout as any"
               :effective-schema="assistantEffectiveSchema"
               :generation-prompt-name="assistantParams.prompt_name as any"
-              :current-card-title="assistantSelectionCleared ? '' : (activeCard?.title as any)"
+              :current-card-title="assistantSelectionCleared ? '' : trRuntime(activeCard?.title as any)"
               :current-card-content="assistantSelectionCleared ? null : (activeCard?.content as any)"
               @refresh-context="refreshAssistantContext"
               @reset-selection="resetAssistantSelection"
@@ -239,7 +239,7 @@
         :timeout="assistantParams.timeout as any"
         :effective-schema="assistantEffectiveSchema"
         :generation-prompt-name="assistantParams.prompt_name as any"
-        :current-card-title="assistantSelectionCleared ? '' : (activeCard?.title as any)"
+        :current-card-title="assistantSelectionCleared ? '' : trRuntime(activeCard?.title as any)"
         :current-card-content="assistantSelectionCleared ? null : (activeCard?.content as any)"
         @refresh-context="refreshAssistantContext"
         @reset-selection="resetAssistantSelection"
@@ -274,7 +274,7 @@
           <el-option
             v-for="type in cardStore.cardTypes"
             :key="type.id"
-            :label="type.name"
+            :label="trRuntime(type.name)"
             :value="type.id"
           ></el-option>
         </el-select>
@@ -324,7 +324,7 @@
       <el-table-column type="selection" width="48" />
       <el-table-column :label="t('common.title')" prop="title" min-width="220" />
       <el-table-column :label="t('common.type')" min-width="160">
-        <template #default="{ row }">{{ row.card_type?.name }}</template>
+        <template #default="{ row }">{{ trRuntime(row.card_type?.name) }}</template>
       </el-table-column>
       <el-table-column :label="t('common.created_at')" min-width="160">
         <template #default="{ row }">{{ (row as any).created_at }}</template>
@@ -336,7 +336,7 @@
     </template>
   </el-dialog>
 
-  <SchemaStudio v-model:visible="schemaStudio.visible" :mode="'card'" :target-id="schemaStudio.cardId" :context-title="schemaStudio.cardTitle" @saved="onCardSchemaSaved" />
+  <SchemaStudio v-model:visible="schemaStudio.visible" :mode="'card'" :target-id="schemaStudio.cardId" :context-title="trRuntime(schemaStudio.cardTitle)" @saved="onCardSchemaSaved" />
   <CardExportDialog
     v-model="exportDialogVisible"
     :project-id="projectStore.currentProject?.id"
@@ -352,6 +352,8 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive, defineAsyncComponent, onBeforeUnmount, computed, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useLocaleStore } from '@renderer/stores/useLocaleStore'
+import { translateText } from '@renderer/locales/runtimeTranslations'
 import { storeToRefs } from 'pinia'
 import { Plus, Search, Upload, Download, Delete, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
@@ -595,6 +597,8 @@ const handleSearch = debounce(async (query: string) => {
 // Composables
 const { leftSidebarWidth, rightSidebarWidth, startResizing } = useSidebarResizer()
 const { t } = useI18n()
+const localeStore = useLocaleStore()
+const trRuntime = (value?: any) => translateText(String(value || ''), localeStore.locale)
 const isLeftSidebarVisible = ref(true)
 const leftSidebarDisplayWidth = computed(() => (isLeftSidebarVisible.value ? leftSidebarWidth.value : 0))
 const leftSidebarToggleOffset = computed(() => (isLeftSidebarVisible.value ? Math.max(leftSidebarDisplayWidth.value - 18, 8) : 10))
