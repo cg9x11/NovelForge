@@ -85,13 +85,12 @@ def read_root():
 
 if __name__ == "__main__":
     import uvicorn
-    # 添加reload=True，这样当代码修改时会自动重新加载
-    # 配置更短的优雅关闭时间，便于 Ctrl+C 快速退出
+
+    reload_enabled = os.getenv("NOVELFORGE_BACKEND_RELOAD", "0").lower() in {"1", "true", "yes"}
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=54321,
-        reload=True,
+        reload=reload_enabled,
         timeout_graceful_shutdown=1,
     )
-
