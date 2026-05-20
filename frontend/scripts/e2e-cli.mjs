@@ -272,16 +272,16 @@ const smokeText = {
   settings: e2eLocale === 'vi-VN' ? ['Cai dat', 'LLM', 'Kho tri thuc', 'Prompt'] : ['Settings', 'LLM', 'Knowledge', 'Prompt', 'About'],
   settingsTabs: e2eLocale === 'vi-VN'
     ? [
-      { name: 'knowledge', label: 'Kho tri thuc', expect: ['Kho tri thuc', 'Them moi'] },
-      { name: 'prompts', label: 'Prompt', expect: ['Prompt', 'Them'] },
-      { name: 'card-types', label: 'Loai the', expect: ['Loai the', 'Key', 'Ten'] },
+      { name: 'knowledge', label: 'Kho tri thuc', expect: ['Kho tri thuc', 'Them moi'], createLabel: 'Tao tri thuc' },
+      { name: 'prompts', label: 'Prompt', expect: ['Prompt', 'Them'], createLabel: 'Tao prompt moi' },
+      { name: 'card-types', label: 'Loai the', expect: ['Loai the', 'Key', 'Ten'], createLabel: 'Them loai' },
       { name: 'assistant', label: 'Cai dat Agent', expect: ['Cai dat Agent'] },
       { name: 'about', label: 'Gioi thieu', expect: ['He thong', 'Ngon ngu'] }
     ]
     : [
-      { name: 'knowledge', label: 'Knowledge', expect: ['Knowledge', 'Add'] },
-      { name: 'prompts', label: 'Prompt', expect: ['Prompt', 'Add'] },
-      { name: 'card-types', label: 'Card Types', expect: ['Card Types', 'Key', 'Name'] },
+      { name: 'knowledge', label: 'Knowledge', expect: ['Knowledge', 'Add'], createLabel: 'New knowledge' },
+      { name: 'prompts', label: 'Prompt', expect: ['Prompt', 'Add'], createLabel: 'New Prompt' },
+      { name: 'card-types', label: 'Card Types', expect: ['Card Types', 'Key', 'Name'], createLabel: 'Add Type' },
       { name: 'assistant', label: 'Agent Settings', expect: ['Agent Settings'] },
       { name: 'about', label: 'About', expect: ['System', 'Language'] }
     ],
@@ -356,6 +356,15 @@ async function auditSettingsTabs(page) {
     await expectAnyText(page, tab.expect, `settings tab ${tab.name}`)
     await saveSnapshot(page, `04-settings-${tab.name}`)
     await assertNoCjk(page, `settings tab ${tab.name}`)
+    if (tab.createLabel) {
+      const opened = await clickNormalizedText(page, tab.createLabel, 'button,[role="button"],.el-button', { optional: true })
+      if (!opened) throw new Error(`Create dialog button not found for settings tab ${tab.name}: ${tab.createLabel}`)
+      await page.locator('.el-dialog:visible').last().waitFor({ state: 'visible', timeout: 10000 })
+      await saveSnapshot(page, `04-settings-${tab.name}-create`)
+      await assertNoCjk(page, `settings tab ${tab.name} create dialog`)
+      await page.keyboard.press('Escape')
+      await waitFor(async () => await page.locator('.el-dialog:visible').count() <= 1, `settings tab ${tab.name} create dialog closed`, 10000).catch(() => {})
+    }
   }
 }
 
