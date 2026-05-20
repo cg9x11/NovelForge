@@ -83,6 +83,17 @@ async function apiJson(pathname, options = {}) {
   return payload?.data ?? payload
 }
 
+async function cleanupStaleSmokeProjects() {
+  try {
+    const projects = await apiJson('/api/projects/')
+    const stale = (projects || []).filter((project) => String(project?.name || '').startsWith('NF_E2E_'))
+    for (const project of stale) await deleteSmokeProject(project)
+    if (stale.length) log('deleted stale smoke projects', { count: stale.length })
+  } catch (error) {
+    log('cleanup stale smoke projects skipped', { error: String(error?.message || error) })
+  }
+}
+
 async function createSmokeProject() {
   const name = `NF_E2E_${Date.now()}`
   const project = await apiJson('/api/projects/', {
@@ -423,6 +434,7 @@ async function smoke() {
   }
   page.on('pageerror', (error) => log('pageerror', error.message))
   try {
+    await cleanupStaleSmokeProjects()
     smokeProject = await createSmokeProject()
     await page.setViewportSize({ width: 1280, height: 860 })
     await page.goto(new URL(page.url()).origin + '/', { waitUntil: 'domcontentloaded' })
