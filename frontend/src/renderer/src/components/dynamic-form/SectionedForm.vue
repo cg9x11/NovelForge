@@ -3,8 +3,8 @@
     <el-collapse v-model="activeNames">
       <el-collapse-item v-for="(sec, idx) in sections" :key="idx" :name="String(idx)">
         <template #title>
-          <span class="sec-title">{{ sec.title }}</span>
-          <span class="sec-desc" v-if="sec.description">{{ sec.description }}</span>
+          <span class="sec-title">{{ tr(sec.title) }}</span>
+          <span class="sec-desc" v-if="sec.description">{{ tr(sec.description) }}</span>
         </template>
         <ModelDrivenForm
           :schema="schema"
@@ -19,12 +19,16 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useLocaleStore } from '@renderer/stores/useLocaleStore'
+import { translateText } from '@renderer/locales/runtimeTranslations'
 import type { JSONSchema } from '@renderer/api/schema'
 import ModelDrivenForm from './ModelDrivenForm.vue'
 import type { SectionConfig } from '@renderer/services/uiLayoutService'
 
 const props = defineProps<{ schema: JSONSchema | undefined; modelValue: any; sections: SectionConfig[] }>()
 const emit = defineEmits(['update:modelValue'])
+const localeStore = useLocaleStore()
+const tr = (value?: string) => translateText(String(value || ''), localeStore.locale)
 
 const proxy = ref<any>(props.modelValue)
 watch(() => props.modelValue, v => proxy.value = v, { deep: true })

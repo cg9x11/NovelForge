@@ -999,19 +999,35 @@ ${variableName} = ${nodeType}()
 }
 
 // 根据节点类型生成基础变量名
+const PYTHON_RESERVED_WORDS = new Set([
+  'false', 'none', 'true', 'and', 'as', 'assert', 'async', 'await', 'break', 'class',
+  'continue', 'def', 'del', 'elif', 'else', 'except', 'finally', 'for', 'from',
+  'global', 'if', 'import', 'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass',
+  'raise', 'return', 'try', 'while', 'with', 'yield'
+])
+
+function normalizePythonVariableName(value) {
+  const normalized = String(value || 'node')
+    .replace(/[^a-zA-Z0-9_]/g, '_')
+    .replace(/^([0-9])/, '_$1')
+    .toLowerCase()
+  const safeName = normalized || 'node'
+  return PYTHON_RESERVED_WORDS.has(safeName) ? `${safeName}_node` : safeName
+}
+
 function generateVariableName(nodeType) {
-  // 提取节点类型名并转换为合适的变量名
+  // ?????????????????
   const parts = nodeType.split('.')
   if (parts.length >= 2) {
     const method = parts[1].toLowerCase()
-    // 移除常见的动词前缀
+    // ?????????
     const cleanMethod = method.replace(/^(get|set|create|update|delete|fetch|load)_?/, '')
-    return cleanMethod || method
+    return normalizePythonVariableName(cleanMethod || method)
   }
-  return nodeType.replace(/\./g, '_').toLowerCase()
+  return normalizePythonVariableName(nodeType.replace(/\./g, '_'))
 }
 
-// 生成唯一的变量名
+// ????????
 function generateUniqueVariableName(baseName) {
   let counter = 2
   let variableName = baseName

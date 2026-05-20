@@ -545,6 +545,30 @@ const FIELD_LABELS = {
   }
 }
 
+
+const VALUE_LABELS = {
+  'en-US': {
+    '\u65ad\u8a00\u5931\u8d25': 'Assertion failed',
+    '\u7b2c[\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u53410-9]+[\u5377\u90e8\u7eaa]': 'Volume [number]',
+    '\u7b2c([\u96f6\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341\u767e\u53430-9]+)\u7ae0': 'Chapter [number]'
+  },
+  'vi-VN': {
+    '\u65ad\u8a00\u5931\u8d25': 'Ki\u1ec3m tra \u0111i\u1ec1u ki\u1ec7n th\u1ea5t b\u1ea1i',
+    '\u7b2c[\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u53410-9]+[\u5377\u90e8\u7eaa]': 'T\u1eadp [s\u1ed1]',
+    '\u7b2c([\u96f6\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341\u767e\u53430-9]+)\u7ae0': 'Ch\u01b0\u01a1ng [s\u1ed1]'
+  }
+}
+
+function getLocalizedValueLabel(value) {
+  const raw = String(value || '')
+  if (!raw) return raw
+  const normalized = raw.replace(/^['"]|['"]$/g, '')
+  const labels = VALUE_LABELS[localeStore.locale] || VALUE_LABELS['en-US']
+  const translated = labels[normalized]
+  if (!translated) return raw
+  return raw === normalized ? translated : raw.replace(normalized, translated)
+}
+
 function humanizeFieldName(fieldName) {
   return String(fieldName || '')
     .replace(/_/g, ' ')
@@ -1683,11 +1707,11 @@ function cancelVariableEdit() {
 // 格式化显示值（去掉引号和 $ 前缀）
 function formatDisplayValue(field) {
   if (ParameterFormatter.isEmpty(field.value)) {
-    return field.default || t('node_block.messages.not_set')
+    return getLocalizedValueLabel(field.default) || t('node_block.messages.not_set')
   }
   
   // 使用 ParameterFormatter 解析显示值
-  let displayValue = ParameterFormatter.parseDisplayValue(field.value)
+  let displayValue = getLocalizedValueLabel(ParameterFormatter.parseDisplayValue(field.value))
   
   // 对于智能选择器，显示对应的名称而不是 ID
   const xComponent = field.rawSchema?.['x-component']

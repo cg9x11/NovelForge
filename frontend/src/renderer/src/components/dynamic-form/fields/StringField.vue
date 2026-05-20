@@ -22,6 +22,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useLocaleStore } from '@renderer/stores/useLocaleStore'
+import { translateText } from '@renderer/locales/runtimeTranslations'
 import type { JSONSchema } from '@renderer/api/schema'
 
 const props = defineProps<{
@@ -33,6 +35,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:modelValue'])
 const { t } = useI18n()
+const localeStore = useLocaleStore()
 
 // 一个简单的启发式方法：如果描述或标题表明它是一个长文本字段，则使用文本区域。
 // 一个更健 robuste 解决方案可能是在 schema 中包含一个自定义属性，比如 `x-ui-control: 'textarea'`。
@@ -55,6 +58,6 @@ const isLongText = computed(() => {
 })
 
 const placeholder = computed(() => {
-  return props.schema.description || t('dynamic_form.fields.input_placeholder', { label: props.label })
+  return props.schema.description ? translateText(String(props.schema.description), localeStore.locale) : t('dynamic_form.fields.input_placeholder', { label: props.label })
 })
 </script>

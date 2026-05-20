@@ -23,6 +23,8 @@
 
 <script setup lang="ts">
 import { defineAsyncComponent, computed } from 'vue'
+import { useLocaleStore } from '@renderer/stores/useLocaleStore'
+import { translateText } from '@renderer/locales/runtimeTranslations'
 import type { JSONSchema } from '@renderer/api/schema'
 import { schemaService } from '@renderer/api/schema'
 import { resolveActualSchema as resolveSchemaUnified } from '@renderer/services/schemaFieldParser'
@@ -51,6 +53,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['update:modelValue'])
+const localeStore = useLocaleStore()
 
 // --- 默认值 ---
 const readonlyFields = props.readonlyFields || []
@@ -109,10 +112,11 @@ function getFieldComponent(propSchema: JSONSchema) {
 
 function getFieldLabel(propName: string, propSchema: JSONSchema): string {
   const actualSchema = resolveActualSchema(propSchema)
-  return (props.displayNameMap && props.displayNameMap[propName])
+  const raw = (props.displayNameMap && props.displayNameMap[propName])
     || (propSchema as any).title
     || (actualSchema as any).title
     || propName
+  return translateText(String(raw), localeStore.locale)
 }
 
 function updateModel(propName: string, value: any) {

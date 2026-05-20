@@ -2,7 +2,7 @@ from typing import List, Optional, Dict, Any
 from sqlmodel import Session, select
 from app.db.models import Prompt
 from app.schemas.prompt import PromptCreate, PromptUpdate
-from app.services.builtin_key_registry import PROMPT_NAME_TO_KEY, resolve_builtin_key
+from app.services.builtin_key_registry import PROMPT_NAME_TO_KEY, resolve_builtin_key, slugify_name
 from string import Template
 import re
 
@@ -17,7 +17,7 @@ def get_prompt_by_key(session: Session, prompt_key: str) -> Optional[Prompt]:
 
 
 def resolve_prompt_key(identifier: str) -> str:
-    from app.services.builtin_key_registry import PROMPT_NAME_TO_KEY, resolve_builtin_key
+    from app.services.builtin_key_registry import PROMPT_NAME_TO_KEY, resolve_builtin_key, slugify_name
     return resolve_builtin_key(identifier, PROMPT_NAME_TO_KEY) or identifier
 
 
@@ -33,11 +33,25 @@ def get_prompt_by_name(session: Session, prompt_name: str) -> Optional[Prompt]:
     return None
 
 
+def get_prompt_by_slug(session: Session, prompt_slug: str) -> Optional[Prompt]:
+    normalized = slugify_name(prompt_slug)
+    if not normalized:
+        return None
+    for prompt in session.exec(select(Prompt)).all():
+        candidates = [getattr(prompt, 'key', None), getattr(prompt, 'name', None)]
+        if any(slugify_name(value or '') == normalized for value in candidates):
+            return prompt
+    return None
+
+
 def get_prompt_by_identifier(session: Session, identifier: str) -> Optional[Prompt]:
     prompt = get_prompt_by_key(session, identifier)
     if prompt:
         return prompt
-    return get_prompt_by_name(session, identifier)
+    prompt = get_prompt_by_name(session, identifier)
+    if prompt:
+        return prompt
+    return get_prompt_by_slug(session, identifier)
 
 def get_prompts(session: Session, skip: int = 0, limit: int = 100) -> List[Prompt]:
     """获取提示词列表"""
