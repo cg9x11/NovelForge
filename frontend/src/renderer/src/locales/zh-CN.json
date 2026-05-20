@@ -563,7 +563,8 @@
       "deleted": "Workflow deleted",
       "update_persistence_failed": "Failed to update persistence setting",
       "paused": "Workflow paused",
-      "resumed": "Workflow resumed"
+      "resumed": "Workflow resumed",
+      "node_added": "Node added"
     },
     "runs": {
       "title": "Workflow Run History",

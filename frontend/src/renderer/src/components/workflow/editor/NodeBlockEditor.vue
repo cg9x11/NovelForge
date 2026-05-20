@@ -435,6 +435,7 @@ import { useProjectListStore } from '@/stores/useProjectListStore'
 import { useLLMConfigStore } from '@/stores/useLLMConfigStore'
 import { usePromptStore } from '@/stores/usePromptStore'
 import { useCardStore } from '@/stores/useCardStore'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 import { ParameterFormatter } from '@/utils/parameterFormatter'
 import { applyWorkflowPatch } from '@/api/workflowAgent'
 
@@ -465,6 +466,7 @@ const projectListStore = useProjectListStore()
 const llmConfigStore = useLLMConfigStore()
 const promptStore = usePromptStore()
 const cardStore = useCardStore()
+const localeStore = useLocaleStore()
 
 // 从 stores 获取响应式数据
 const { projects: projectList } = storeToRefs(projectListStore)
@@ -509,6 +511,50 @@ const nodeTypesByCategory = computed(() => {
   })
   return grouped
 })
+
+const FIELD_LABELS = {
+  'en-US': {
+    input: 'Input data', seconds: 'Delay seconds', tasks: 'Async tasks', condition: 'Condition expression', message: 'Error message', expression: 'Python expression',
+    project_id: 'Project ID', project_name: 'Project name', llm_config_id: 'LLM config ID', llm_name: 'LLM name',
+    root_path: 'Novel root path', file_pattern: 'File name pattern', volume_pattern: 'Volume folder pattern', chapter_pattern: 'Chapter name pattern',
+    target: 'Card reference', card_id: 'Card ID', type_name: 'Card type name', card_type: 'Card type', title: 'Card title', content: 'Card content', parent: 'Parent card', parent_id: 'Parent card ID',
+    content_merge: 'Content to merge', card: 'Card to delete', limit: 'Limit', items: 'Data list', title_template: 'Title template', content_template: 'Content template', match_by: 'Match by',
+    field_path: 'Field path', old_text: 'Old text', new_text: 'New text', template: 'Template name', on_create: 'Trigger on create', on_update: 'Trigger on update',
+    user_prompt: 'User prompt', system_prompt: 'System prompt', prompt_id: 'Prompt ID or name', variables: 'Template variables', response_model_id: 'Response model', context: 'Context data',
+    schema_extra: 'Extra schema', max_retry: 'Max retries', max_retries: 'Max retries', prompt_template: 'Prompt template', temperature: 'Temperature', max_tokens: 'Max tokens', timeout: 'Timeout seconds',
+    fail_soft: 'Soft fail', use_instruction_flow: 'Use instruction flow', topic: 'Debate topic', max_rounds: 'Max debate rounds', agent_1_name: 'Agent 1 name',
+    agent_1_system_prompt: 'Agent 1 system prompt', agent_1_llm_config: 'Agent 1 LLM config', agent_2_name: 'Agent 2 name', agent_2_system_prompt: 'Agent 2 system prompt',
+    agent_2_llm_config: 'Agent 2 LLM config', concurrency: 'Concurrency', cache_key: 'Cache key', overlap_size: 'Overlap size', initial_carry: 'Initial carry state',
+    carry_extract_expr: 'Carry extract expression', delay: 'Delay seconds', enable_progress: 'Enable progress', data: 'Data list', batch_size: 'Batch size', parallel: 'Parallel processing'
+  },
+  'vi-VN': {
+    input: 'D? li?u ??u v?o', seconds: 'S? gi?y tr?', tasks: 'T?c v? b?t ??ng b?', condition: 'Bi?u th?c ?i?u ki?n', message: 'Th?ng b?o l?i', expression: 'Bi?u th?c Python',
+    project_id: 'ID d? ?n', project_name: 'T?n d? ?n', llm_config_id: 'ID c?u h?nh LLM', llm_name: 'T?n LLM',
+    root_path: '???ng d?n g?c ti?u thuy?t', file_pattern: 'M?u t?n file', volume_pattern: 'M?u th? m?c t?p', chapter_pattern: 'M?u t?n ch??ng',
+    target: 'Tham chi?u th?', card_id: 'ID th?', type_name: 'T?n lo?i th?', card_type: 'Lo?i th?', title: 'Ti?u ?? th?', content: 'N?i dung th?', parent: 'Th? cha', parent_id: 'ID th? cha',
+    content_merge: 'N?i dung c?n g?p', card: 'Th? c?n x?a', limit: 'Gi?i h?n', items: 'Danh s?ch d? li?u', title_template: 'M?u ti?u ??', content_template: 'M?u n?i dung', match_by: 'Gh?p theo',
+    field_path: '???ng d?n tr??ng', old_text: 'V?n b?n c?', new_text: 'V?n b?n m?i', template: 'T?n m?u', on_create: 'K?ch ho?t khi t?o', on_update: 'K?ch ho?t khi c?p nh?t',
+    user_prompt: 'Prompt ng??i d?ng', system_prompt: 'Prompt h? th?ng', prompt_id: 'ID ho?c t?n prompt', variables: 'Bi?n m?u', response_model_id: 'M? h?nh ph?n h?i', context: 'D? li?u ng? c?nh',
+    schema_extra: 'Schema b? sung', max_retry: 'S? l?n th? l?i t?i ?a', max_retries: 'S? l?n th? l?i t?i ?a', prompt_template: 'M?u prompt', temperature: 'Nhi?t ??', max_tokens: 'S? token t?i ?a', timeout: 'Th?i gian ch? (gi?y)',
+    fail_soft: 'L?i m?m', use_instruction_flow: 'D?ng lu?ng h??ng d?n', topic: 'Ch? ?? tranh lu?n', max_rounds: 'S? v?ng tranh lu?n t?i ?a', agent_1_name: 'T?n agent 1',
+    agent_1_system_prompt: 'Prompt h? th?ng agent 1', agent_1_llm_config: 'C?u h?nh LLM agent 1', agent_2_name: 'T?n agent 2', agent_2_system_prompt: 'Prompt h? th?ng agent 2',
+    agent_2_llm_config: 'C?u h?nh LLM agent 2', concurrency: 'S? lu?ng ??ng th?i', cache_key: 'Kh?a cache', overlap_size: 'K?ch th??c ch?ng l?p', initial_carry: 'Tr?ng th?i carry ban ??u',
+    carry_extract_expr: 'Bi?u th?c tr?ch xu?t carry', delay: 'S? gi?y tr?', enable_progress: 'B?t ti?n ??', data: 'Danh s?ch d? li?u', batch_size: 'K?ch th??c batch', parallel: 'X? l? song song'
+  }
+}
+
+function humanizeFieldName(fieldName) {
+  return String(fieldName || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function getLocalizedFieldLabel(fieldName, fallback) {
+  const locale = localeStore.locale
+  if (locale === 'zh-CN') return fallback || humanizeFieldName(fieldName)
+  const labels = FIELD_LABELS[locale] || FIELD_LABELS['en-US']
+  return labels[fieldName] || humanizeFieldName(fieldName)
+}
 
 // 解析代码为节点块
 async function parseCodeToNodes(code) {
@@ -645,7 +691,7 @@ async function fetchNodeOutputs(node) {
         
         return {
           name: fieldName,
-          label: fieldDef.description || fieldName,
+          label: getLocalizedFieldLabel(fieldName, fieldDef.description),
           type: resolveFieldType(fieldDef),
           required: fieldDef.required || false,
           default: fieldDef.default,
@@ -708,7 +754,7 @@ async function fetchNodeOutputs(node) {
         
         return {
           name: fieldName,
-          label: fieldName,
+          label: getLocalizedFieldLabel(fieldName, fieldName),
           type: fieldType,
           required: false,
           default: undefined,

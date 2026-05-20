@@ -37,9 +37,11 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Search, Operation, Collection, DataAnalysis, MagicStick, Menu, Box, Lightning, Document } from '@element-plus/icons-vue'
 import request from '@/api/request'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 
 const emit = defineEmits(['add-node'])
 const { t } = useI18n()
+const localeStore = useLocaleStore()
 const searchQuery = ref('')
 const activeCategories = ref(['logic', 'novel', 'card', 'example'])
 const nodeTypes = ref([])
@@ -70,6 +72,60 @@ const NODE_LABELS = {
   'AI.SequentialStructured': 'Tạo cấu trúc tuần tự',
   'Example.Process': 'Xử lý ví dụ',
   'Example.BatchProcess': 'Xử lý hàng loạt'
+}
+
+const EN_NODE_LABELS = {
+  'Logic.Delay': 'Delay',
+  'Logic.SelectProject': 'Select Project',
+  'Logic.SelectLLM': 'Select LLM',
+  'Logic.Wait': 'Wait Task',
+  'Logic.Assert': 'Assert',
+  'Logic.Expression': 'Expression',
+  'Novel.Load': 'Load Novel',
+  'Card.Read': 'Read Card',
+  'Card.Create': 'Create Card',
+  'Card.Update': 'Update Card',
+  'Card.Delete': 'Delete Card',
+  'Card.Query': 'Query Cards',
+  'Card.BatchUpsert': 'Batch Upsert Cards',
+  'Card.ReplaceFieldText': 'Replace Field Text',
+  'Trigger.ProjectCreated': 'Project Created Trigger',
+  'Trigger.CardSaved': 'Card Saved Trigger',
+  'AI.LLM': 'Call LLM',
+  'Prompt.Load': 'Load Prompt',
+  'AI.StructuredGenerate': 'Structured Generate',
+  'AI.Debate': 'Agent Debate',
+  'AI.BatchStructured': 'Batch Structured Generate',
+  'AI.SequentialStructured': 'Sequential Structured Generate',
+  'Example.Process': 'Example Process',
+  'Example.BatchProcess': 'Batch Process'
+}
+
+const EN_NODE_DESCRIPTIONS = {
+  'Logic.Delay': 'Wait for a fixed duration, then continue.',
+  'Logic.SelectProject': 'Select a project by name or ID and output project info.',
+  'Logic.SelectLLM': 'Select an LLM config by name or ID.',
+  'Logic.Wait': 'Wait for one or more async tasks to finish.',
+  'Logic.Assert': 'Validate a condition; stop workflow when it fails.',
+  'Logic.Expression': 'Run a controlled Python expression and output result.',
+  'Novel.Load': 'Scan a novel folder and produce chapter metadata.',
+  'Card.Read': 'Read content from a card by ID, $self, or $parent.',
+  'Card.Create': 'Create a new card in current project.',
+  'Card.Update': 'Update content or title of an existing card.',
+  'Card.Delete': 'Delete a card by ID.',
+  'Card.Query': 'Find cards by query conditions.',
+  'Card.BatchUpsert': 'Create or update many cards from input data.',
+  'Card.ReplaceFieldText': 'Replace text in a card field.',
+  'Trigger.ProjectCreated': 'Trigger workflow when a project is created.',
+  'Trigger.CardSaved': 'Trigger workflow when a card is saved.',
+  'AI.LLM': 'Call LLM with selected prompt and config.',
+  'Prompt.Load': 'Load a prompt from the prompt library.',
+  'AI.StructuredGenerate': 'Use AI to generate data matching a schema.',
+  'AI.Debate': 'Let multiple agents debate and summarize a result.',
+  'AI.BatchStructured': 'Generate structured data for many items.',
+  'AI.SequentialStructured': 'Generate structured data sequentially with carry support.',
+  'Example.Process': 'Example node for processing a list and pushing progress.',
+  'Example.BatchProcess': 'Example node for batch data processing.'
 }
 
 const NODE_DESCRIPTIONS = {
@@ -123,8 +179,19 @@ const filteredNodesByCategory = computed(() => {
   return filtered
 })
 
-const getNodeLabel = (node) => NODE_LABELS[node.type] || node.label || node.type
-const getNodeDescription = (node) => NODE_DESCRIPTIONS[node.type] || node.description || t('node_library.noDescription')
+const VI_NODE_LABELS = NODE_LABELS
+const VI_NODE_DESCRIPTIONS = NODE_DESCRIPTIONS
+
+const getNodeLabel = (node) => {
+  if (localeStore.locale === 'vi-VN') return VI_NODE_LABELS[node.type] || node.label || node.type
+  if (localeStore.locale === 'en-US') return EN_NODE_LABELS[node.type] || node.type
+  return node.label || node.type
+}
+const getNodeDescription = (node) => {
+  if (localeStore.locale === 'vi-VN') return VI_NODE_DESCRIPTIONS[node.type] || node.description || t('node_library.noDescription')
+  if (localeStore.locale === 'en-US') return EN_NODE_DESCRIPTIONS[node.type] || t('node_library.noDescription')
+  return node.description || t('node_library.noDescription')
+}
 
 const getCategoryIcon = (category) => ({ trigger: Lightning, logic: Operation, card: Collection, data: DataAnalysis, ai: MagicStick, novel: Document, prompt: Document, example: Box, context: Menu }[category] || Menu)
 const getCategoryLabel = (category) => ({ trigger: t('node_library.categories.trigger'), logic: t('node_library.categories.logic'), card: t('node_library.categories.card'), data: t('node_library.categories.data'), ai: t('node_library.categories.ai'), novel: t('node_library.categories.novel'), prompt: t('node_library.categories.prompt'), example: t('node_library.categories.example'), context: t('node_library.categories.context') }[category] || category)

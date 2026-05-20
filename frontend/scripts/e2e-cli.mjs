@@ -243,6 +243,8 @@ async function smoke() {
     await waitFor(async () => (await snapshot(page)).text !== '', 'post-workflow click')
     await saveSnapshot(page, '03-workflow-before-assert')
     await expectAnyText(page, ['Node', 'Nodes', 'Logic', 'Delay', 'Select Project', 'Create Card'], 'workflow node library')
+    await clickText(page, 'Delay')
+    await expectAnyText(page, ['Input data', 'Delay seconds'], 'workflow node params')
     const workflowState = await page.evaluate(() => {
       const library = document.querySelector('.node-library, [class*="node-library"], [class*="NodeLibrary"], .library-section') || document.querySelector('aside')
       const rect = library?.getBoundingClientRect()
