@@ -37,6 +37,7 @@ const props = defineProps<{
 const emit = defineEmits(['update:modelValue'])
 const { t } = useI18n()
 const localeStore = useLocaleStore()
+const cjkRe = /[\u4e00-\u9fff]/
 const knowledgeOptions = ref<Array<string | number>>([])
 const isLoading = ref(false)
 
@@ -73,8 +74,12 @@ const resolvedOptions = computed(() => {
   return baseOptions
 })
 
+function cleanDisplayText(value: string): string {
+  return cjkRe.test(value) ? '' : value
+}
+
 const placeholder = computed(() => {
-  return props.schema.description ? translateText(String(props.schema.description), localeStore.locale) : t('dynamic_form.fields.select_placeholder', { label: props.label })
+  return props.schema.description ? cleanDisplayText(translateText(String(props.schema.description), localeStore.locale)) : t('dynamic_form.fields.select_placeholder', { label: props.label })
 })
 
 const noDataText = computed(() => {

@@ -290,14 +290,23 @@ function findCjk(text) {
   return [...new Set(text.match(/[\u4e00-\u9fff]+/g) || [])]
 }
 
+function snapshotSearchText(data) {
+  return [
+    data.text || '',
+    ...(data.buttons || []),
+    ...(data.headings || []),
+    ...(data.inputs || []).flatMap((item) => [item.placeholder || '', item.value || ''])
+  ].join(' ')
+}
+
 async function assertNoCjk(page, label) {
   const data = await waitFor(async () => {
     const current = await snapshot(page)
-    const cjk = findCjk(current.text)
+    const cjk = findCjk(snapshotSearchText(current))
     return cjk.length ? false : current
   }, `${label} no CJK`, 5000, 120).catch(async () => {
     const current = await snapshot(page)
-    const cjk = findCjk(current.text)
+    const cjk = findCjk(snapshotSearchText(current))
     await saveSnapshot(page, `cjk-${label.replace(/[^a-z0-9_-]+/gi, '-')}`)
     throw new Error(`${label} contains CJK text: ${cjk.slice(0, 20).join(', ')}`)
   })
