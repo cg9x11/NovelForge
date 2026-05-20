@@ -7,10 +7,12 @@
 
     <el-table :data="filteredTypes" height="60vh" size="small" :border="false" v-loading="loading">
       <el-table-column prop="key" :label="t('common.key')" width="170" show-overflow-tooltip />
-      <el-table-column prop="name" :label="t('card_type_manager.columns.name')" width="220" />
+      <el-table-column :label="t('card_type_manager.columns.name')" width="220">
+        <template #default="{ row }">{{ tr(row.name) }}</template>
+      </el-table-column>
       <el-table-column prop="description" :label="t('card_type_manager.columns.description')" min-width="260" show-overflow-tooltip>
         <template #default="{ row }">
-          <span>{{ (row.description && String(row.description).trim()) ? row.description : t('common.na') }}</span>
+          <span>{{ (row.description && String(row.description).trim()) ? tr(row.description) : t('common.na') }}</span>
         </template>
       </el-table-column>
       <el-table-column :label="t('card_type_manager.columns.ai')" width="90">
@@ -53,7 +55,7 @@
             </el-form-item>
             <el-form-item :label="t('card_type_manager.form.prompt')">
               <el-select v-model="aiParams.prompt_name" filterable :placeholder="t('card_type_manager.selectPrompt')" style="width:100%">
-                <el-option v-for="p in prompts" :key="p.id" :label="p.name" :value="p.key || p.name" />
+                <el-option v-for="p in prompts" :key="p.id" :label="tr(p.name)" :value="p.key || p.name" />
               </el-select>
             </el-form-item>
             <div class="ai-grid">
@@ -96,6 +98,8 @@ import { useCardStore } from '@renderer/stores/useCardStore'
 import { schemaService } from '@renderer/api/schema'
 import { listCardTypes, createCardType, updateCardType, deleteCardType, listLLMConfigs, listPrompts, type CardTypeRead as CTR, type CardTypeCreate as CTC, type CardTypeUpdate as CTU } from '@renderer/api/setting'
 import SchemaStudio from '../shared/SchemaStudio.vue'
+import { useLocaleStore } from '@renderer/stores/useLocaleStore'
+import { translateText } from '@renderer/locales/runtimeTranslations'
 
 // 后端 CardType 类型
 type CardTypeRead = CTR
@@ -106,6 +110,8 @@ function isBuiltInCardType(row: any): boolean { return !!row?.built_in }
 
 const cardStore = useCardStore()
 const { t } = useI18n()
+const localeStore = useLocaleStore()
+const tr = (value?: string | null) => translateText(String(value || ''), localeStore.locale)
 
 const loading = ref(false)
 const types = ref<CardTypeRead[]>([])

@@ -5,6 +5,7 @@
 
 from typing import List, Dict, Any
 from loguru import logger
+from app.services.card_type_service_utils import resolve_card_type_key
 
 
 def extract_triggers_from_code(code: str) -> List[Dict[str, Any]]:
@@ -162,6 +163,13 @@ def match_event(event_name: str, event_data: Dict[str, Any], trigger: Dict[str, 
     # 3. 检查所有 match 条件
     for key, expected_value in match_conditions.items():
         actual_value = event_data.get(key)
+
+        if key == "card_type":
+            actual_key = resolve_card_type_key(actual_value) or actual_value
+            expected_key = resolve_card_type_key(expected_value) or expected_value
+            if actual_key != expected_key:
+                return False
+            continue
         
         # 简单相等匹配
         if actual_value != expected_value:

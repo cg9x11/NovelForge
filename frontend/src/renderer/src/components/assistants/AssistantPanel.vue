@@ -232,6 +232,8 @@ import { useAssistantStore } from '@renderer/stores/useAssistantStore'
 import { useProjectStore } from '@renderer/stores/useProjectStore'
 import { useCardStore } from '@renderer/stores/useCardStore'
 import { useEditorStore } from '@renderer/stores/useEditorStore'
+import { useLocaleStore } from '@renderer/stores/useLocaleStore'
+import { translateText } from '@renderer/locales/runtimeTranslations'
 import { useAssistantPreferences } from '@renderer/composables/useAssistantPreferences'
 import { useAssistantSessionHistory } from '@renderer/composables/useAssistantSessionHistory'
 import { useAssistantInjectionSelector } from '@renderer/composables/useAssistantInjectionSelector'
@@ -255,6 +257,11 @@ const { messageListRef, scrollToBottom } = useMessageListScroll()
 const assistantStore = useAssistantStore()
 const projectStore = useProjectStore()
 const editorStore = useEditorStore()
+const localeStore = useLocaleStore()
+
+function trRuntime(value?: string | null): string {
+  return translateText(String(value || ''), localeStore.locale)
+}
 
 // 思考过程折叠状态：key 为 bucket 标识（例如 plain-0-0 / pre-0-0 / g-0-1-0），值为是否展开
 // 默认收起（false），用户点击后再展开
@@ -375,11 +382,11 @@ function getRefKey(ref: AssistantRef): string {
 }
 
 function getRefLabel(ref: AssistantRef): string {
-  if (ref.refType === 'card') return `${ref.projectName} / ${ref.cardTitle}`
+  if (ref.refType === 'card') return `${ref.projectName} / ${trRuntime(ref.cardTitle)}`
   if (ref.refType === 'chapter_excerpt') {
-    return t('assistant.chapter_excerpt_label', { project: ref.projectName, card: ref.cardTitle, start: ref.startLine, end: ref.endLine })
+    return t('assistant.chapter_excerpt_label', { project: ref.projectName, card: trRuntime(ref.cardTitle), start: ref.startLine, end: ref.endLine })
   }
-  return t('assistant.review_result_label', { title: ref.targetTitle })
+  return t('assistant.review_result_label', { title: trRuntime(ref.targetTitle) })
 }
 
 const { buildConversationText, buildAssistantChatRequest } = useAssistantRequestBuilder({

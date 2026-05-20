@@ -26,7 +26,7 @@
       <el-table-column :label="t('output_model_builder.columns.type')" width="150">
         <template #default="{ row }">
           <el-select v-model="row.kind" @change="onKindChange(row)">
-            <el-option v-for="t in baseKinds" :key="t" :label="t" :value="t" />
+            <el-option v-for="kind in baseKinds" :key="kind" :label="kind" :value="kind" />
             <el-option label="relation(embed)" value="relation" />
           </el-select>
         </template>
@@ -59,7 +59,7 @@
       <el-table-column :label="t('output_model_builder.columns.tupleItems')" min-width="260">
         <template #default="{ row }">
           <div v-if="row.kind==='tuple'" class="tuple-editor">
-            <div v-for="(t, i) in row.tupleItems" :key="i" class="tuple-chip">
+            <div v-for="(tupleKind, i) in row.tupleItems" :key="i" class="tuple-chip">
               <el-select v-model="row.tupleItems[i]" size="small" style="width:120px">
                 <el-option v-for="tk in tupleKinds" :key="tk" :label="tk" :value="tk" />
               </el-select>
@@ -74,7 +74,7 @@
         <template #default="{ row }">
           <div v-if="row.kind==='relation'" class="rel-config">
             <el-select v-model="row.relation.targetModelName" filterable :placeholder="t('output_model_builder.selectTargetModel')" style="width:260px">
-              <el-option v-for="t in targetModels" :key="t.name" :label="t.name" :value="t.name" :disabled="isEmbedSelf(row, t.name)" />
+              <el-option v-for="targetModel in targetModels" :key="targetModel.name" :label="tr(targetModel.name)" :value="targetModel.name" :disabled="isEmbedSelf(row, targetModel.name)" />
             </el-select>
           </div>
           <div v-else class="rel-config muted">—</div>
@@ -88,10 +88,13 @@
 import { ref, watch, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { type BuilderField } from '@renderer/utils/outputModelSchemaUtils'
+import { useLocaleStore } from '@renderer/stores/useLocaleStore'
+import { translateText } from '@renderer/locales/runtimeTranslations'
 
 export interface OutputModelLite { name: string; json_schema?: any }
 
 const { t } = useI18n()
+const localeStore = useLocaleStore()
 
 const props = defineProps<{ modelValue: BuilderField[]; models: OutputModelLite[]; currentModelName?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: BuilderField[]] }>()
@@ -111,7 +114,13 @@ watch(localFields, (v) => { if (!syncingFromProps.value) emit('update:modelValue
 
 const targetModels = computed(() => props.models || [])
 
-function cloneField(f: BuilderField): BuilderField { return JSON.parse(JSON.stringify(f)) }
+function tr(value?: string | null): string { return translateText(String(value || ''), localeStore.locale) }
+function cloneField(f: BuilderField): BuilderField {
+  const next = JSON.parse(JSON.stringify(f))
+  if (next.label) next.label = tr(next.label)
+  if (next.description) next.description = tr(next.description)
+  return next
+}
 function addField() { localFields.value.push({ name: '', label: '', kind: 'string', isArray: false, required: false, aiExclude: false, relation: { targetModelName: null }, description: '', example: '', tupleItems: [] }) }
 function removeField(idx: number) { localFields.value.splice(idx, 1) }
 function moveUp(idx: number) { if (idx <= 0) return; const a = localFields.value; [a[idx-1], a[idx]] = [a[idx], a[idx-1]] }

@@ -62,7 +62,7 @@ class CharacterDynamicExtractor:
 
     def build_affected_targets(self, data: UpdateDynamicInfo) -> list[dict[str, Any]]:
         return [
-            {"type": "card", "card_type": "角色卡", "title": item.name}
+            {"type": "card", "card_type": "character_card", "title": item.name}
             for item in data.info_list
             if getattr(item, "name", None)
         ]

@@ -43,8 +43,8 @@ class TriggerProjectCreatedNode(BaseNode):
         # 使用触发器输出
         card = Card.Create(
             project_id=trigger.project_id,
-            card_type="核心蓝图",
-            title="核心蓝图"
+            card_type="blueprint",
+            title="blueprint"
         )
     """
     

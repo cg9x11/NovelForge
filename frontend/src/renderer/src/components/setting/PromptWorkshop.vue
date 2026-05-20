@@ -6,8 +6,12 @@
     </div>
     <el-table :data="prompts" height="60vh" size="small" style="width: 100%" v-loading="loading">
       <el-table-column prop="key" :label="t('common.key')" width="190" show-overflow-tooltip />
-      <el-table-column prop="name" :label="t('prompt_workshop.name')" width="180" />
-      <el-table-column prop="description" :label="t('prompt_workshop.description')" />
+      <el-table-column :label="t('prompt_workshop.name')" width="180">
+        <template #default="{ row }">{{ tr(row.name) }}</template>
+      </el-table-column>
+      <el-table-column :label="t('prompt_workshop.description')">
+        <template #default="{ row }">{{ tr(row.description) }}</template>
+      </el-table-column>
       <el-table-column :label="t('common.actions')" width="220">
         <template #default="{ row }">
           <el-button size="small" @click="handleEdit(row)">{{ t('common.edit') }}</el-button>
@@ -58,7 +62,7 @@
               <span class="hint" style="margin-left:8px">{{ t('prompt_workshop.kb_hint') }}</span>
             </div>
             <el-select v-model="selectedKnowledgeIds" multiple filterable :placeholder="t('prompt_workshop.select_kb_placeholder')" style="width:100%">
-              <el-option v-for="kb in knowledgeItems" :key="kb.id" :label="kb.name" :value="kb.id" />
+              <el-option v-for="kb in knowledgeItems" :key="kb.id" :label="tr(kb.name)" :value="kb.id" />
             </el-select>
           </div>
 
@@ -92,6 +96,8 @@ import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import { listKnowledge, type Knowledge, listPrompts, createPrompt, updatePrompt, deletePrompt } from '@renderer/api/setting'
+import { useLocaleStore } from '@renderer/stores/useLocaleStore'
+import { translateText } from '@renderer/locales/runtimeTranslations'
 
 interface Prompt {
   id: number
@@ -103,6 +109,8 @@ interface Prompt {
 }
 
 const { t } = useI18n()
+const localeStore = useLocaleStore()
+const tr = (value?: string | null) => translateText(String(value || ''), localeStore.locale)
 const DEFAULT_OUTPUT_FORMAT = t('prompt_workshop.default_output_format')
 
 const prompts = ref<Prompt[]>([])

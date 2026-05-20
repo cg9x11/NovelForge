@@ -70,7 +70,7 @@ class StructuredGenerateNode(BaseNode[StructuredGenerateInput, StructuredGenerat
         契约格式：
         {
             "kind": "structured_output",
-            "schema_id": "角色卡",
+            "schema_id": "character_card",
             "data_path": "data"
         }
         """

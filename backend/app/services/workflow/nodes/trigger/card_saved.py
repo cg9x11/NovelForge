@@ -10,7 +10,7 @@ class TriggerCardSavedInput(BaseModel):
     """卡片保存触发器输入"""
     card_type: Optional[str] = Field(
         None,
-        description="卡片类型名称（可选）。只触发指定类型的卡片保存，如 '核心蓝图'。留空则匹配所有类型"
+        description="卡片类型名称（可选）。只触发指定类型的卡片保存，如 'blueprint'。留空则匹配所有类型"
     )
     on_create: bool = Field(
         False,
@@ -51,9 +51,9 @@ class TriggerCardSavedNode(BaseNode):
         # 监听所有卡片保存
         trigger = Trigger.CardSaved()
         
-        # 只监听核心蓝图卡片的更新
+        # 只监听blueprint卡片的更新
         trigger = Trigger.CardSaved(
-            card_type="核心蓝图",
+            card_type="blueprint",
             on_create=false,
             on_update=true
         )

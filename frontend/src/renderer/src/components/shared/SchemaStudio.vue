@@ -51,6 +51,8 @@
 <script setup lang="ts">
 import { ref, computed, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useLocaleStore } from '@renderer/stores/useLocaleStore'
+import { translateText } from '@renderer/locales/runtimeTranslations'
 import OutputModelBuilder from '../setting/OutputModelBuilder.vue'
 import ModelDrivenForm from '../dynamic-form/ModelDrivenForm.vue'
 import { schemaToBuilder, builderToSchema, type BuilderField } from '@renderer/utils/outputModelSchemaUtils'
@@ -58,6 +60,7 @@ import { ElMessage } from 'element-plus'
 import { getCardTypeSchema, updateCardTypeSchema, getCardSchema, updateCardSchema, applyCardSchemaToType, listCardTypes, updateCardType } from '@renderer/api/setting'
 
 const { t } = useI18n()
+const localeStore = useLocaleStore()
 
 const props = defineProps<{ visible: boolean; mode: 'type' | 'card'; targetId: number; contextTitle?: string }>()
 const emit = defineEmits<{ 'update:visible': [boolean]; 'saved': []; 'close': [] }>()
@@ -104,8 +107,20 @@ const schemaObject = computed(() => {
   } catch { return null }
 })
 const schemaText = computed(() => {
-  try { return JSON.stringify(schemaObject.value || {}, null, 2) } catch { return '' }
+  try { return JSON.stringify(translateSchemaForDisplay(schemaObject.value || {}), null, 2) } catch { return '' }
 })
+
+
+function translateSchemaForDisplay(value: any): any {
+  if (typeof value === 'string') return translateText(value, localeStore.locale)
+  if (Array.isArray(value)) return value.map((item) => translateSchemaForDisplay(item))
+  if (value && typeof value === 'object') {
+    const out: Record<string, any> = {}
+    for (const [key, item] of Object.entries(value)) out[key] = translateSchemaForDisplay(item)
+    return out
+  }
+  return value
+}
 
 async function loadSchema() {
   if (!props.visible) return

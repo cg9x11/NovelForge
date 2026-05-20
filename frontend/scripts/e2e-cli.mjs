@@ -214,9 +214,9 @@ async function clickNormalizedText(page, text, selector = 'button,[role="button"
       .replace(/\u0111/g, 'd')
       .replace(/\u0110/g, 'D')
       .normalize('NFKC')
-    const wanted = normalize(text)
+    const wanted = normalize(text).toLowerCase()
     const elements = Array.from(document.querySelectorAll(selector))
-    const target = elements.find((el) => normalize(el.innerText || el.textContent || el.getAttribute('aria-label') || el.getAttribute('title') || '').includes(wanted))
+    const target = elements.find((el) => normalize(el.innerText || el.textContent || el.getAttribute('aria-label') || el.getAttribute('title') || '').toLowerCase().includes(wanted))
     if (!target) return { clicked: false, candidates: elements.map((el) => normalize(el.innerText || el.textContent || el.getAttribute('aria-label') || el.getAttribute('title') || '')).slice(0, 40) }
     target.click()
     return { clicked: true }
@@ -243,12 +243,16 @@ function findCjk(text) {
 }
 
 async function assertNoCjk(page, label) {
-  const data = await snapshot(page)
-  const cjk = findCjk(data.text)
-  if (cjk.length) {
+  const data = await waitFor(async () => {
+    const current = await snapshot(page)
+    const cjk = findCjk(current.text)
+    return cjk.length ? false : current
+  }, `${label} no CJK`, 5000, 120).catch(async () => {
+    const current = await snapshot(page)
+    const cjk = findCjk(current.text)
     await saveSnapshot(page, `cjk-${label.replace(/[^a-z0-9_-]+/gi, '-')}`)
     throw new Error(`${label} contains CJK text: ${cjk.slice(0, 20).join(', ')}`)
-  }
+  })
   return data
 }
 
@@ -266,8 +270,67 @@ const smokeText = {
   back: e2eLocale === 'vi-VN' ? 'Quay l\u1ea1i' : 'Back',
   settingsButtonTitle: e2eLocale === 'vi-VN' ? 'C\u00e0i \u0111\u1eb7t' : 'Settings',
   settings: e2eLocale === 'vi-VN' ? ['Cai dat', 'LLM', 'Kho tri thuc', 'Prompt'] : ['Settings', 'LLM', 'Knowledge', 'Prompt', 'About'],
+  settingsTabs: e2eLocale === 'vi-VN'
+    ? [
+      { name: 'knowledge', label: 'Kho tri thuc', expect: ['Kho tri thuc', 'Them moi'] },
+      { name: 'prompts', label: 'Prompt', expect: ['Prompt', 'Them'] },
+      { name: 'card-types', label: 'Loai the', expect: ['Loai the', 'Key', 'Ten'] },
+      { name: 'assistant', label: 'Cai dat Agent', expect: ['Cai dat Agent'] },
+      { name: 'about', label: 'Gioi thieu', expect: ['He thong', 'Ngon ngu'] }
+    ]
+    : [
+      { name: 'knowledge', label: 'Knowledge', expect: ['Knowledge', 'Add'] },
+      { name: 'prompts', label: 'Prompt', expect: ['Prompt', 'Add'] },
+      { name: 'card-types', label: 'Card Types', expect: ['Card Types', 'Key', 'Name'] },
+      { name: 'assistant', label: 'Agent Settings', expect: ['Agent Settings'] },
+      { name: 'about', label: 'About', expect: ['System', 'Language'] }
+    ],
   ideasButton: e2eLocale === 'vi-VN' ? '\u00dd t\u01b0\u1edfng' : 'Ideas',
-  ideas: e2eLocale === 'vi-VN' ? ['Quay lai', 'Chuyen', 'the'] : ['Back', 'Transfer', 'Ideas', 'Card']
+  ideas: e2eLocale === 'vi-VN' ? ['Quay lai', 'Chuyen', 'the'] : ['Back', 'Transfer', 'Ideas', 'Card'],
+  editStructure: e2eLocale === 'vi-VN' ? 'Sua cau truc' : 'Edit Structure',
+  schemaStudio: e2eLocale === 'vi-VN' ? ['Trinh dung schema', 'Xem truoc bieu mau', 'JSON schema'] : ['Schema Builder', 'Form Preview', 'Schema JSON']
+}
+
+
+async function auditEditorStructure(page) {
+  const projectCount = await page.locator('.project-card:visible').count()
+  if (!projectCount) {
+    log('editor structure audit skipped', { reason: 'no visible project card' })
+    return false
+  }
+  await page.locator('.project-card:visible').first().click()
+  await waitFor(async () => await page.locator('.card-tree:visible, .custom-tree-node:visible').count(), 'editor card tree', 30000)
+  const nodeCount = await page.locator('.custom-tree-node:visible').count()
+  if (!nodeCount) {
+    log('editor structure audit skipped', { reason: 'no visible card nodes' })
+    return false
+  }
+  for (let index = 0; index < Math.min(nodeCount, 8); index += 1) {
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(80)
+    const node = page.locator('.custom-tree-node:visible').nth(index)
+    await node.scrollIntoViewIfNeeded()
+    await node.click({ force: true })
+    await node.click({ button: 'right', force: true })
+    await page.waitForTimeout(150)
+    const opened = await clickNormalizedText(page, smokeText.editStructure, '.el-dropdown-menu__item,[role="menuitem"]', { optional: true })
+    if (!opened) {
+      await page.keyboard.press('Escape')
+      await page.waitForTimeout(120)
+      continue
+    }
+    await page.locator('.el-dialog:visible').first().waitFor({ state: 'visible', timeout: 20000 })
+    await expectAnyText(page, smokeText.schemaStudio, 'schema studio')
+    await saveSnapshot(page, '06-editor-structure')
+    await saveScreenshot(page, '06-editor-structure')
+    await assertNoCjk(page, 'editor structure')
+    await page.keyboard.press('Escape')
+    await waitFor(async () => await page.locator('.el-dialog:visible').count() === 0, 'schema dialog closed', 10000).catch(() => {})
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await expectAnyText(page, smokeText.dashboard, 'dashboard after editor structure')
+    return true
+  }
+  throw new Error('No editable card node opened schema studio')
 }
 
 async function auditWorkflowNodes(page) {
@@ -285,6 +348,15 @@ async function auditWorkflowNodes(page) {
     await assertNoCjk(page, `workflow node ${index + 1}: ${name}`)
   }
   log('workflow node audit', { nodeCount, names })
+}
+
+async function auditSettingsTabs(page) {
+  for (const tab of smokeText.settingsTabs) {
+    await clickNormalizedText(page, tab.label, '.el-tabs__item')
+    await expectAnyText(page, tab.expect, `settings tab ${tab.name}`)
+    await saveSnapshot(page, `04-settings-${tab.name}`)
+    await assertNoCjk(page, `settings tab ${tab.name}`)
+  }
 }
 
 async function smoke() {
@@ -314,6 +386,8 @@ async function smoke() {
     } else {
       log('create project entry skipped', { reason: 'project already exists or button hidden' })
     }
+
+    await auditEditorStructure(page)
 
     await page.getByText(smokeText.workflowButton, { exact: false }).first().click()
     await waitFor(async () => (await snapshot(page)).text !== '', 'post-workflow click')
@@ -347,6 +421,7 @@ async function smoke() {
     await saveSnapshot(page, '04-settings')
     await saveScreenshot(page, '04-settings')
     await assertNoCjk(page, 'settings')
+    await auditSettingsTabs(page)
     await page.keyboard.press('Escape')
 
     await page.getByText(smokeText.ideasButton, { exact: false }).first().click()

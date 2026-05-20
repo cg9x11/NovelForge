@@ -49,19 +49,22 @@
       </div>
     </div>
     <el-button type="primary" :icon="Plus" plain @click="addItem" class="add-button">
-      {{ t('arrayField.add') }} {{ (displayNameMap && displayNameMap[itemSchema.title || '']) || itemSchema.title || t('arrayField.newItem') }}
+      {{ t('arrayField.add') }} {{ addItemLabel }}
     </el-button>
   </el-card>
 </template>
 
 <script setup lang="ts">
 import { computed, defineAsyncComponent } from 'vue'
+import { useLocaleStore } from '@renderer/stores/useLocaleStore'
+import { translateText } from '@renderer/locales/runtimeTranslations'
 import { useI18n } from 'vue-i18n'
 import type { JSONSchema } from '@renderer/api/schema'
 import { Delete, Plus } from '@element-plus/icons-vue'
 import { resolveActualSchema } from '@renderer/services/schemaFieldParser'
 
 const { t } = useI18n()
+const localeStore = useLocaleStore()
 const ModelDrivenForm = defineAsyncComponent(() => import('../ModelDrivenForm.vue'))
 const StringField = defineAsyncComponent(() => import('./StringField.vue'))
 const NumberField = defineAsyncComponent(() => import('./NumberField.vue'))
@@ -79,6 +82,12 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['update:modelValue'])
+
+
+const addItemLabel = computed(() => {
+  const raw = (props.displayNameMap && props.displayNameMap[itemSchema.value.title || '']) || itemSchema.value.title || t('arrayField.newItem')
+  return translateText(String(raw), localeStore.locale)
+})
 
 const itemSchema = computed((): JSONSchema => {
   if (props.schema.items) {

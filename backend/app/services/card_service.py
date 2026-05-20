@@ -229,21 +229,21 @@ class CardService:
         """
         if template_items is None:
             initial_cards_setup = {
-                "作品标签": {"order": 0},
-                "金手指": {"order": 1},
-                "一句话梗概": {"order": 2},
-                "故事大纲": {"order": 3},
-                "世界观设定": {"order": 4},
-                "核心蓝图": {"order": 5},
+                "work_tags": {"order": 0},
+                "special_ability": {"order": 1},
+                "one_sentence": {"order": 2},
+                "story_outline": {"order": 3},
+                "world_building": {"order": 4},
+                "blueprint": {"order": 5},
             }
 
-            for card_type_name, setup in initial_cards_setup.items():
+            for card_type_key, setup in initial_cards_setup.items():
                 try:
-                    card_type = get_card_type_by_identifier(db, card_type_name)
+                    card_type = get_card_type_by_identifier(db, card_type_key)
                     if card_type:
                         # 创建卡片
                         new_card = Card(
-                            title=card_type_name,
+                            title=card_type.name,
                             content={},
                             project_id=project_id,
                         card_type_id=card_type.id,
