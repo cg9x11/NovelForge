@@ -13,6 +13,7 @@ const cdpPort = process.env.NOVELFORGE_E2E_PORT || '9222'
 const cdpUrl = `http://127.0.0.1:${cdpPort}`
 const command = process.argv[2] || 'smoke'
 const keepOpen = process.env.NOVELFORGE_E2E_KEEP_OPEN === '1'
+const e2eLocale = process.env.NOVELFORGE_E2E_LOCALE || 'en-US'
 const started = []
 
 function printHelp() {
@@ -120,6 +121,12 @@ async function connectPage() {
     return false
   }, 'app page', 30000)
   await page.waitForLoadState('domcontentloaded')
+  const activeLocale = await page.evaluate((locale) => {
+    const current = localStorage.getItem('app-locale')
+    if (current !== locale) localStorage.setItem('app-locale', locale)
+    return current
+  }, e2eLocale)
+  if (activeLocale !== e2eLocale) await page.reload({ waitUntil: 'domcontentloaded' })
   return { browser, page }
 }
 
@@ -206,24 +213,24 @@ async function smoke() {
   page.on('pageerror', (error) => log('pageerror', error.message))
   try {
     await page.setViewportSize({ width: 1280, height: 860 })
-    await expectAnyText(page, ['D? ?n', 'Project', '??', 'My Bookshelf'], 'dashboard text')
+    await expectAnyText(page, ['My Bookshelf', 'Project'], 'dashboard text')
     await saveSnapshot(page, '01-dashboard')
     await saveScreenshot(page, '01-dashboard')
 
-    const createLabels = ['T?o d? ?n', 'D? ?n m?i', 'New Project', 'Create Project', '????', '????']
+    const createLabels = ['New Project', 'Create Project']
     const createFound = await expectAnyText(page, createLabels, 'create project entry')
     await clickText(page, createFound.found)
-    await expectAnyText(page, ['M?u d? ?n', 'Project Template', 'T?o d? ?n - Ph??ng ph?p b?ng tuy?t', 'Snowflake', '????'], 'project dialog/template')
+    await expectAnyText(page, ['Project Template', 'Snowflake'], 'project dialog/template')
     await saveSnapshot(page, '02-create-project')
     await saveScreenshot(page, '02-create-project')
     await page.keyboard.press('Escape')
     await page.reload({ waitUntil: 'domcontentloaded' })
-    await expectAnyText(page, ['D? ?n', 'Project', '??', 'My Bookshelf'], 'dashboard after dialog')
+    await expectAnyText(page, ['My Bookshelf', 'Project'], 'dashboard after dialog')
 
     await page.getByRole('button', { name: 'Workflow' }).click()
     await waitFor(async () => (await snapshot(page)).text !== '', 'post-workflow click')
     await saveSnapshot(page, '03-workflow-before-assert')
-    await expectAnyText(page, ['Node', 'Nodes', '??', 'Logic', 'Delay', 'Tr? ho?n', 'Ch?n d? ?n', 'T?o th?', 'Select Project', 'Create Card'], 'workflow node library')
+    await expectAnyText(page, ['Node', 'Nodes', 'Logic', 'Delay', 'Select Project', 'Create Card'], 'workflow node library')
     const workflowState = await page.evaluate(() => {
       const library = document.querySelector('.node-library, [class*="node-library"], [class*="NodeLibrary"], .library-section') || document.querySelector('aside')
       const rect = library?.getBoundingClientRect()

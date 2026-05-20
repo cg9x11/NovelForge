@@ -11,6 +11,11 @@ import { useUpdateStore } from './stores/useUpdateStore'
 import { useWorkflowStore } from './stores/useWorkflowStore'
 import type { components } from '@renderer/types/generated'
 import { schemaService } from './api/schema'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import en from 'element-plus/es/locale/lang/en'
+import vi from 'element-plus/es/locale/lang/vi'
+import { useLocaleStore } from './stores/useLocaleStore'
+
 
 const IdeasHome = defineAsyncComponent(() => import('./views/IdeasHome.vue'))
 const CodeWorkflowEditor = defineAsyncComponent(() => import('./views/workflow/CodeWorkflowEditor.vue'))
@@ -22,6 +27,14 @@ const appStore = useAppStore()
 const projectStore = useProjectStore()
 const updateStore = useUpdateStore()
 const workflowStore = useWorkflowStore()
+
+const localeStore = useLocaleStore()
+
+const elementLocale = computed(() => {
+  if (localeStore.locale === 'en-US') return en
+  if (localeStore.locale === 'vi-VN') return vi
+  return zhCn
+})
 
 const { currentView, settingsDialogVisible } = storeToRefs(appStore)
 const { currentProject } = storeToRefs(projectStore)
@@ -95,6 +108,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <el-config-provider :locale="elementLocale">
   <div class="app-layout">
     <Header v-if="!isNoHeader" />
     <main class="main-content">
@@ -114,6 +128,7 @@ onBeforeUnmount(() => {
     />
     <WorkflowStatusBar />
   </div>
+  </el-config-provider>
 </template>
 
 <style scoped>

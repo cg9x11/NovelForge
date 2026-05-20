@@ -5,7 +5,7 @@
       <el-input v-model="searchQuery" :placeholder="t('node_library.searchPlaceholder')" clearable :prefix-icon="Search" size="small" />
     </div>
 
-    <div class="library-content" v-loading="loading">
+    <div class="library-content" v-loading="loading" :element-loading-text="t('common.loading')">
       <el-scrollbar>
         <el-collapse v-model="activeCategories">
           <el-collapse-item v-for="(nodes, category) in filteredNodesByCategory" :key="category" :name="category">

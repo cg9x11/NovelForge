@@ -22,7 +22,7 @@
       </el-select>
     </div>
 
-    <main class="dashboard-main" v-loading="isLoading">
+    <main class="dashboard-main" v-loading="isLoading" :element-loading-text="t('common.loading')">
       <el-empty v-if="displayProjects.length === 0" :description="t('dashboard.empty')">
         <el-button type="primary" :icon="Plus" @click="handleOpenCreateDialog">{{ t('dashboard.new_project') }}</el-button>
       </el-empty>
