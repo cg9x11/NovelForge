@@ -1,10 +1,24 @@
 import { app, shell, BrowserWindow, session, ipcMain } from 'electron'
 import { join } from 'path'
+import { mkdirSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import keytar from 'keytar'
 
 const KEYTAR_SERVICE_NAME = 'NovelForge-LLM'
+
+const E2E_DEBUG_PORT = process.env['NOVELFORGE_E2E_PORT'] || '9222'
+
+if (process.env['NOVELFORGE_E2E'] === '1') {
+  const e2eUserData = process.env['NOVELFORGE_E2E_USER_DATA'] || join(process.cwd(), '..', 'artifacts', 'e2e', 'electron-user-data')
+  mkdirSync(e2eUserData, { recursive: true })
+  app.setPath('userData', e2eUserData)
+  app.commandLine.appendSwitch('remote-debugging-port', E2E_DEBUG_PORT)
+  app.commandLine.appendSwitch('remote-allow-origins', `http://127.0.0.1:${E2E_DEBUG_PORT}`)
+  app.commandLine.appendSwitch('disable-gpu')
+  app.commandLine.appendSwitch('disable-software-rasterizer')
+  app.commandLine.appendSwitch('no-sandbox')
+}
 
 const studioWindows = new Map<string, BrowserWindow>()
 

@@ -67,3 +67,5 @@ backend/build
 
 # Node modules
 node_modules/
+# E2E artifacts
+artifacts/e2e/
