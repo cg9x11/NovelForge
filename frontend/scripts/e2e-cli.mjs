@@ -25,6 +25,7 @@ Usage:
   node scripts/e2e-cli.mjs screenshot [name]
   node scripts/e2e-cli.mjs click <visible text>
   node scripts/e2e-cli.mjs wait-text <visible text>
+  node scripts/e2e-cli.mjs assert-no-cjk [label]
 
 Env:
   NOVELFORGE_E2E_PORT=9222
@@ -203,6 +204,17 @@ async function expectAnyText(page, texts, label) {
   }, label, 20000)
 }
 
+function findCjk(text) {
+  return [...new Set(text.match(/[\u4e00-\u9fff]+/g) || [])]
+}
+
+async function assertNoCjk(page, label) {
+  const data = await snapshot(page)
+  const cjk = findCjk(data.text)
+  if (cjk.length) throw new Error(`${label} contains CJK text: ${cjk.slice(0, 20).join(', ')}`)
+  return data
+}
+
 async function smoke() {
   await ensureBackend()
   await ensureFrontend()
@@ -245,6 +257,24 @@ async function smoke() {
     log('workflow state', workflowState)
     await saveSnapshot(page, '03-workflow')
     await saveScreenshot(page, '03-workflow')
+    await assertNoCjk(page, 'workflow')
+
+    await page.getByRole('button', { name: 'Back' }).click()
+    await expectAnyText(page, ['My Bookshelf', 'Project'], 'dashboard before settings')
+    await page.locator('button[title="Settings"]').click()
+    await expectAnyText(page, ['Settings', 'LLM', 'Knowledge', 'Prompt', 'About'], 'settings dialog')
+    await saveSnapshot(page, '04-settings')
+    await saveScreenshot(page, '04-settings')
+    await assertNoCjk(page, 'settings')
+    await page.keyboard.press('Escape')
+
+    await page.getByRole('button', { name: 'Ideas' }).click()
+    await expectAnyText(page, ['Back', 'Transfer', 'Ideas', 'Card'], 'ideas home')
+    await saveSnapshot(page, '05-ideas')
+    await saveScreenshot(page, '05-ideas')
+    await assertNoCjk(page, 'ideas')
+    await page.getByRole('button', { name: 'Back' }).first().click()
+    await expectAnyText(page, ['My Bookshelf', 'Project'], 'dashboard after ideas')
 
     await page.evaluate(async (base) => {
       const response = await fetch(`${base}/api/llm-configs/test`, {
@@ -271,6 +301,7 @@ async function runCommand() {
     else if (command === 'screenshot') await saveScreenshot(page, process.argv[3] || 'manual-screenshot')
     else if (command === 'click') await clickText(page, process.argv.slice(3).join(' '))
     else if (command === 'wait-text') await waitForText(page, process.argv.slice(3).join(' '))
+    else if (command === 'assert-no-cjk') await assertNoCjk(page, process.argv.slice(3).join(' ') || 'manual')
     else throw new Error(`Unknown command: ${command}`)
   } finally {
     if (!keepOpen) await browser.close()
