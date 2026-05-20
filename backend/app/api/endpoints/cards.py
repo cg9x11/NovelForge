@@ -6,7 +6,7 @@ from urllib.parse import quote
 from app.db.session import get_session
 from app.services.card_service import CardService, CardTypeService
 from app.services.card_export_service import CardExportService
-from app.services.schema_service import compose_schema_with_card_types, localize_schema_titles
+from app.services.schema_service import compose_schema_with_card_types, localize_schema_titles, sanitize_schema_display_text
 from app.services.card_params_service import merge_effective_ai_params
 from app.schemas.card import (
     CardRead, CardCreate, CardUpdate,
@@ -51,7 +51,7 @@ def create_card_type(card_type: CardTypeCreate, db: Session = Depends(get_sessio
     except BusinessException as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
     data = created.model_dump()
-    data["json_schema"] = localize_schema_titles(data.get("json_schema"))
+    data["json_schema"] = sanitize_schema_display_text(localize_schema_titles(data.get("json_schema")))
     return data
 
 @router.get("/card-types", response_model=List[CardTypeRead])
@@ -60,7 +60,7 @@ def get_all_card_types(db: Session = Depends(get_session)):
     result = []
     for card_type in service.get_all():
         data = card_type.model_dump()
-        data["json_schema"] = localize_schema_titles(data.get("json_schema"))
+        data["json_schema"] = sanitize_schema_display_text(localize_schema_titles(data.get("json_schema")))
         result.append(data)
     return result
 
@@ -71,7 +71,7 @@ def get_card_type(card_type_id: int, db: Session = Depends(get_session)):
     if db_card_type is None:
         raise HTTPException(status_code=404, detail="CardType not found")
     data = db_card_type.model_dump()
-    data["json_schema"] = localize_schema_titles(data.get("json_schema"))
+    data["json_schema"] = sanitize_schema_display_text(localize_schema_titles(data.get("json_schema")))
     return data
 
 @router.put("/card-types/{card_type_id}", response_model=CardTypeRead)
@@ -84,7 +84,7 @@ def update_card_type(card_type_id: int, card_type: CardTypeUpdate, db: Session =
     if db_card_type is None:
         raise HTTPException(status_code=404, detail="CardType not found")
     data = db_card_type.model_dump()
-    data["json_schema"] = localize_schema_titles(data.get("json_schema"))
+    data["json_schema"] = sanitize_schema_display_text(localize_schema_titles(data.get("json_schema")))
     return data
 
 @router.delete("/card-types/{card_type_id}", status_code=204)
@@ -106,7 +106,7 @@ def get_card_type_schema(card_type_id: int, db: Session = Depends(get_session)) 
     ct = db.get(CardType, card_type_id)
     if not ct:
         raise HTTPException(status_code=404, detail="CardType not found")
-    localized_schema = localize_schema_titles(ct.json_schema) if isinstance(ct.json_schema, dict) else ct.json_schema
+    localized_schema = sanitize_schema_display_text(localize_schema_titles(ct.json_schema)) if isinstance(ct.json_schema, dict) else ct.json_schema
     return {"json_schema": localized_schema}
 
 @router.put("/card-types/{card_type_id}/schema")
@@ -118,7 +118,7 @@ def update_card_type_schema(card_type_id: int, payload: Dict[str, Any], db: Sess
     db.add(ct)
     db.commit()
     db.refresh(ct)
-    localized_schema = localize_schema_titles(ct.json_schema) if isinstance(ct.json_schema, dict) else ct.json_schema
+    localized_schema = sanitize_schema_display_text(localize_schema_titles(ct.json_schema)) if isinstance(ct.json_schema, dict) else ct.json_schema
     return {"json_schema": localized_schema}
 
 # --- CardType AI Params Endpoints ---

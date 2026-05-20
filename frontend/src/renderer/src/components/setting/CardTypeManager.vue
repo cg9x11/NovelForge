@@ -112,6 +112,12 @@ const cardStore = useCardStore()
 const { t } = useI18n()
 const localeStore = useLocaleStore()
 const tr = (value?: string | null) => translateText(String(value || ''), localeStore.locale)
+const cjkRe = /[\u4e00-\u9fff]/
+const originalDefaultContextTemplate = ref<string | null>(null)
+function cleanEditableText(value?: string | null): string {
+  const text = String(value || '')
+  return cjkRe.test(text) ? '' : text
+}
 
 const loading = ref(false)
 const types = ref<CardTypeRead[]>([])
@@ -136,7 +142,8 @@ const prompts = ref<any[]>([])
 
 function openEditor(row?: CardTypeRead) {
   drawer.value = { visible: true, editing: !!row, id: row?.id || 0 }
-  form.value = row ? { ...row } : { key: '', name: '', description: '', is_ai_enabled: true, is_singleton: false, default_ai_context_template: '' }
+  form.value = row ? { ...row, default_ai_context_template: cleanEditableText((row as any).default_ai_context_template) } : { key: '', name: '', description: '', is_ai_enabled: true, is_singleton: false, default_ai_context_template: '' }
+  originalDefaultContextTemplate.value = row ? String((row as any).default_ai_context_template || '') : null
   uiLayoutText.value = row?.ui_layout ? JSON.stringify(row.ui_layout, null, 2) : ''
   aiParams.value = (row as any)?.ai_params ? { ...defaultAIParams, ...(row as any).ai_params } : { ...defaultAIParams }
   // 首次打开加载可选项
@@ -161,6 +168,9 @@ async function saveType(): Promise<void> {
   let ui_layout: any = undefined
   try { ui_layout = uiLayoutText.value ? JSON.parse(uiLayoutText.value) : undefined } catch { ElMessage.error(t('card_type_manager.messages.invalidUiLayoutJson')); return }
   const payload: Partial<CardTypeCreate & CardTypeUpdate> = { ...form.value, ui_layout } as any
+  if (drawer.value.editing && !form.value.default_ai_context_template && originalDefaultContextTemplate.value) {
+    ;(payload as any).default_ai_context_template = originalDefaultContextTemplate.value
+  }
   ;(payload as any).ai_params = form.value.is_ai_enabled ? aiParams.value : null
   try {
     if (drawer.value.editing) {

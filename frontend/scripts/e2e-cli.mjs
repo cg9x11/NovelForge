@@ -346,6 +346,7 @@ const smokeText = {
   ideasButton: e2eLocale === 'vi-VN' ? '\u00dd t\u01b0\u1edfng' : 'Ideas',
   ideas: e2eLocale === 'vi-VN' ? ['Quay lai', 'Chuyen', 'the'] : ['Back', 'Transfer', 'Ideas', 'Card'],
   editStructure: e2eLocale === 'vi-VN' ? 'Sua cau truc' : 'Edit Structure',
+  edit: e2eLocale === 'vi-VN' ? 'Sua' : 'Edit',
   editSchema: e2eLocale === 'vi-VN' ? 'Sua cau truc' : 'Edit schema',
   schemaStudio: e2eLocale === 'vi-VN' ? ['Trinh dung schema', 'Xem truoc bieu mau', 'JSON schema'] : ['Schema Builder', 'Form Preview', 'Schema JSON']
 }
@@ -423,6 +424,14 @@ async function auditSettingsTabs(page) {
     await saveSnapshot(page, `04-settings-${tab.name}`)
     await assertNoCjk(page, `settings tab ${tab.name}`)
     if (tab.name === 'card-types') {
+      const openedEdit = await clickNormalizedText(page, smokeText.edit, 'button,[role="button"],.el-button', { optional: true })
+      if (!openedEdit) throw new Error(`Edit button not found for settings tab ${tab.name}: ${smokeText.edit}`)
+      await page.locator('.el-dialog:visible').last().waitFor({ state: 'visible', timeout: 10000 })
+      await saveSnapshot(page, `04-settings-${tab.name}-edit`)
+      await assertNoCjk(page, `settings tab ${tab.name} edit dialog`)
+      await page.keyboard.press('Escape')
+      await waitFor(async () => await page.locator('.el-dialog:visible').count() <= 1, `settings tab ${tab.name} edit dialog closed`, 10000).catch(() => {})
+
       const openedSchema = await clickNormalizedText(page, smokeText.editSchema, 'button,[role="button"],.el-button', { optional: true })
       if (!openedSchema) throw new Error(`Schema editor button not found for settings tab ${tab.name}: ${smokeText.editSchema}`)
       await page.locator('.el-dialog:visible').last().waitFor({ state: 'visible', timeout: 10000 })

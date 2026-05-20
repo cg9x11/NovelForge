@@ -150,6 +150,38 @@ def localize_schema_titles(schema: Any) -> Any:
     visit(schema)
     return schema
 
+
+def sanitize_schema_display_text(schema: Any) -> Any:
+    """Remove untranslated CJK display-only strings from schema copies."""
+    if not isinstance(schema, (dict, list)):
+        return schema
+
+    display_keys = {"title", "description", "default", "example"}
+
+    def visit(node: Any) -> Any:
+        if isinstance(node, list):
+            cleaned = [visit(item) for item in node]
+            return [item for item in cleaned if item is not None]
+        if isinstance(node, dict):
+            out: Dict[str, Any] = {}
+            for key, value in node.items():
+                if key == "examples" and isinstance(value, list):
+                    cleaned_examples = [visit(item) for item in value]
+                    cleaned_examples = [item for item in cleaned_examples if item is not None]
+                    if cleaned_examples:
+                        out[key] = cleaned_examples
+                    continue
+                if key in display_keys and isinstance(value, str) and _contains_cjk(value):
+                    continue
+                out[key] = visit(value)
+            return out
+        if isinstance(node, str) and _contains_cjk(node):
+            return None
+        return node
+
+    return visit(deepcopy(schema))
+
+
 def collect_ref_names(node: Any) -> Set[str]:
     """递归收集 Schema 中的所有 $ref 引用名称
     
