@@ -13,7 +13,7 @@
     "typecheck:web": "vue-tsc --NoEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
-    "dev": "electron-vite dev",
+    "dev": "npm run clean:dev && electron-vite dev --outDir out-dev",
     "dev:web": "cross-env VITE_APP_PLATFORM=web vite dev -c vite.config.web.ts",
     "clean": "node -e \"const fs = require('fs'); ['out', 'dist'].forEach(dir => fs.existsSync(dir) && fs.rmSync(dir, { recursive: true, force: true }))\"",
     "build": "npm run clean && npm run typecheck && electron-vite build",
@@ -30,7 +30,8 @@
     "gen:types": "openapi-typescript http://127.0.0.1:54321/openapi.json -o src/renderer/src/types/generated.d.ts",
     "e2e:smoke": "node scripts/e2e-cli.mjs smoke",
     "e2e:snapshot": "node scripts/e2e-cli.mjs snapshot",
-    "e2e:screenshot": "node scripts/e2e-cli.mjs screenshot"
+    "e2e:screenshot": "node scripts/e2e-cli.mjs screenshot",
+    "clean:dev": "node -e \"const fs = require('fs'); const dir = 'out-dev'; fs.existsSync(dir) && fs.rmSync(dir, { recursive: true, force: true })\""
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.18.6",
