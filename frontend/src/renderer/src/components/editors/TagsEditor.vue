@@ -304,7 +304,7 @@ function parseKnowledge(text: string) {
   const persons: string[] = []
 
   for (const raw of lines) {
-    const m = raw.match(/^(\s*)[-*+]\s*(.+)$/)
+    const m = raw.match(/^(\s*)-\s*(.+)$/)
     if (!m) continue
     const indent = m[1].length
     const content = m[2].trim()
