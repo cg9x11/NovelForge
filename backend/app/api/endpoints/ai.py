@@ -314,12 +314,7 @@ async def generate_with_instruction_stream(
                 f"provider={getattr(llm_config, 'provider', None)} "
                 f"model={getattr(llm_config, 'model_name', None)} "
                 f"api_protocol={getattr(llm_config, 'api_protocol', None)} "
-                f"api_base={getattr(llm_config, 'api_base', None) or getattr(llm_config, 'base_url', None)} "
-                f"prompt_template={request.prompt_template} "
-                f"schema_keys={list((full_schema.get('properties') or {}).keys())} "
-                f"current_data_keys={list((request.current_data or {}).keys())} "
-                f"context_length={len(request.context_info or '')} "
-                f"user_prompt_length={len(request.user_prompt or '')}"
+                f"prompt_template={request.prompt_template}"
             )
 
             async for event in generate_instruction_stream(
