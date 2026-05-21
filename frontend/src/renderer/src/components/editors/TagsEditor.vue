@@ -285,6 +285,14 @@ function detectSection(content: string): 'none' | 'theme' | 'audience' | 'person
   return 'none'
 }
 
+function normalizeKnowledgeBullets(text: string): string {
+  return (text || '').split(/\r?\n/).map(line => {
+    const trimmed = line.trimStart()
+    if (!trimmed.startsWith('* ')) return line
+    return `${line.slice(0, line.length - trimmed.length)}- ${trimmed.slice(2)}`
+  }).join('\n')
+}
+
 function parseKnowledge(text: string) {
   const rawLines = (text || '').split(/\r?\n/)
   const lines: string[] = []
@@ -370,7 +378,7 @@ onMounted(async () => {
   try {
     const list = await listKnowledge()
     const kb = (list || []).find(k => k && (k.key === 'work_tags' || k.name === t('tags_editor.title_plain')))
-    if (kb && kb.content) parseKnowledge(kb.content)
+    if (kb && kb.content) parseKnowledge(normalizeKnowledgeBullets(kb.content))
   } catch {}
 })
 </script>
