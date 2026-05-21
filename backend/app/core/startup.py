@@ -1,8 +1,4 @@
-"""应用启动初始化
-
-统一的启动初始化流程。
-"""
-
+from app.locales import localized_text
 from loguru import logger
 from sqlalchemy import UniqueConstraint, inspect, text
 from sqlalchemy.schema import CreateColumn
@@ -17,17 +13,11 @@ from app.services.builtin_key_registry import PROMPT_NAME_TO_KEY, CARD_TYPE_NAME
 
 
 def init_database():
-    """初始化数据库表结构
-
-    开发阶段可用；生产环境建议通过 Alembic 迁移。
-    """
-    logger.info("[启动] 初始化数据库表结构...")
+    logger.info("[Startup] Initializing database schema...")
     SQLModel.metadata.create_all(engine)
-    # 对已有数据库执行轻量补齐：自动发现模型新增的安全追加列并补齐。
-    # 仅处理“加列”场景；复杂变更仍建议使用 Alembic 迁移。
     _ensure_safe_additive_columns()
     _backfill_builtin_keys()
-    logger.info("[启动] 数据库表结构初始化完成")
+    logger.info("[Startup] Database schema initialized")
 
 
 def _column_has_table_level_unique_constraint(column) -> bool:
@@ -39,7 +29,6 @@ def _column_has_table_level_unique_constraint(column) -> bool:
 
 
 def _can_auto_add_column(column) -> tuple[bool, str]:
-    """检查列是否适合自动补齐（仅处理安全的追加场景）。"""
     if column.primary_key:
         return False, "primary key"
     if column.unique or _column_has_table_level_unique_constraint(column):
@@ -54,15 +43,6 @@ def _can_auto_add_column(column) -> tuple[bool, str]:
 
 
 def _ensure_safe_additive_columns():
-    """自动发现模型与现有表结构差异，并补齐可安全追加的缺失列。
-
-    职责边界：
-    - 处理已存在数据表上的“新增列”场景
-    - 仅补齐安全追加的列
-    - 不处理删列、改列类型、改约束、索引补建、数据回填等复杂迁移
-
-    新表的创建仍由 `SQLModel.metadata.create_all(engine)` 负责。
-    """
     added_columns: list[str] = []
     skipped_columns: list[str] = []
 
@@ -78,7 +58,7 @@ def _ensure_safe_additive_columns():
             try:
                 db_columns = {item["name"] for item in inspector.get_columns(table.name)}
             except Exception:
-                logger.exception(f"[启动] 读取现有表结构失败: {table.name}")
+                logger.exception(f"[Startup] Failed to inspect table schema: {table.name}")
                 continue
 
             missing_columns = [column for column in table.columns if column.name not in db_columns]
@@ -98,15 +78,15 @@ def _ensure_safe_additive_columns():
                     added_columns.append(display_name)
                 except Exception as exc:
                     skipped_columns.append(f"{display_name} (add failed: {exc})")
-                    logger.exception(f"[启动] 自动补齐列失败: {display_name}")
+                    logger.exception(f"[Startup] Failed to add missing column: {display_name}")
 
     if added_columns:
-        logger.info(f"[启动] 已自动补齐缺失列: {', '.join(added_columns)}")
+        logger.info(f"[Startup] Added missing columns: {', '.join(added_columns)}")
     else:
-        logger.info("[启动] 表结构检查完成，无需补齐缺失列")
+        logger.info("[Startup] Schema check complete, no missing columns")
 
     if skipped_columns:
-        logger.warning(f"[启动] 检测到不安全或失败列，已跳过自动补齐: {', '.join(skipped_columns)}")
+        logger.warning(f"[Startup] Skipped unsafe or failed columns: {', '.join(skipped_columns)}")
 
 
 def _backfill_builtin_keys():
@@ -127,14 +107,14 @@ def _backfill_builtin_keys():
                     updated.append(f"{model.__name__}:{name}->{desired}")
         if updated:
             session.commit()
-            logger.info(f"[??] ?????key: {', '.join(updated[:20])}{' ...' if len(updated) > 20 else ''}")
+            logger.info(f"[Startup] Backfilled builtin keys: {', '.join(updated[:20])}{' ...' if len(updated) > 20 else ''}")
         else:
-            logger.info("[??] ??key?????????")
+            logger.info("[Startup] Builtin keys already up to date")
 
 
 
 def _has_cjk(value: str | None) -> bool:
-    return any("\u4e00" <= ch <= "\u9fff" for ch in (value or ""))
+    return any(localized_text('hardcoded.core_startup_d274eee8') <= ch <= localized_text('hardcoded.core_startup_5e62e292') for ch in (value or ""))
 
 
 def _choose_key_keeper(rows):
@@ -190,111 +170,76 @@ def _dedupe_builtin_keys():
 
         if removed:
             session.commit()
-            logger.info(f"[??] ??????? key: {', '.join(removed[:30])}{' ...' if len(removed) > 30 else ''}")
+            logger.info(f"[Startup] Removed duplicate builtin key rows: {', '.join(removed[:30])}{' ...' if len(removed) > 30 else ''}")
         else:
-            logger.info("[??] ?? key ?????")
+            logger.info("[Startup] No duplicate builtin key rows")
 
 def init_application_data():
-    """初始化应用数据
-
-    自动发现并执行所有已注册的初始化器。
-    初始化器通过 @initializer 装饰器注册，按 order 顺序执行。
-    """
-    logger.info("[启动] 初始化应用数据...")
+    logger.info("[Startup] Initializing application data...")
     with Session(engine) as session:
-        # 自动发现并执行所有初始化器
         discover_and_run_initializers(session)
-    logger.info("[启动] 应用数据初始化完成")
+    logger.info("[Startup] Application data initialized")
 
 
 def register_event_handlers():
-    """注册事件处理器
-
-    自动发现并导入所有事件处理器模块以触发 @on_event 装饰器。
-    """
-    logger.info("[启动] 注册事件处理器...")
-    # 导入事件处理器模块以触发装饰器注册
+    logger.info("[Startup] Registering event handlers...")
     import app.services  # noqa: F401
 
     discover_event_handlers()
-    logger.info("[启动] 事件处理器注册完成")
+    logger.info("[Startup] Event handlers registered")
 
 
 def register_workflow_nodes():
-    """注册工作流节点
-
-    自动发现并导入所有工作流节点模块以触发 @register_node 装饰器。
-    """
-    logger.info("[启动] 注册工作流节点...")
+    logger.info("[Startup] Registering workflow nodes...")
     discover_workflow_nodes()
-    logger.info("[启动] 工作流节点注册完成")
+    logger.info("[Startup] Workflow nodes registered")
 
 
 def cleanup_zombie_runs():
-    """清理死机运行
-
-    将所有状态为 "running" 的运行标记为 "failed"。
-    这些运行可能是因为服务器崩溃或重启而中断的。
-    """
-    logger.info("[启动] 清理死机运行...")
+    logger.info("[Startup] Cleaning zombie workflow runs...")
 
     from sqlmodel import select
 
     from app.db.models import WorkflowRun
 
     with Session(engine) as session:
-        # 查找所有运行中的任务
         stmt = select(WorkflowRun).where(WorkflowRun.status == "running")
         zombie_runs = session.exec(stmt).all()
 
         if zombie_runs:
-            logger.warning(f"[启动] 发现 {len(zombie_runs)} 个死机工作流运行，正在清理...")
+            logger.warning(f"[Startup] Found {len(zombie_runs)} zombie workflow runs, cleaning...")
             for run in zombie_runs:
                 run.status = "failed"
                 if not run.error_json:
-                    run.error_json = {"error": "服务器重启，运行中断"}
+                    run.error_json = {"error": "Server restarted; run interrupted"}
                 session.add(run)
-                logger.info(f"[启动] 清理死机运行: run_id={run.id}, workflow_id={run.workflow_id}")
+                logger.info(f"[Startup] Cleaning zombie run: run_id={run.id}, workflow_id={run.workflow_id}")
             session.commit()
-            logger.info(f"[启动] 已清理 {len(zombie_runs)} 个死机工作流运行")
+            logger.info(f"[Startup] Cleaned {len(zombie_runs)} zombie workflow runs")
         else:
-            logger.info("[启动] 没有发现死机工作流运行")
+            logger.info("[Startup] No zombie workflow runs found")
 
-    logger.info("[启动] 死机工作流运行清理完成")
+    logger.info("[Startup] Zombie workflow run cleanup complete")
 
 
 def startup():
-    """应用启动入口
-
-    执行所有启动初始化任务。
-    """
     logger.info("=" * 50)
-    logger.info("NovelForge 后端启动中...")
+    logger.info("NovelForge backend starting...")
     logger.info("=" * 50)
 
-    # 1. 初始化数据库
     init_database()
-    # 2. 初始化应用数据
     init_application_data()
     _backfill_builtin_keys()
     _dedupe_builtin_keys()
-    # 3. 注册事件处理器
     register_event_handlers()
-    # 4. 注册工作流节点
     register_workflow_nodes()
-    # 5. 清理死机运行
     cleanup_zombie_runs()
 
     logger.info("=" * 50)
-    logger.info("NovelForge 后端启动完成！")
+    logger.info("NovelForge backend started")
     logger.info("=" * 50)
 
 
 def shutdown():
-    """应用关闭清理
-
-    执行关闭时的清理任务（如有需要）。
-    """
-    logger.info("NovelForge 后端正在关闭...")
-    # 可以在这里添加清理逻辑
-    logger.info("NovelForge 后端已关闭")
+    logger.info("NovelForge backend shutting down...")
+    logger.info("NovelForge backend stopped")

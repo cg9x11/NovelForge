@@ -1,4 +1,5 @@
-﻿from __future__ import annotations
+from __future__ import annotations
+from app.locales import localized_text
 
 import json
 from datetime import datetime
@@ -10,7 +11,7 @@ from sqlmodel import Session, select
 from app.schemas.relation_extract import EN_TO_CN_KIND
 
 
-DEFAULT_KIND_CN = "其他"
+DEFAULT_KIND_CN = localized_text('hardcoded.services_kg_provider_1a26edf9')
 
 
 class KnowledgeGraphUnavailableError(RuntimeError):

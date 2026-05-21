@@ -12,7 +12,6 @@ type ProjectUpdate = components['schemas']['ProjectUpdate']
 const t = i18n.global.t
 
 export const useProjectListStore = defineStore('projectList', () => {
-  // 项目列表
   const projects = ref<Project[]>([])
   const isLoading = ref(false)
 
@@ -23,7 +22,6 @@ export const useProjectListStore = defineStore('projectList', () => {
       const list = await getProjects()
       projects.value = (list || []).filter(p => (p.name || '') !== '__free__')
     } catch (error) {
-      console.error('获取项目列表失败:', error)
       ElMessage.error(t('project_list.messages.fetchFailed'))
       throw error
     } finally {
@@ -56,7 +54,6 @@ export const useProjectListStore = defineStore('projectList', () => {
 
   async function deleteProject(projectId: number) {
     try {
-      // 额外前端保护：阻止删除保留项目
       const proj = projects.value.find(p => p.id === projectId)
       if (proj && (proj.name || '') === '__free__') {
         ElMessage.warning(t('project_list.messages.reservedCannotDelete'))
@@ -80,7 +77,7 @@ export const useProjectListStore = defineStore('projectList', () => {
     // State
     projects,
     isLoading,
-    
+
     // Actions
     fetchProjects,
     createProject,
@@ -88,4 +85,4 @@ export const useProjectListStore = defineStore('projectList', () => {
     deleteProject,
     reset
   }
-}) 
+})

@@ -49,4 +49,4 @@ defineProps<{
   padding: 8px;
   border-radius: 4px;
 }
-</style> 
+</style>

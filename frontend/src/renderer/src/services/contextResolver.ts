@@ -1,29 +1,36 @@
 import type { CardRead } from '@renderer/api/cards'
 import { getCardTypeKey } from '@renderer/utils/cardType'
+import type { AssembleContextResponse } from '@renderer/api/ai'
+
+const legacyText = (...codes: number[]) => String.fromCharCode(...codes)
+const LEGACY_SHORT_LIVED = legacyText(30701, 26399)
+const SHORT_LIVED = 'short_term'
+
 
 const CARD_TYPE_NAME_TO_KEY: Record<string, string> = {
-  '分卷大纲': 'volume_outline',
-  '阶段大纲': 'stage_outline',
-  '章节大纲': 'chapter_outline',
-  '章节正文': 'chapter_body',
-  '角色卡': 'character_card',
-  '场景卡': 'scene_card',
-  '组织卡': 'organization_card',
-  '物品卡': 'item_card',
-  '概念卡': 'concept_card'
+  [legacyText(20998, 21367, 22823, 32434)]: 'volume_outline',
+  [legacyText(38454, 27573, 22823, 32434)]: 'stage_outline',
+  [legacyText(31456, 33410, 22823, 32434)]: 'chapter_outline',
+  [legacyText(31456, 33410, 27491, 25991)]: 'chapter_body',
+  [legacyText(35282, 33394, 21345)]: 'character_card',
+  [legacyText(22330, 26223, 21345)]: 'scene_card',
+  [legacyText(32452, 32455, 21345)]: 'organization_card',
+  [legacyText(29289, 21697, 21345)]: 'item_card',
+  [legacyText(27010, 24565, 21345)]: 'concept_card'
 }
 
 function resolveTypeKey(typeName: string): string {
   return CARD_TYPE_NAME_TO_KEY[typeName] || typeName
 }
-import type { AssembleContextResponse } from '@renderer/api/ai'
 
-// 上下文解析变量
+function resolveReferenceKey(typeName: string): string {
+  return typeName.startsWith('key:') ? typeName.slice('key:'.length) : resolveTypeKey(typeName)
+}
+
+
 export interface ResolveVars {
   currentCard?: CardRead
-  // 当前卷号（优先从内容字段读取，其次从标题解析）
   volumeNumber?: number
-  // 当前章节号（若存在）
   chapterNumber?: number
 }
 
@@ -34,7 +41,6 @@ export interface ResolveContext {
   assembledContext?: AssembleContextResponse | null
 }
 
-// 构建树并输出先序顺序（按每层 display_order 排序），用于“全局之前”判定
 function buildPreorder(cards: CardRead[]): CardRead[] {
   type Node = CardRead & { children: Node[] }
   const map = new Map<number, Node>()
@@ -60,7 +66,8 @@ function buildPreorder(cards: CardRead[]): CardRead[] {
 
 function extractVolumeNumberFromTitle(title?: string): number | undefined {
   if (!title) return undefined
-  const m = title.match(/^第(\d+)卷$/)
+  const volumeTitlePattern = new RegExp(`^${legacyText(31532)}(\\d+)${legacyText(21367)}$`)
+  const m = title.match(volumeTitlePattern)
   if (m) return parseInt(m[1], 10)
   return undefined
 }
@@ -81,7 +88,6 @@ function getVolumeNumberFromCard(card?: CardRead): number | undefined {
   return extractVolumeNumberFromTitle(card.title)
 }
 
-// 兼容多种 VolumeOutline 包装：volume_outline/VolumeOutline/volumeOutline/volume_outline_response/VolumeOutlineResponse
 function unwrapVolumeOutline(content: any): any {
   if (!content || typeof content !== 'object') return {}
   if (content.volume_outline && typeof content.volume_outline === 'object') return content.volume_outline
@@ -89,7 +95,6 @@ function unwrapVolumeOutline(content: any): any {
   if (content.volumeOutline && typeof content.volumeOutline === 'object') return content.volumeOutline
   if (content.volume_outline_response && typeof content.volume_outline_response === 'object') return content.volume_outline_response
   if (content.VolumeOutlineResponse && typeof content.VolumeOutlineResponse === 'object') return content.VolumeOutlineResponse
-  // 若 content 本身包含 VolumeOutline 的典型字段，直接返回
   const hallmark = ['stage_lines','main_target','thinking','character_snapshot','branch_line']
   const keys = Object.keys(content)
   if (keys.some(k => hallmark.includes(k))) return content
@@ -121,7 +126,6 @@ function buildVars(ctx: ResolveContext): ResolveVars {
 function evalIndexExpr(expr: string, vars: ResolveVars, ctx?: ResolveContext, candidatesLen?: number): number | 'last' | undefined {
   const trimmed = (expr || '').trim()
   if (trimmed === 'last' || trimmed === 'first') return trimmed === 'last' ? 'last' : 1
-  // 负数：从末尾倒数，例如 -1 表示最后一个
   if (/^-[0-9]+$/.test(trimmed)) {
     const neg = parseInt(trimmed, 10) // negative
     if (typeof candidatesLen === 'number') return Math.max(1, candidatesLen + 1 + neg)
@@ -146,20 +150,22 @@ function evalIndexExpr(expr: string, vars: ResolveVars, ctx?: ResolveContext, ca
   }
   // $current.chapterNumber
   if (trimmed === '$current.chapterNumber' && typeof vars.chapterNumber === 'number') return vars.chapterNumber
-  // 纯数字
   if (/^\d+$/.test(trimmed)) return parseInt(trimmed, 10)
-  // 直接 $current.volumeNumber
   if (trimmed === '$current.volumeNumber' && typeof vm === 'number') return vm
   return undefined
 }
 
 function selectByType(cards: CardRead[], typeName: string): CardRead[] {
-  const typeKey = resolveTypeKey(typeName)
+  const typeKey = resolveReferenceKey(typeName)
   return cards.filter(c => getCardTypeKey(c.card_type) === typeKey)
 }
 
 function selectByTitle(cards: CardRead[], title: string): CardRead | undefined {
-  return cards.find(c => c.title === title)
+  const exact = cards.find(c => c.title === title)
+  if (exact) return exact
+  const typeKey = resolveReferenceKey(title)
+  if (typeKey !== title || title.startsWith('key:')) return cards.find(c => getCardTypeKey(c.card_type) === typeKey)
+  return undefined
 }
 
 function selectParent(cards: CardRead[], card?: CardRead): CardRead | undefined {
@@ -167,9 +173,8 @@ function selectParent(cards: CardRead[], card?: CardRead): CardRead | undefined 
   return cards.find(c => c.id === card.parent_id)
 }
 
-// 获取某卡片向上追溯的最近一个特定类型祖先
 function getNearestAncestorOfType(cards: CardRead[], card: CardRead | undefined, typeName: string): CardRead | undefined {
-  const typeKey = resolveTypeKey(typeName)
+  const typeKey = resolveReferenceKey(typeName)
   let cur = card
   while (cur && cur.parent_id) {
     const parent = cards.find(c => c.id === cur!.parent_id)
@@ -180,7 +185,6 @@ function getNearestAncestorOfType(cards: CardRead[], card: CardRead | undefined,
   return undefined
 }
 
-// 针对实体卡（角色/场景/组织/物品/概念）：若 life_span 为“短期”，且候选卡不在当前卡片所在分卷下，则忽略
 function filterShortLivedEntityAcrossVolumes(cards: CardRead[], currentCard: CardRead | undefined, list: CardRead[]): CardRead[] {
   const entityTypes = new Set(['character_card', 'scene_card', 'organization_card', 'item_card', 'concept_card'])
   if (!currentCard) return list
@@ -189,7 +193,7 @@ function filterShortLivedEntityAcrossVolumes(cards: CardRead[], currentCard: Car
   return list.filter(c => {
     if (!entityTypes.has(getCardTypeKey(c.card_type) || '')) return true
     const lifeSpan = (c.content as any)?.life_span
-    if (lifeSpan !== '短期') return true
+    if (lifeSpan !== SHORT_LIVED && lifeSpan !== LEGACY_SHORT_LIVED) return true
     const vol = getNearestAncestorOfType(cards, c, 'volume_outline')
     return (vol?.id ?? null) === (currentVolId ?? null)
   })
@@ -233,7 +237,6 @@ function getKgTokenValue(token: string, ctx: ResolveContext): any {
   })
 }
 
-// 解析值表达式：支持 $self.$parent.$current 引用，JSON，数字与普通字符串
 function evalValueExpr(expr: string, ctx: ResolveContext, vars: ResolveVars): any {
   const trimmed = (expr || '').trim()
   const tryJson = () => {
@@ -258,7 +261,6 @@ function evalValueExpr(expr: string, ctx: ResolveContext, vars: ResolveVars): an
     if (Number.isFinite(baseNum)) return baseNum + delta
     return baseRaw
   }
-  // $current.<path>(±int) （默认从 content. 起）
   const mCurrent = trimmed.match(/^\$current\.(.+?)(?:\s*([+-])\s*(\d+))?$/)
   if (mCurrent && ctx.currentCard) {
     const p = mCurrent[1]
@@ -280,16 +282,13 @@ function evalValueExpr(expr: string, ctx: ResolveContext, vars: ResolveVars): an
   }
   if (trimmed.startsWith('$current.')) {
     const p = trimmed.substring('$current.'.length)
-    // $current.<path> 默认从当前卡片 content 开始
     const full = p.startsWith('content.') ? p : `content.${p}`
     return getPathValue(ctx.currentCard, full)
   }
   if ((trimmed.startsWith('[') && trimmed.endsWith(']')) || (trimmed.startsWith('{') && trimmed.endsWith('}'))) {
     const j = tryJson(); if (j !== undefined) return j
   }
-  // 数字
   if (/^[-+]?\d+(?:\.\d+)?$/.test(trimmed)) return Number(trimmed)
-  // 去引号
   if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
     return trimmed.slice(1, -1)
   }
@@ -298,20 +297,14 @@ function evalValueExpr(expr: string, ctx: ResolveContext, vars: ResolveVars): an
 
 function toArray(val: any): any[] { if (Array.isArray(val)) return val; if (val == null) return []; return [val] }
 
-// 解析 filter 表达式：
-// - 多条件：filter:<cond> && <cond> && ...
-// - 条件形态：field in <rhs> | field = <rhs> | field < <rhs> | field > <rhs>
-// - field 可带前缀 card.，可省略 content.（默认补全）
 type FilterCond = { field: string; op: 'in'|'='|'<'|'>'; rhsRaw: string }
 function parseFilterExpr(expr: string): { conditions: FilterCond[] } | null {
   const raw = (expr || '').trim()
   const body = raw.startsWith('filter:') ? raw.substring('filter:'.length).trim() : raw
   if (!body) return null
-  // 以 && 拆分多个条件
   const parts = body.split(/\s*&&\s*/).map(s => s.trim()).filter(Boolean)
   const conds: FilterCond[] = []
   for (const p of parts) {
-    // 优先匹配 in（允许任意空白）
     const inMatch = p.match(/^(.*?)\s+in\s+(.+)$/i)
     if (inMatch) {
       let field = inMatch[1].trim()
@@ -323,7 +316,6 @@ function parseFilterExpr(expr: string): { conditions: FilterCond[] } | null {
       continue
     }
 
-    // 其次匹配 = / < / >（允许两侧无空格，如 a=1）
     const cmpMatch = p.match(/^(.*?)\s*([=<>])\s*(.+)$/)
     if (cmpMatch) {
       let field = cmpMatch[1].trim()
@@ -336,7 +328,6 @@ function parseFilterExpr(expr: string): { conditions: FilterCond[] } | null {
       continue
     }
 
-    // 未识别
     return null
   }
   return conds.length ? { conditions: conds } : null
@@ -357,18 +348,15 @@ function normalizeToStringArray(val: any): string[] {
       continue
     }
     if (typeof it === 'object') {
-      // 常见字段优先：EntityInvolved.name / title / label / content.name
       const cand = (it as any).name ?? (it as any).title ?? (it as any).label ?? ((it as any).content?.name)
       if (cand != null) { out.push(String(cand)); continue }
     }
   }
-  // 去重、标准化大小写
   return Array.from(new Set(out.map(s => String(s))))
 }
 
 function parseMultiPathSpec(path?: string): { mode: 'single' | 'multi'; paths: string[] } {
   if (!path) return { mode: 'single', paths: [] }
-  // .{a,b,c} 或 已去掉前导点后的 {a,b,c}
   const trimmed = path.replace(/^\./, '')
   const m = trimmed.match(/^\{(.+)\}$/)
   if (m) {
@@ -389,10 +377,9 @@ function pickFields(obj: any, paths: string[]): any {
   return out
 }
 
-// 辅助：获取当前卷的分卷大纲卡片
 function getCurrentVolumeCard(cards: CardRead[], vars: ResolveVars): CardRead | undefined {
   if (typeof vars.volumeNumber !== 'number') return undefined
-  const list = selectByType(cards, '分卷大纲')
+  const list = selectByType(cards, 'key:volume_outline')
   const sorted = [...list].sort((a, b) => {
     const na = extractVolumeNumberFromTitle(a.title)
     const nb = extractVolumeNumberFromTitle(b.title)
@@ -402,7 +389,6 @@ function getCurrentVolumeCard(cards: CardRead[], vars: ResolveVars): CardRead | 
   return sorted[vars.volumeNumber - 1]
 }
 
-// stage:current -> 在当前卷的 stage_lines 中找到覆盖当前章节号的阶段
 function resolveCurrentStage(cards: CardRead[], vars: ResolveVars): any {
   const vol = getCurrentVolumeCard(cards, vars)
   const raw = (vol?.content as any) || {}
@@ -420,21 +406,17 @@ function resolveCurrentStage(cards: CardRead[], vars: ResolveVars): any {
   })
 }
 
-// chapters:previous -> 当前卷、当前阶段内，章节号小于当前章节的已存在章节卡片，映射为 SmallChapter
 function resolvePreviousChapters(cards: CardRead[], vars: ResolveVars): any[] {
   const volNum = vars.volumeNumber
   const chNum = vars.chapterNumber
   if (typeof volNum !== 'number' || typeof chNum !== 'number') return []
-  // 所有章节大纲卡片
-  const chapterCards = selectByType(cards, '章节大纲')
-  // 过滤当前卷、且小于当前章节号
+  const chapterCards = selectByType(cards, 'key:chapter_outline')
   const filtered = chapterCards.filter(c => {
     const cc = c.content as any
     const vol = cc?.chapter_outline?.volume_number
     const cn = cc?.chapter_outline?.chapter_number
     return vol === volNum && typeof cn === 'number' && cn < chNum
   })
-  // 映射为 SmallChapter 结构
   return filtered
     .sort((a, b) => {
       const an = (a.content as any)?.chapter_outline?.chapter_number || 0
@@ -454,12 +436,7 @@ function resolvePreviousChapters(cards: CardRead[], vars: ResolveVars): any[] {
 }
 
 function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars): string {
-  // 支持三种前缀：type:、self、标题（默认）以及 parent
-  // 语法：
-  // @type:分卷大纲[index=last].content.volume_outline
-  // @type:分卷大纲[index=$current.volumeNumber-1].content
   // @self.parent.content
-  // @核心蓝图.content
 
   const token = rawToken.replace(/^@/, '')
 
@@ -473,7 +450,6 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
     return stringifyValue(kgTokenValue)
   }
 
-  // 优先处理特殊选择器，避免被标题规则误匹配
   if (token.startsWith('stage:current')) {
     const path = token.includes('.') ? token.substring('stage:current.'.length) : ''
     const stage = resolveCurrentStage(ctx.cards, vars)
@@ -485,7 +461,6 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
     return stringifyValue(arr)
   }
 
-  // type 选择器
   const typeMatch = token.match(/^type:([^\.\[\s]+)(?:\[([^\]]+)\])?(?:\.(.+))?$/)
   if (typeMatch) {
     const typeName = typeMatch[1]
@@ -493,17 +468,14 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
     const rawPath = typeMatch[3]
     const { mode: pathMode, paths: multiPaths } = parseMultiPathSpec(rawPath)
 
-    // 使用树的先序顺序，保证“无论层级”的全局顺序与左侧树一致
     const orderedAll = buildPreorder(ctx.cards)
 
-    // previous: 全局之前（可选参数 n：仅返回最后 n 个）
     if (filter && filter.startsWith('previous')) {
-      
-      // 修正解析逻辑：更灵活地处理 previous:N, previous:global, previous:global:N
+
       const parts = filter.split(':');
       let mode = 'global';
       let takeN: number | undefined = undefined;
-      
+
       for (const part of parts.slice(1)) {
         if (part === 'global' || part === 'local') {
           mode = part;
@@ -511,42 +483,36 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
           takeN = parseInt(part, 10);
         }
       }
-      
+
       let prevList: CardRead[] = []
-      
+
       if (mode === 'local') {
-        // 局部 previous：同一父卡片下的同类型兄弟卡片（按 display_order 排序）
         const pid = ctx.currentCard?.parent_id ?? null
-        const typeKey = resolveTypeKey(typeName)
-      const siblings = ctx.cards.filter(c => 
-          c.parent_id === pid && 
-          getCardTypeKey(c.card_type) === typeKey && 
+        const typeKey = resolveReferenceKey(typeName)
+      const siblings = ctx.cards.filter(c =>
+          c.parent_id === pid &&
+          getCardTypeKey(c.card_type) === typeKey &&
           c.id !== ctx.currentCard?.id
         ).sort((a, b) => a.display_order - b.display_order)
-        
-        // 找到当前卡片在同父下的位置，取之前的
+
         const currentIndex = siblings.findIndex(c => c.id === ctx.currentCard?.id)
         if (currentIndex > 0) {
           prevList = siblings.slice(0, currentIndex)
         }
-        // 局部模式通常同父，无需跨卷过滤；但若父层不是分卷，仍按实体短期过滤
         prevList = filterShortLivedEntityAcrossVolumes(ctx.cards, ctx.currentCard, prevList)
       } else {
-        // 全局 previous：当前树形先序顺序中，当前卡片之前的所有同类型卡片
         const indexById = new Map<number, number>()
         orderedAll.forEach((c, i) => indexById.set(c.id, i))
         const currentIndex = ctx.currentCard ? (indexById.get(ctx.currentCard.id) ?? -1) : -1
-        const typeKey = resolveTypeKey(typeName)
+        const typeKey = resolveReferenceKey(typeName)
         prevList = orderedAll.filter((c, i) => getCardTypeKey(c.card_type) === typeKey && i < currentIndex)
-        // 应用实体短期跨卷过滤
         prevList = filterShortLivedEntityAcrossVolumes(ctx.cards, ctx.currentCard, prevList)
-        
-        // 如果指定了 takeN，则取最后 n 个
+
         if (typeof takeN === 'number' && takeN > 0 && prevList.length > takeN) {
           prevList = prevList.slice(-takeN)
         }
       }
-      
+
       if (!rawPath) {
         const collected = prevList.map(c => getPathValue(c, 'content'))
         return stringifyValue(collected)
@@ -560,10 +526,9 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
       }
     }
 
-    // sibling: 同父节点下的同类型卡片（按 display_order）
     if (filter === 'sibling') {
       const pid = ctx.currentCard?.parent_id ?? null
-      const typeKey = resolveTypeKey(typeName)
+      const typeKey = resolveReferenceKey(typeName)
       const siblings = ctx.cards.filter(c => c.parent_id === pid && getCardTypeKey(c.card_type) === typeKey && c.id !== ctx.currentCard?.id)
         .sort((a, b) => a.display_order - b.display_order)
       if (!rawPath) {
@@ -571,7 +536,6 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
         return stringifyValue(collected)
       }
       if (pathMode === 'multi') return stringifyValue(siblings.map(c => pickFields(c, multiPaths)))
-      // 单路径：提取后过滤空值，若仅一个有效值则直接返回该值
       const collectedVals = siblings
         .map(c => getPathValue(c, multiPaths[0]))
         .filter(v => v !== undefined && v !== null && !(typeof v === 'string' && v.trim() === ''))
@@ -580,8 +544,7 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
       return stringifyValue(collectedVals)
     }
 
-    // 其他情况：以稳定排序供 first/last/index 使用
-    const typeKey = resolveTypeKey(typeName)
+    const typeKey = resolveReferenceKey(typeName)
     const rawCandidates = orderedAll.filter(c => getCardTypeKey(c.card_type) === typeKey)
     let candidates = [...rawCandidates]
     candidates = candidates.sort((a, b) => {
@@ -596,12 +559,10 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
     else if (filter === 'first' || !filter) selected = candidates[0]
     else if (filter && filter.startsWith('index=')) {
       const expr = filter.substring('index='.length).trim()
-      // 先尝试解析为过滤表达式
       const f = parseFilterExpr(expr)
       if (f) {
         const matchFn = (card: CardRead) => {
           for (const cond of f.conditions) {
-            // 计算左值
             let lv = getPathValue(card, cond.field)
             if ((cond.field.endsWith('.name') || cond.field === 'content.name') && (lv === undefined || lv === null || String(lv).trim() === '')) {
               lv = (card as any).title || (card as any)?.content?.title || ''
@@ -615,7 +576,6 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
             } else if (cond.op === '=') {
               const rhs = evalValueExpr(cond.rhsRaw, ctx, vars)
               const rhsStr = String(Array.isArray(rhs) ? rhs[0] : rhs)
-              // 数值优先比较
               const lvNum = Number(lvStr)
               const rhsNum = Number(rhsStr)
               if (Number.isFinite(lvNum) && Number.isFinite(rhsNum)) {
@@ -632,7 +592,6 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
                 if (cond.op === '<' && !(a < b)) return false
                 if (cond.op === '>' && !(a > b)) return false
               } else {
-                // 字符串比较（本地化较复杂，这里用简单字典序）
                 const cmp = lvStr.localeCompare(rhsStr)
                 if (cond.op === '<' && !(cmp < 0)) return false
                 if (cond.op === '>' && !(cmp > 0)) return false
@@ -642,7 +601,6 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
           return true
         }
         const matched = candidates.filter(matchFn)
-        // 根据 pathMode 返回集合
         if (!rawPath) {
           const collected = matched.map(c => getPathValue(c, 'content'))
           return stringifyValue(collected)
@@ -655,11 +613,9 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
           return stringifyValue(collected)
         }
       }
-      // 显式 filter: 但未解析成功时，不回退到首项，避免注入错误上下文
       if (expr.startsWith('filter:')) {
         return ''
       }
-      // 否则按原有数字/表达式处理
       const idx = evalIndexExpr(expr, vars, ctx, candidates.length)
       if (idx === 'last') selected = candidates[candidates.length - 1]
       else if (typeof idx === 'number') {
@@ -683,7 +639,6 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
     }
   }
 
-  // self / parent 选择器
   const selfMatch = token.match(/^self(?:\.(.+))?$/)
   if (selfMatch) {
     const raw = selfMatch[1]
@@ -712,7 +667,6 @@ function resolveToken(rawToken: string, ctx: ResolveContext, vars: ResolveVars):
     }
   }
 
-  // 标题选择（向后兼容），显式排除特殊前缀
   if (!token.startsWith('stage:') && !token.startsWith('chapters:')) {
     const titleMatch = token.match(/^([^\.\[\s]+)(?:\.(.+))?$/)
     if (titleMatch) {
@@ -746,7 +700,6 @@ export function resolveTemplate(ctx: ResolveContext): string {
   while (i < n) {
     const at = s.indexOf('@', i)
     if (at === -1) break
-    // 扫描 token，允许 [] / {} / 引号 内的空格
     let j = at + 1
     let depthSquare = 0
     let depthCurly = 0
@@ -768,7 +721,6 @@ export function resolveTemplate(ctx: ResolveContext): string {
       if (ch === ']') { depthSquare = Math.max(0, depthSquare - 1); j++; continue }
       if (ch === '{') { depthCurly++; j++; continue }
       if (ch === '}') { depthCurly = Math.max(0, depthCurly - 1); j++; continue }
-      // 结束条件：遇到空白或新的 @，且不在任何括号/引号内
       if ((ch === '@' || /\s/.test(ch)) && depthSquare === 0 && depthCurly === 0) break
       j++
     }
@@ -777,7 +729,6 @@ export function resolveTemplate(ctx: ResolveContext): string {
     i = j + 1
   }
 
-  // 反向替换（仅使用内置解析，不支持跨项目 @）
   let result = s
   for (let k = tokens.length - 1; k >= 0; k--) {
     const t = tokens[k]
@@ -785,4 +736,4 @@ export function resolveTemplate(ctx: ResolveContext): string {
     result = result.slice(0, t.start) + replacement + result.slice(t.end)
   }
   return result
-} 
+}

@@ -80,7 +80,6 @@ async function save() {
       const saved = await updateKnowledge(f.id, { key: (f as any).key, name: f.name, description: f.description || '', content: f.content } as any)
       resetKnowledgeOptionCache()
       ElMessage.success(t('knowledge_manager.messages.updated'))
-      // 局部更新
       if (saved) {
         const idx = items.value.findIndex(i => i.id === saved.id)
         if (idx >= 0) items.value[idx] = saved
@@ -114,4 +113,4 @@ fetchList()
 <style scoped>
 .knowledge-manager { display: flex; flex-direction: column; gap: 12px; height: 100%; }
 .header { display: flex; justify-content: space-between; align-items: center; }
-</style> 
+</style>

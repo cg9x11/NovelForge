@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.locales import localized_text
 
 from typing import Any
 
@@ -10,7 +11,7 @@ from app.schemas.relation_extract import RelationExtraction
 
 class RelationExtractor:
     code = "relation"
-    name = "关系提取"
+    name = localized_text('hardcoded.services_memory_extractors_relation_0d5fbc4f')
     target = "graph"
     preview_supported = True
     output_model = RelationExtraction

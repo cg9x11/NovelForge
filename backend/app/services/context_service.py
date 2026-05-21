@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.locales import localized_text
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
@@ -33,12 +34,12 @@ class AssembledContext:
 	def to_system_prompt_block(self) -> str:
 		parts: List[str] = []
 		if self.facts_subgraph:
-			parts.append(f"[事实子图]\n{self.facts_subgraph}")
+			parts.append(localized_text('hardcoded.services_context_service_19fec551', self_facts_subgraph=self.facts_subgraph))
 		return "\n\n".join(parts)
 
 
 def _compose_facts_subgraph_stub() -> str:
-	return "关键事实：暂无（尚未收集）"
+	return localized_text('hardcoded.services_context_service_17706cd3')
 
 
 def _clean_text(value: Any) -> str:
@@ -176,18 +177,18 @@ def assemble_context(session: Session, params: ContextAssembleParams) -> Assembl
 			if (str(it.get("a")) in participant_set and str(it.get("b")) in participant_set)
 		]
 		if filtered_relation_items:
-			lines: List[str] = ["关键事实："]
+			lines: List[str] = [localized_text('hardcoded.services_context_service_63e88fa5')]
 			for it in filtered_relation_items:
 				a = str(it.get("a"))
 				b = str(it.get("b"))
-				kind_cn = str(it.get("kind") or "其他")
+				kind_cn = str(it.get("kind") or localized_text('hardcoded.services_context_service_1a26edf9'))
 				pred_en = CN_TO_EN_KIND.get(kind_cn, kind_cn)
 				lines.append(f"- {a} {pred_en} {b}")
 			facts_text = "\n".join(lines)
 		else:
 			txt = "\n".join([f"- {f}" for f in (sub_struct.get("fact_summaries") or [])])
 			if txt:
-				facts_text = "关键事实：\n" + txt
+				facts_text = localized_text('hardcoded.services_context_service_5f885fe1') + txt
 
 		try:
 			fs_model = FactsStructured(
@@ -226,7 +227,7 @@ def assemble_context(session: Session, params: ContextAssembleParams) -> Assembl
 				"concept_summaries": concept_summaries,
 			}
 
-	facts = truncate_text(facts_text, facts_quota, suffix="\n...[已截断]")
+	facts = truncate_text(facts_text, facts_quota, suffix=localized_text('hardcoded.services_context_service_5cfddb12'))
 
 	return AssembledContext(
 		facts_subgraph=facts,

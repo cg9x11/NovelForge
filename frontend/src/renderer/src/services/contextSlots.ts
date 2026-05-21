@@ -1,4 +1,5 @@
 import type { CardRead, CardUpdate } from '@renderer/api/cards'
+import { i18n } from '@renderer/i18n'
 
 export type ContextTemplateKind = 'generation' | 'review'
 
@@ -8,8 +9,8 @@ export interface ContextTemplates {
 }
 
 export const CONTEXT_TEMPLATE_LABELS: Record<ContextTemplateKind, string> = {
-  generation: '内容生成',
-  review: '内容审核',
+  get generation() { return String(i18n.global.t('context_templates.labels.generation')) },
+  get review() { return String(i18n.global.t('context_templates.labels.review')) },
 }
 
 export function normalizeContextTemplateKind(

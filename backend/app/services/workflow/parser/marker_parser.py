@@ -1,13 +1,3 @@
-"""工作流 DSL 解析器（注释标记 DSL）。
-
-仅支持如下节点块格式：
-1) 注释标记节点块（唯一受支持格式）
-   #@node(async=true, disabled=false, description="...")
-   var_name = Category.NodeType(...)
-   #</node>
-
-不支持 XML 节点格式（<node ...>...</node>）。
-"""
 
 import ast
 import re
@@ -20,32 +10,46 @@ from ..expressions.builtins import get_safe_global_names
 
 
 class WorkflowParser:
-    """工作流解析器（注释标记 DSL）。"""
+
 
     _RE_NODE_OPEN = re.compile(r"^\s*#@node(?:\((.*)\))?\s*$")
     _RE_NODE_CLOSE = re.compile(r"^\s*#</node>\s*$")
 
     def parse(self, code: str) -> ExecutionPlan:
-        """解析工作流代码。"""
         if not code or not code.strip():
             return ExecutionPlan(statements=[], dependencies={})
 
-        # 兼容 UTF-8 BOM，避免首行标记被误判
-        code = code.lstrip("\ufeff")
+        code = code.lstrip(chr(0xfeff))
 
         if self._looks_like_xml(code):
-            raise ValueError("不再支持 XML 工作流格式。请使用 #@node(...) ... #</node> 注释标记 DSL。")
+            raise ValueError("XML workflow format is no longer supported. Use #@node(...) ... #</node> comment marker DSL.")
 
         if not self._looks_like_marker_dsl(code):
-            raise ValueError("工作流代码必须使用 #@node(...) ... #</node> 注释标记 DSL。")
+            preview = self._format_preview(code)
+            logger.error("[WorkflowParser] marker DSL not detected. preview=\n{}", preview)
+            raise ValueError(
+                "Workflow code must use #@node(...) ... #</node> comment marker DSL. "
+                f"First non-empty lines:\n{preview}"
+            )
 
         statements = self._parse_marker_dsl(code)
         dependencies = {stmt.variable: stmt.depends_on for stmt in statements}
         plan = ExecutionPlan(statements=statements, dependencies=dependencies)
         plan.validate()
 
-        logger.debug(f"[WorkflowParser] 解析成功，模式=marker, 节点数={len(statements)}")
+        logger.debug(f"[WorkflowParser] Parsed successfully, mode=marker, nodes={len(statements)}")
         return plan
+
+
+    def _format_preview(self, code: str, max_lines: int = 8) -> str:
+        lines = []
+        for line_no, line in enumerate((code or "").splitlines(), start=1):
+            if not line.strip():
+                continue
+            lines.append(f"{line_no}: {line[:180]}")
+            if len(lines) >= max_lines:
+                break
+        return "\n".join(lines) or "<empty>"
 
     def _looks_like_xml(self, code: str) -> bool:
         return bool(re.search(r"<\s*node\b", code))
@@ -68,7 +72,7 @@ class WorkflowParser:
                     continue
 
                 raise ValueError(
-                    f"第 {index + 1} 行存在未包裹在节点块中的代码。请使用 #@node(...) 与 #</node> 包裹节点。"
+                    f"Line {index + 1} has code outside a node block. Wrap nodes with #@node(...) and #</node>."
                 )
 
             meta = self._parse_node_meta(match.group(1) or "")
@@ -81,12 +85,12 @@ class WorkflowParser:
                 index += 1
 
             if index >= len(lines):
-                raise ValueError(f"节点元数据（第 {open_line_no} 行）缺少结束标记 '#</node>'")
+                raise ValueError(f"Node metadata at line {open_line_no} is missing closing marker #</node>")
 
             index += 1
             code_block = "\n".join(block_lines)
             if not code_block:
-                raise ValueError(f"节点元数据（第 {open_line_no} 行）后没有节点代码")
+                raise ValueError(f"Node metadata at line {open_line_no} has no node code after it")
 
             stmt = self._parse_python_node_block(
                 code_block=code_block,
@@ -117,7 +121,7 @@ class WorkflowParser:
             if not part:
                 continue
             if "=" not in part:
-                raise ValueError(f"无效的节点元数据片段: '{part}'（应为 key=value）")
+                raise ValueError(f"Invalid node metadata fragment: {part!r} (expected key=value)")
 
             key, raw_value = part.split("=", 1)
             key = key.strip()
@@ -132,7 +136,7 @@ class WorkflowParser:
             elif key == "name":
                 meta["name"] = str(value)
             else:
-                raise ValueError(f"不支持的节点元数据键: '{key}'")
+                raise ValueError(f"Unsupported node metadata key: {key!r}")
 
         return meta
 
@@ -177,7 +181,7 @@ class WorkflowParser:
             buffer.append(char)
 
         if quote is not None:
-            raise ValueError("节点元数据引号未闭合")
+            raise ValueError("Node metadata quote is not closed")
 
         tail = "".join(buffer).strip()
         if tail:
@@ -211,7 +215,7 @@ class WorkflowParser:
                 return True
             if lowered in ("false", "0", "no", "off"):
                 return False
-        raise ValueError(f"节点元数据字段 '{field_name}' 期望布尔值，实际为: {value}")
+        raise ValueError(f"Node metadata field {field_name!r} expects a boolean, got: {value}")
 
     def _parse_python_node_block(
         self,
@@ -226,10 +230,10 @@ class WorkflowParser:
         try:
             tree = ast.parse(normalized_block)
         except SyntaxError as e:
-            raise ValueError(f"节点代码语法错误: {e}")
+            raise ValueError(f"Node code syntax error: {e}")
 
         if len(tree.body) != 1:
-            raise ValueError("每个节点块必须且只能包含一条语句（建议使用单条赋值语句）")
+            raise ValueError("Each node block must contain exactly one statement; single assignment is recommended")
 
         node = tree.body[0]
         variable: Optional[str] = None
@@ -237,18 +241,18 @@ class WorkflowParser:
 
         if isinstance(node, ast.Assign):
             if len(node.targets) != 1 or not isinstance(node.targets[0], ast.Name):
-                raise ValueError("节点赋值语句必须是简单变量赋值，如 a = Logic.Expression(...)")
+                raise ValueError("Node assignment must be simple variable assignment, e.g. a = Logic.Expression(...)")
             variable = node.targets[0].id
             if not isinstance(node.value, ast.Call):
-                raise ValueError("节点赋值右侧必须是节点调用，如 Logic.Expression(...)")
+                raise ValueError("Right side of node assignment must be a node call, e.g. Logic.Expression(...)")
             call_node = node.value
         elif isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
             if not fallback_name:
-                raise ValueError("节点块为无赋值调用时，需在 #@node(...) 中提供 name=... 元数据")
+                raise ValueError("Unassigned node call requires name=... metadata in #@node(...)")
             variable = fallback_name
             call_node = node.value
         else:
-            raise ValueError("节点块只支持调用表达式或赋值调用表达式")
+            raise ValueError("Node block supports only call expressions or assignment call expressions")
 
         call_expr = ast.unparse(call_node)
         node_type, config = self._parse_node_call(call_expr)
@@ -267,7 +271,7 @@ class WorkflowParser:
         )
 
         logger.debug(
-            f"[WorkflowParser/Marker] 节点: {variable}, 类型: {node_type}, "
+            f"[WorkflowParser/Marker] node: {variable}, type: {node_type}, "
             f"async: {is_async}, disabled: {disabled}, description: {description}"
         )
         return stmt
@@ -289,7 +293,7 @@ class WorkflowParser:
             expr = tree.body
 
             if not isinstance(expr, ast.Call):
-                raise ValueError("不是有效的节点调用")
+                raise ValueError("Not a valid node call")
 
             if isinstance(expr.func, ast.Attribute):
                 if isinstance(expr.func.value, ast.Name):
@@ -306,9 +310,9 @@ class WorkflowParser:
                         parts.insert(0, node.id)
                     node_type = ".".join(parts)
                 else:
-                    raise ValueError("不支持的节点类型格式")
+                    raise ValueError("Unsupported node type format")
             else:
-                raise ValueError("节点调用必须是 NodeType.Method(...) 格式")
+                raise ValueError("Node call must use NodeType.Method(...) format")
 
             config = {}
             for keyword in expr.keywords:
@@ -318,9 +322,9 @@ class WorkflowParser:
 
             return node_type, config
         except SyntaxError as e:
-            raise ValueError(f"语法错误: {e}")
+            raise ValueError(f"Syntax error: {e}")
         except Exception as e:
-            raise ValueError(f"解析失败: {e}")
+            raise ValueError(f"Parse failed: {e}")
 
     def _parse_value(self, node: ast.AST) -> Any:
         if isinstance(node, ast.Constant):
@@ -371,6 +375,5 @@ class WorkflowParser:
 
 
 def parse_workflow(code: str) -> ExecutionPlan:
-    """便捷函数：解析工作流代码。"""
     parser = WorkflowParser()
     return parser.parse(code)

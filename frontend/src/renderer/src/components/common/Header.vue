@@ -74,7 +74,7 @@ function openIdeasWorkbench() {
   height: 60px;
   background-color: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color);
-  flex-shrink: 0; /* Prevent header from shrinking */
+  flex-shrink: 0;
 }
 
 .logo-container.clickable {
@@ -96,5 +96,5 @@ function openIdeasWorkbench() {
   display: flex;
   gap: 15px;
 }
-</style> 
+</style>
 

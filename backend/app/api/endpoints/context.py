@@ -1,3 +1,4 @@
+from app.locales import localized_text
 from fastapi import APIRouter, Depends
 from typing import Any
 from sqlmodel import Session
@@ -8,7 +9,7 @@ from app.schemas.context import AssembleContextRequest, AssembleContextResponse
 
 router = APIRouter()
 
-@router.post("/assemble", response_model=AssembleContextResponse, summary="装配写作上下文（事实子图）")
+@router.post("/assemble", response_model=AssembleContextResponse, summary=localized_text('hardcoded.api_endpoints_context_5d778851'))
 def assemble(req: AssembleContextRequest, session: Session = Depends(get_session)):
     params = ContextAssembleParams(
         project_id=req.project_id,

@@ -15,9 +15,9 @@ def create_project_endpoint(project_in: ProjectCreate, session: Session = Depend
         project, _ = project_service.create_project(session=session, project_in=project_in)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
+
     # Header is handled by WorkflowHeaderMiddleware automatically
-        
+
     return ApiResponse(data=project)
 
 @router.get("/", response_model=ApiResponse[List[ProjectRead]])
@@ -49,4 +49,4 @@ def delete_project_endpoint(project_id: int, session: Session = Depends(get_sess
     success = project_service.delete_project(session=session, project_id=project_id)
     if not success:
         raise HTTPException(status_code=404, detail="Project not found")
-    return ApiResponse(message="Project deleted successfully") 
+    return ApiResponse(message="Project deleted successfully")

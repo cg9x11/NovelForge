@@ -182,15 +182,16 @@ const filteredNodesByCategory = computed(() => {
 const VI_NODE_LABELS = NODE_LABELS
 const VI_NODE_DESCRIPTIONS = NODE_DESCRIPTIONS
 
+const getNodeLocaleKey = (node, field) => `workflow_nodes.${String(node?.type || '').replace(/\./g, '_')}.${field}`
 const getNodeLabel = (node) => {
-  if (localeStore.locale === 'vi-VN') return VI_NODE_LABELS[node.type] || node.label || node.type
-  if (localeStore.locale === 'en-US') return EN_NODE_LABELS[node.type] || node.type
-  return node.label || node.type
+  const key = getNodeLocaleKey(node, 'label')
+  const value = String(t(key))
+  return value && value !== key ? value : (node.label || node.type)
 }
 const getNodeDescription = (node) => {
-  if (localeStore.locale === 'vi-VN') return VI_NODE_DESCRIPTIONS[node.type] || node.description || t('node_library.noDescription')
-  if (localeStore.locale === 'en-US') return EN_NODE_DESCRIPTIONS[node.type] || t('node_library.noDescription')
-  return node.description || t('node_library.noDescription')
+  const key = getNodeLocaleKey(node, 'description')
+  const value = String(t(key))
+  return value && value !== key ? value : (node.description || t('node_library.noDescription'))
 }
 
 const getCategoryIcon = (category) => ({ trigger: Lightning, logic: Operation, card: Collection, data: DataAnalysis, ai: MagicStick, novel: Document, prompt: Document, example: Box, context: Menu }[category] || Menu)

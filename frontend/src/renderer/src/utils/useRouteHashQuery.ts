@@ -7,4 +7,4 @@ export function useRouteHashQuery(): Record<string, string> {
   const out: Record<string, string> = {}
   params.forEach((v, k) => { out[k] = v })
   return out
-} 
+}

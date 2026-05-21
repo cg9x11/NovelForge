@@ -1,3 +1,4 @@
+from app.locales import localized_text
 from typing import Any
 
 from app.schemas.chapter_review import ReviewRunRequest
@@ -24,18 +25,18 @@ def _to_text(value: Any) -> str:
 
 def build_review_prompt(request: ReviewRunRequest) -> str:
     parts: list[str] = [
-        "【审核目标】",
-        f"标题：{request.title}",
-        f"审核类型：{request.review_type}",
-        f"审核 profile：{request.review_profile}",
-        f"目标字段：{request.target_field}",
+        localized_text('hardcoded.services_review_review_prompt_builders_3ffa5509'),
+        localized_text('hardcoded.services_review_review_prompt_builders_9e189a57', request_title=request.title),
+        localized_text('hardcoded.services_review_review_prompt_builders_b952203d', request_review_type=request.review_type),
+        localized_text('hardcoded.services_review_review_prompt_builders_c3c94ecc', request_review_profile=request.review_profile),
+        localized_text('hardcoded.services_review_review_prompt_builders_2b1f7dc0', request_target_field=request.target_field),
     ]
 
     if request.context_info:
-        parts.extend(["", "【引用上下文】", request.context_info.strip()])
+        parts.extend(["", localized_text('hardcoded.services_review_review_prompt_builders_47e3983e'), request.context_info.strip()])
     if request.facts_info:
-        parts.extend(["", "【事实子图】", request.facts_info.strip()])
+        parts.extend(["", localized_text('hardcoded.services_review_review_prompt_builders_1db448ce'), request.facts_info.strip()])
 
     target_text = _to_text(request.target_text)
-    parts.extend(["", "【待审核内容】", target_text or "（空内容）"])
+    parts.extend(["", localized_text('hardcoded.services_review_review_prompt_builders_063e3537'), target_text or localized_text('hardcoded.services_review_review_prompt_builders_22a8a031')])
     return "\n".join(parts)

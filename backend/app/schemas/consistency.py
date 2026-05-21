@@ -1,12 +1,13 @@
 from __future__ import annotations
+from app.locales import schema_field_description
 
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 
 
 class CheckRequest(BaseModel):
-	text: str = Field(..., description="待校验文本")
-	facts_structured: Optional[Dict[str, Any]] = Field(default=None, description="结构化事实子图（relation_summaries等）")
+	text: str = Field(..., description=schema_field_description("text"))
+	facts_structured: Optional[Dict[str, Any]] = Field(default=None, description=schema_field_description("facts_structured"))
 
 
 class Issue(BaseModel):
@@ -22,4 +23,4 @@ class FixSuggestion(BaseModel):
 
 class CheckResponse(BaseModel):
 	issues: List[Issue]
-	suggested_fixes: List[FixSuggestion] 
+	suggested_fixes: List[FixSuggestion]

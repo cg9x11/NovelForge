@@ -106,7 +106,7 @@ export function applyAssistantStreamChunk(options: ApplyAssistantStreamChunkOpti
 
     const baseMessage = options.messages.value[options.targetIdx]
     if (!baseMessage) {
-      console.warn(`[AssistantPanel] 目标消息索引 ${options.targetIdx} 不存在，忽略事件`, event)
+      console.warn(`[AssistantPanel] Target message index ${options.targetIdx} does not exist; event ignored`, event)
       return
     }
 
@@ -276,7 +276,7 @@ export function applyAssistantStreamChunk(options: ApplyAssistantStreamChunkOpti
 
   const msg = options.messages.value[options.targetIdx]
   if (!msg) {
-    console.warn(`⚠️ [AssistantPanel] 目标消息索引 ${options.targetIdx} 不存在，停止流式输出`)
+    console.warn(`⚠️ [AssistantPanel] Target message index ${options.targetIdx} does not exist; stop streaming output`)
     return
   }
 

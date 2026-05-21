@@ -25,7 +25,6 @@ import { useI18n } from 'vue-i18n'
 import type { JSONSchema } from '@renderer/api/schema'
 import { resolveKnowledgeOptions } from '@renderer/services/knowledgeOptionResolver'
 import { useLocaleStore } from '@renderer/stores/useLocaleStore'
-import { translateText } from '@renderer/locales/runtimeTranslations'
 
 const props = defineProps<{
   modelValue: string | number | undefined
@@ -37,7 +36,6 @@ const props = defineProps<{
 const emit = defineEmits(['update:modelValue'])
 const { t } = useI18n()
 const localeStore = useLocaleStore()
-const cjkRe = /[\u4e00-\u9fff]/
 const knowledgeOptions = ref<Array<string | number>>([])
 const isLoading = ref(false)
 
@@ -74,12 +72,8 @@ const resolvedOptions = computed(() => {
   return baseOptions
 })
 
-function cleanDisplayText(value: string): string {
-  return cjkRe.test(value) ? '' : value
-}
-
 const placeholder = computed(() => {
-  return props.schema.description ? cleanDisplayText(translateText(String(props.schema.description), localeStore.locale)) : t('dynamic_form.fields.select_placeholder', { label: props.label })
+  return props.schema.description ? String(props.schema.description) : t('dynamic_form.fields.select_placeholder', { label: props.label })
 })
 
 const noDataText = computed(() => {
@@ -97,6 +91,6 @@ function getOptionLabel(item: string | number): string {
   if (props.prop === 'entity_type') {
     return t(`dynamic_form.fields.entity.${raw}`) || raw
   }
-  return translateText(raw, localeStore.locale)
+  return raw
 }
 </script>

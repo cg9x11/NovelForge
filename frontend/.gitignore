@@ -1,4 +1,4 @@
-# 依赖和构建产物
+# Dependencies and build outputs
 node_modules
 build/
 dist/
@@ -6,15 +6,15 @@ dist-web/
 out/
 scripts/*.cjs
 
-# IDE配置
+# IDE config
 .vscode/
 .idea/
 
-# 系统文件
+# System files
 .DS_Store
 Thumbs.db
 
-# 缓存和日志
+# Cache and logs
 .eslintcache
 *.log*
 *.tmp

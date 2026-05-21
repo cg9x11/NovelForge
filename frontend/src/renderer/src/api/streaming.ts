@@ -40,7 +40,7 @@ export function createSSEStreamingRequest(params: SSERequestParams) {
     signal,
   }).then(async response => {
     if (!response.ok) {
-      const message = await extractErrorMessage(response, `请求失败：${response.status}`)
+      const message = await extractErrorMessage(response, `Request failed: ${response.status}`)
       throw new Error(message)
     }
 

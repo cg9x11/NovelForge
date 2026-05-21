@@ -7,7 +7,6 @@
     @close="reset"
   >
     <div class="selector-container">
-      <!-- 左列：模式选择 + 列表区 -->
       <div class="column left">
         <h3>{{ t('card_reference.step_mode') }}</h3>
         <el-radio-group v-model="mode" size="small">
@@ -16,7 +15,6 @@
           <el-radio-button label="special">{{ t('card_reference.special') }}</el-radio-button>
         </el-radio-group>
 
-        <!-- 按标题模式：原有卡片列表 -->
         <template v-if="mode === 'title'">
           <el-input v-model="cardSearch" :placeholder="t('card_reference.search_cards')" clearable class="mt8" />
           <el-scrollbar class="list-container">
@@ -33,7 +31,6 @@
           </el-scrollbar>
         </template>
 
-        <!-- 按类型模式：类型选择 + 过滤方式（previous/sibling/first/last/index） + index 表达式 -->
         <template v-else-if="mode === 'type'">
           <div class="mt8">
             <el-select v-model="selectedTypeName" :placeholder="t('card_reference.select_card_type')" style="width: 100%" @change="handleTypeChange">
@@ -87,7 +84,6 @@
           </div>
         </template>
 
-        <!-- 特殊模式：self / parent / stage:current -->
         <template v-else>
           <div class="mt8">
             <el-select v-model="specialKey" :placeholder="t('card_reference.select_special_reference')" style="width: 100%">
@@ -102,7 +98,6 @@
         </template>
       </div>
 
-      <!-- 右列：字段树 -->
       <div class="column">
         <div class="row-head">
           <h3>{{ t('card_reference.step_fields') }}</h3>
@@ -164,19 +159,15 @@ const props = defineProps<{ modelValue: boolean; cards: CardRead[]; currentCardI
 const emit = defineEmits(['update:modelValue', 'confirm'])
 const { t } = useI18n()
 
-// --- 模式与选择 ---
 const mode = ref<'title' | 'type' | 'special'>('title')
 
-// 当前卡片与父卡片
 const currentCard = computed(() => props.cards.find(c => c.id === props.currentCardId))
 const parentCard = computed(() => props.cards.find(c => c.id === (currentCard.value?.parent_id || -1)))
 const hasParent = computed(() => !!parentCard.value)
 
-// 按标题
 const cardSearch = ref('')
 const selectedKard = ref<CardRead | null>(null)
 
-// 按类型
 const selectedTypeName = ref<string | undefined>(undefined)
 const typeFilterMode = ref<'previous' | 'sibling' | 'first' | 'last' | 'index'>('first')
 const previousMode = ref<'global' | 'local'>('global')
@@ -196,17 +187,14 @@ const previousModeTips = {
   local: t('card_reference.previous_tips.local')
 }
 
-// 特殊
 const specialKey = ref<string | undefined>(undefined)
 const specialPath = ref<string>('')
 
-// 字段树
 const treeRef = ref()
 const selectedFieldPath = ref<string | null>(null)
 const selectedFieldPaths = ref<string[]>([])
 const multiMode = ref<boolean>(false)
 const fieldPaths = ref<FieldPath[]>([])
-// 高级模式（仅 index）：多条件
 const advMode = ref<boolean>(false)
 type AdvCond = { field: string; op: '='|'in'|'<'|'>'; rhs: string }
 const advConds = ref<AdvCond[]>([])
@@ -223,10 +211,8 @@ const flatFieldList = computed(() => {
   return out
 })
 
-// 过滤卡片（按标题）
 const filteredCards = computed(() => props.cards.filter(card => card.title.toLowerCase().includes(cardSearch.value.toLowerCase())))
 
-// 所有类型名
 const cardTypeNames = computed(() => Array.from(new Set(props.cards.map(c => c.card_type?.name).filter(Boolean) as string[])))
 
 function buildPathSpec(): string {
@@ -237,12 +223,10 @@ function buildPathSpec(): string {
   return ''
 }
 
-// 预览字符串
 const selectionPreview = computed(() => {
   const pathSpec = buildPathSpec()
   if (mode.value === 'title') {
     if (!selectedKard.value) return ''
-    // 标题模式：未选字段时默认 .content
     if (!pathSpec) return `@${selectedKard.value.title}.content`
     return `@${selectedKard.value.title}${pathSpec}`
   }
@@ -254,14 +238,12 @@ const selectionPreview = computed(() => {
       if (previousMode.value === 'local') {
         filter = '[previous:local]'
       } else {
-        // global 模式
         filter = n ? `[previous:global:${n}]` : '[previous:global]'
       }
     } else if (typeFilterMode.value === 'sibling') filter = '[sibling]'
     else if (typeFilterMode.value === 'first') filter = '[first]'
     else if (typeFilterMode.value === 'last') filter = '[last]'
     else if (typeFilterMode.value === 'index') filter = `[index=${indexExpr.value.trim()}]`
-    // 类型模式：未选字段时默认 .content
     if (!pathSpec) return `@type:${selectedTypeName.value}${filter}.content`
     return `@type:${selectedTypeName.value}${filter}${pathSpec}`
   }
@@ -273,7 +255,6 @@ const selectionPreview = computed(() => {
     if (selectedFieldPath.value) {
       return `@${specialKey.value}${pathSpec}`
     }
-    // 特殊：parent/self 默认 .content；stage/chapters 按原规则
     let s = `@${specialKey.value}`
     if (specialKey.value === 'parent' || specialKey.value === 'self') {
       s += `.content`
@@ -305,7 +286,6 @@ function removeCond(idx: number) {
   advConds.value.splice(idx, 1)
 }
 
-// 同步高级模式表达式到 indexExpr（多条件）
 watch([advMode, advConds], () => {
   if (mode.value === 'type' && typeFilterMode.value === 'index' && advMode.value) {
     const expr = advCondPreview.value
@@ -322,10 +302,8 @@ watch(
 
 function reset() {
   mode.value = 'title'
-  // 标题模式
   cardSearch.value = ''
   selectedKard.value = null
-  // 类型模式
   selectedTypeName.value = undefined
   typeFilterMode.value = 'first'
   previousMode.value = 'global'
@@ -333,17 +311,14 @@ function reset() {
   previousCount.value = ''
   advMode.value = false
   advConds.value = []
-  // 特殊模式
   specialKey.value = undefined
   specialPath.value = ''
-  // 字段树与路径
   selectedFieldPath.value = null
   selectedFieldPaths.value = []
   multiMode.value = false
   fieldPaths.value = []
 }
 
-// --- Stage:Current 支持 ---
 function unwrapVolumeOutline(content: any): any {
   if (!content || typeof content !== 'object') return {}
   for (const k of ['volume_outline','VolumeOutline','volumeOutline','volume_outline_response','VolumeOutlineResponse']) {
@@ -376,7 +351,6 @@ function findCurrentStage(cards: CardRead[], currentCardId?: number): { stage: a
 const stageFound = ref<boolean>(false)
 const stageMeta = ref<{ volume?: number; chapter?: number; name?: string } | null>(null)
 
-// 当选择特殊引用为 parent 时，自动加载父卡片 schema 并渲染字段树
 watch(specialKey, async (key) => {
   selectedFieldPath.value = null
   selectedFieldPaths.value = []
@@ -395,13 +369,11 @@ watch(specialKey, async (key) => {
       fieldPaths.value = sch ? generateFieldPaths(sch as any) : []
     } catch { fieldPaths.value = [] }
   } else if (key === 'stage:current') {
-    // 自动定位当前章节所在阶段；若命中，则右侧展示 StageLine 字段
     const { stage, volumeNumber, chapterNumber } = findCurrentStage(props.cards, props.currentCardId)
     stageFound.value = !!stage
     stageMeta.value = { volume: volumeNumber, chapter: chapterNumber, name: typeof stage?.stage_name === 'string' ? stage.stage_name : undefined }
     await schemaService.loadSchemas()
     const stageSchema = schemaService.getSchema('StageLine')
-    // 对于特殊对象，路径不加 'content.' 前缀，直接展示字段名
     fieldPaths.value = stage ? (stageSchema ? generateFieldPaths(stageSchema, '') : []) : []
   } else {
     fieldPaths.value = []
@@ -421,7 +393,6 @@ async function handleCardSelect(card: CardRead) {
 }
 
 async function handleTypeChange() {
-  // 根据类型名选取任意同类型卡片以加载其 schema
   selectedFieldPath.value = null
   selectedFieldPaths.value = []
   fieldPaths.value = []
@@ -476,8 +447,7 @@ function generateFieldPaths(schema: JSONSchema, prefix = 'content'): FieldPath[]
 }
 
 function handleFieldSelect(data: FieldPath) {
-  if (multiMode.value) return // 多选模式下靠复选框
-  // 单选：允许非叶子节点
+  if (multiMode.value) return
   selectedFieldPath.value = data.path
 }
 
@@ -519,4 +489,4 @@ function handleConfirm() {
 .cond-list { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 .cond-item { display: flex; gap: 8px; align-items: center; }
 .hint { margin-top: 6px; font-size: 12px; color: var(--el-text-color-secondary); }
-</style> 
+</style>

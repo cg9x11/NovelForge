@@ -52,7 +52,6 @@
 import { ref, computed, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleStore } from '@renderer/stores/useLocaleStore'
-import { translateText } from '@renderer/locales/runtimeTranslations'
 import OutputModelBuilder from '../setting/OutputModelBuilder.vue'
 import ModelDrivenForm from '../dynamic-form/ModelDrivenForm.vue'
 import { schemaToBuilder, builderToSchema, type BuilderField } from '@renderer/utils/outputModelSchemaUtils'
@@ -73,16 +72,12 @@ const builderFields = ref<BuilderField[]>([])
 const relationTargets = ref<Array<{ name: string; json_schema?: any }>>([])
 const previewModel = ref<any>({})
 const modelName = ref<string>('')
-const cjkRe = /[\u4e00-\u9fff]/
-// 保留原始 schema，用于保护复杂字段（如 dynamic_info）的结构不被简化覆盖
 const originalSchema = ref<any | null>(null)
 
 const schemaObject = computed(() => {
   try {
     const base: any = builderToSchema(builderFields.value) as any
 
-    // 若原始 schema 中存在复杂对象字段（目前主要是 dynamic_info），
-    // 为避免被简化的 builder 覆盖其结构，这里用原始定义进行回填。
     const orig = originalSchema.value as any
     if (orig && typeof orig === 'object' && orig.properties && base && base.properties) {
       const origProps = orig.properties as Record<string, any>
@@ -94,7 +89,6 @@ const schemaObject = computed(() => {
     }
 
     const defs: Record<string, any> = {}
-    // 收集被引用的目标模型结构
     for (const f of builderFields.value) {
       if (f.kind === 'relation' && f.relation?.targetModelName) {
         const name = f.relation.targetModelName
@@ -102,7 +96,6 @@ const schemaObject = computed(() => {
         if (found?.json_schema) defs[name] = found.json_schema
       }
     }
-    // 若类型模式且设置了模型名，可作为当前模型名称引用（供外部使用）
     if (Object.keys(defs).length) base.$defs = defs
     return base
   } catch { return null }
@@ -113,10 +106,7 @@ const schemaText = computed(() => {
 
 
 function translateSchemaForDisplay(value: any): any {
-  if (typeof value === 'string') {
-    const translated = translateText(value, localeStore.locale)
-    return cjkRe.test(translated) ? '' : translated
-  }
+  if (typeof value === 'string') return value
   if (Array.isArray(value)) return value.map((item) => translateSchemaForDisplay(item))
   if (value && typeof value === 'object') {
     const out: Record<string, any> = {}
@@ -142,7 +132,6 @@ async function loadSchema() {
       builderFields.value = schemaToBuilder(sch)
     }
 
-    // 载入可被引用的目标模型（所有卡片类型）
     try {
       const types = await listCardTypes()
       const list = (types || []) as any[]
@@ -159,7 +148,6 @@ async function loadSchema() {
 
 async function saveForType() {
   try {
-    // 先保存模型名（如有修改）
     if (props.mode === 'type') {
       await updateCardType(props.targetId, { model_name: modelName.value || null } as any)
     }
@@ -220,6 +208,5 @@ const contextTitle = computed(() => props.contextTitle || '')
 .footer-actions { display: flex; gap: 8px; justify-content: flex-end; width: 100%; }
 .placeholder { color: var(--el-text-color-secondary); padding: 12px; }
 .modelname-form { padding: 6px 0; }
-/* 与窗口按钮保持距离 */
 :deep(.el-dialog__headerbtn) { margin-right: 6px; }
-</style> 
+</style>

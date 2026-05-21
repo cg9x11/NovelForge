@@ -346,7 +346,7 @@ Lưu ý: Nếu trước đây bạn chọn phát triển cục bộ, bạn cần
   - Cấu hình LLM hỗ trợ "kết nối thử nghiệm".
   - Hỗ trợ cài đặt sử dụng: Bạn có thể đặt giới hạn trên của Token và giới hạn trên của cuộc gọi (-1 nghĩa là không giới hạn).
   - Danh sách hiển thị "đã sử dụng (đầu vào/đầu ra/cuộc gọi)" và cung cấp "thống kê đặt lại bằng một cú nhấp chuột". (Số liệu thống kê hiện tại về việc sử dụng mã thông báo là số liệu thống kê sơ bộ và phương pháp tính toán của các mô hình khác nhau có thể khác nhau, chỉ mang tính chất tham khảo)
-  
+
 - Tối ưu hóa code và trải nghiệm
 
 </details>
@@ -400,7 +400,7 @@ Lưu ý: Nếu trước đây bạn chọn phát triển cục bộ, bạn cần
 
 </details>
 
----  
+---
 
 <a id="Chồng công nghệ"></a>
 ## 🛠️ Ngăn xếp công nghệ
@@ -454,14 +454,14 @@ cd ../frontend
 cài đặt npm
 
 # Khởi động máy chủ phát triển
-npm rundev
+npm run dev
 # Bạn cũng có thể sử dụng lệnh sau để khởi động trang web
 // npm chạy dev:web
 ```
 
 **3. Bắt đầu đồng thời mặt trước và mặt sau (npm) bằng một dòng lệnh**
 ``` bash
-npm rundev
+npm run dev
 ```
 
 #### QUAN TRỌNG: BOOTSTRAP_OVERWRITE cho .env
@@ -541,7 +541,7 @@ Các phiên bản phát hành đôi khi được đóng gói, không cần đị
 6. **Vào Tạo chương**
     * Sau khi hoàn thành các bước trên, bấm vào thẻ văn bản chương tương ứng để mở trình soạn thảo chương và vào giao diện viết cốt lõi. Bảng ngữ cảnh ở bên phải tự động chuẩn bị tất cả thông tin cơ bản bạn cần cho chương hiện tại.
     ![Văn bản thay thế](docImgs/README/image-27.png)
-    
+
     * Bạn có thể nhấn Continue để viết cho thế hệ AI (nếu chưa có nội dung sẽ tự động viết lại từ đầu).
     * Có thể chọn hai chế độ kiểm soát số từ khi tiếp tục viết:
          - **Ràng buộc từ nhắc**: Chỉ hạn chế số lượng từ ở cấp độ từ nhắc, giúp văn bản trở nên tự nhiên hơn và tiết kiệm mã thông báo.
@@ -605,7 +605,7 @@ Sau khi được áp dụng cho một loại, các thẻ tiếp theo thuộc lo�
 * Lược đồ hỗ trợ nhúng (`$ref` thành loại `$defs`) và có thể kết hợp cũng như sử dụng lại các cấu trúc hiện có để tạo điều kiện thuận lợi cho việc xây dựng các khả năng tổng hợp.
 
 ![văn bản thay thế](docImgs/README/image-18.png)
-    
+
 Lưu ý, hãy thử thêm mô hình mới thay vì sửa đổi cấu trúc mô hình hiện có để tránh xung đột với dữ liệu hiện có.
 
 ### Review chương và review chung
@@ -802,10 +802,3 @@ Những công cụ tốt nhất được sinh ra từ trí tuệ của cộng đ
 
 * Gửi đề xuất hoặc phản hồi về tính năng có giá trị trong **Vấn đề**.
 * Chia sẻ những hiểu biết độc đáo của bạn về quá trình sáng tạo.
-
-
-
-<a id="Nhóm liên lạc"></a>
-## Nhóm liên lạc
-
-![alt text](docImgs/README/image-40.png)

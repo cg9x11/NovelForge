@@ -1,0 +1,85 @@
+# Workflow:blueprint
+# Function:blueprintsaved,batchCreate volume,character_card,scene_card
+# Trigger:blueprintcardsavedauto trigger
+
+#@node(description="Trigger:Watchblueprintcardsaved")
+trigger = Trigger.CardSaved(card_type="blueprint")
+#</node>
+
+
+#@node(description="Readblueprint")
+blueprint = Card.Read(card_id=trigger.card_id)
+#</node>
+
+
+#@node(description=" volume()")
+volumes = Logic.Expression(
+    expression="[{'index': i} for i in range(1, (blueprint.content.volume_count or 0) + 1)]"
+  )
+#</node>
+
+
+#@node(async=true, description="batchCreatevolume_outline(async)")
+vol_cards = Card.BatchUpsert(
+    project_id=trigger.project_id,
+    card_type="volume_outline",
+    title_template="No.{item.index} volume",
+    content_template={"volume_number": "{item.index}"},
+    match_by="title",
+    items=volumes.result
+  )
+#</node>
+
+
+#@node(description="extract")
+characters = Logic.Expression(
+    expression="blueprint.content.character_cards or []"
+  )
+#</node>
+
+
+#@node(async=true, description="batchCreatecharacter_card(async)")
+char_cards = Card.BatchUpsert(
+    project_id=trigger.project_id,
+    parent_id=trigger.card_id,
+    card_type="character_card",
+    title_template="{item.name}",
+    match_by="title",
+    items=characters.result
+  )
+#</node>
+
+
+#@node(description="extract")
+scenes = Logic.Expression(
+    expression="blueprint.content.scene_cards or []"
+  )
+#</node>
+
+
+#@node(async=true, description="batchCreatescene_card(async)")
+scene_cards = Card.BatchUpsert(
+    project_id=trigger.project_id,
+    parent_id=trigger.card_id,
+    card_type="scene_card",
+    title_template="{item.name}",
+    match_by="title",
+    items=scenes.result
+  )
+#</node>
+
+
+#@node(description="waitasynccomplete")
+wait_result = Logic.Wait(tasks=[vol_cards, char_cards, scene_cards])
+#</node>
+
+
+#@node(description="Clear source list")
+update_result = Card.Update(
+    card_id=trigger.card_id,
+    content_merge={
+      "character_cards": [],
+      "scene_cards": []
+    }
+  )
+#</node>

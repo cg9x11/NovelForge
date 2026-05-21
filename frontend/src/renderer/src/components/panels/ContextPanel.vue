@@ -103,6 +103,7 @@ import { useI18n } from 'vue-i18n'
 import { assembleContext, type AssembleContextResponse } from '@renderer/api/ai'
 import { ElMessage } from 'element-plus'
 import { getCardsForProject, type CardRead } from '@renderer/api/cards'
+import { getCardTypeKey } from '@renderer/utils/cardType'
 
 const { t } = useI18n()
 
@@ -117,7 +118,6 @@ const emit = defineEmits<{
 
 const assembling = ref(false)
 const assembled = ref<AssembleContextResponse | null>(null)
-// 回显入口已移除
 
 type Group = { label: string; values: string[] }
 const participantGroups = ref<Group[]>([])
@@ -126,7 +126,6 @@ const localVolumeNumber = ref<number | null>(props.volumeNumber ?? null)
 const localStageNumber = ref<number | null>(props.stageNumber ?? null)
 const localChapterNumber = ref<number | null>(props.chapterNumber ?? null)
 
-// 缓存：名称 -> 分组标签（通过项目卡片匹配）
 const nameToGroup = ref<Record<string, string>>({})
 
 watch(() => props.participants, (v) => { localParticipants.value = [...(v || [])] })
@@ -142,7 +141,6 @@ function emitStage() { emit('update:stageNumber', localStageNumber.value ?? null
 function emitChapter() { emit('update:chapterNumber', localChapterNumber.value ?? null) }
 
 function detectTypeGroupByCard(c: CardRead): string {
-  // 1) 优先使用内容中的实体类型标记（后端新增）
   const et = (c.content as any)?.entity_type
   if (et === 'character') return t('contextPanel.groups.character')
   if (et === 'scene') return t('contextPanel.groups.scene')
@@ -150,15 +148,13 @@ function detectTypeGroupByCard(c: CardRead): string {
   if (et === 'item') return t('contextPanel.groups.item')
   if (et === 'concept') return t('contextPanel.groups.concept')
 
-  // 2) 使用卡片类型中文名归类
-  const tname = (c.card_type?.name || '').trim()
-  if (tname.includes('角色')) return t('contextPanel.groups.character')
-  if (tname.includes('场景')) return t('contextPanel.groups.scene')
-  if (tname.includes('组织')) return t('contextPanel.groups.organization')
-  if (tname.includes('物品')) return t('contextPanel.groups.item')
-  if (tname.includes('概念')) return t('contextPanel.groups.concept')
+  const cardTypeKey = getCardTypeKey(c.card_type)
+  if (cardTypeKey === 'character_card') return t('contextPanel.groups.character')
+  if (cardTypeKey === 'scene_card') return t('contextPanel.groups.scene')
+  if (cardTypeKey === 'organization_card') return t('contextPanel.groups.organization')
+  if (cardTypeKey === 'item_card') return t('contextPanel.groups.item')
+  if (cardTypeKey === 'concept_card') return t('contextPanel.groups.concept')
 
-  // 3) 兼容旧模型名：优先实例/类型的 model_name
   const m = (c as any).model_name || (c.card_type as any)?.model_name || ''
   if (m === 'CharacterCard') return t('contextPanel.groups.character')
   if (m === 'SceneCard') return t('contextPanel.groups.scene')
@@ -226,7 +222,6 @@ async function assemble() {
     })
     assembled.value = res
     emit('context-updated', res)
-    // 将最新本地值回写父层，确保保存时同步
     emitParticipants(); emitVolume(); emitStage(); emitChapter();
     ElMessage.success(t('contextPanel.assembledSuccess'))
   } catch (e:any) {
@@ -268,4 +263,4 @@ async function assemble() {
 .dialog-text { white-space: pre-wrap; line-height: 1.8; font-size: 13.5px; color: var(--el-text-color-primary); }
 .badges { margin-left: 8px; }
 .raw-toggle { margin: 6px 0; }
-</style> 
+</style>

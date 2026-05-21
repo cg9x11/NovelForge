@@ -7,16 +7,9 @@ import type {
   Instruction
 } from '@renderer/types/instruction'
 
-/**
- * 生成参数
- */
 export interface GenerateParams extends InstructionGenerateRequest {
-  // 继承所有请求参数
 }
 
-/**
- * 事件回调函数类型
- */
 export interface GenerateCallbacks {
   onThinking?: (text: string) => void
   onInstruction?: (instruction: Instruction) => void
@@ -25,13 +18,6 @@ export interface GenerateCallbacks {
   onDone?: (success: boolean, message?: string, finalData?: any) => void
 }
 
-/**
- * 使用指令流生成
- * 
- * @param params 生成参数
- * @param callbacks 事件回调
- * @param signal 中断信号（可选）
- */
 export async function generateWithInstructionStream(
   params: GenerateParams,
   callbacks: GenerateCallbacks,
@@ -40,7 +26,6 @@ export async function generateWithInstructionStream(
   const url = `${API_BASE_URL}/ai/generate/stream`
 
   try {
-    // 发送 POST 请求
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -59,7 +44,6 @@ export async function generateWithInstructionStream(
       throw new Error(String(i18n.global.t('generation.errors.empty_response')))
     }
 
-    // 读取 SSE 流
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
@@ -71,19 +55,16 @@ export async function generateWithInstructionStream(
         break
       }
 
-      // 解码数据块
       buffer += decoder.decode(value, { stream: true })
 
-      // 按行分割
       const lines = buffer.split('\n')
-      buffer = lines.pop() || '' // 保留不完整的行
+      buffer = lines.pop() || ''
 
       for (const line of lines) {
         if (!line.trim()) {
           continue
         }
 
-        // 解析 SSE 格式
         const event = parseSSELine(line)
         if (event) {
           handleEvent(event, callbacks)
@@ -91,7 +72,6 @@ export async function generateWithInstructionStream(
       }
     }
 
-    // 处理剩余的缓冲区
     if (buffer.trim()) {
       const event = parseSSELine(buffer)
       if (event) {
@@ -100,23 +80,16 @@ export async function generateWithInstructionStream(
     }
   } catch (error: any) {
     if (error.name === 'AbortError') {
-      console.log('生成已中断')
+      console.log('Generation aborted')
       return
     }
 
-    console.error('生成失败:', error)
+    console.error('Generation failed:', error)
     callbacks.onError?.(error.message || String(i18n.global.t('generation.errors.failed')))
   }
 }
 
-/**
- * 解析 SSE 行
- * @param line SSE 格式的行
- * @returns 解析后的事件对象
- */
 function parseSSELine(line: string): { event: string; data: any } | null {
-  // SSE 格式：event: xxx\ndata: {...}
-  // 或者简化格式：data: {...}
 
   let eventType = 'message'
   let dataStr = ''
@@ -138,16 +111,11 @@ function parseSSELine(line: string): { event: string; data: any } | null {
     const data = JSON.parse(dataStr)
     return { event: eventType, data }
   } catch (e) {
-    console.warn('解析 SSE 数据失败:', dataStr)
+    console.warn('Failed to parse SSE data:', dataStr)
     return null
   }
 }
 
-/**
- * 处理事件
- * @param event 事件对象
- * @param callbacks 回调函数
- */
 function formatGenerationStreamError(data: any): string {
   if (data?.error_code === 'GENERATION_FAILED') {
     const message = data.message ? `: ${data.message}` : ''
@@ -182,6 +150,6 @@ function handleEvent(event: { event: string; data: any }, callbacks: GenerateCal
       break
 
     default:
-      console.warn('未知的事件类型:', type, data)
+      console.warn('Unknown event type:', type, data)
   }
 }

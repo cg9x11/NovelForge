@@ -23,7 +23,6 @@ function goBackToDashboard() {
 }
 
 onMounted(async () => {
-  // 若未加载或不是保留项目，则加载保留项目
   if (!currentProject.value || (currentProject.value.name || '') !== '__free__') {
     await projectStore.loadFreeProject()
   }
@@ -33,7 +32,6 @@ onMounted(async () => {
   }
 })
 
-// 新建自由卡对话框
 const createDialog = ref(false)
 const newTitle = ref('')
 const newTypeId = ref<number | null>(null)
@@ -55,7 +53,6 @@ async function confirmCreate() {
   createDialog.value = false
 }
 
-// --- 移动/复制到项目 ---
 const transferDialog = ref(false)
 const transferOp = ref<'copy' | 'move'>('copy')
 const transferSearch = ref('')
@@ -78,7 +75,6 @@ async function openTransferDialog() {
   targetProjectId.value = null
   targetParentId.value = null
   targetProjectCards.value = []
-  // 加载项目列表（排除 __free__）
   try {
     const list = await getProjects()
     projectOptions.value = (list || []).filter(p => (p.name || '') !== '__free__').map(p => ({ id: p.id!, name: p.name! }))
@@ -105,7 +101,6 @@ async function confirmTransfer() {
         await moveCard(id, { target_project_id: pid, parent_id: targetParentId.value as any })
       }
     }
-    // 刷新自由项目卡片
     if (projectStore.currentProject?.id) await cardStore.fetchCards(projectStore.currentProject.id)
     transferDialog.value = false
   } catch {}
@@ -128,7 +123,7 @@ async function confirmTransfer() {
       <el-skeleton animated :rows="6" style="padding: 24px;" />
     </template>
 
-    
+
 
     <el-dialog v-model="transferDialog" :title="t('ideas_home.transferDialogTitle')" width="760px" class="nf-transfer-dialog">
       <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
@@ -167,4 +162,4 @@ async function confirmTransfer() {
 </style>
 <style>
 .nf-transfer-dialog .el-table .cell { font-size: 13px; }
-</style> 
+</style>

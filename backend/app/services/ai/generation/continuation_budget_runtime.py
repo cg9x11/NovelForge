@@ -7,7 +7,7 @@ from typing import Optional
 from app.schemas.ai import ContinuationRequest
 
 
-_SENTENCE_ENDINGS = "。！？!?…\n"
+_SENTENCE_ENDINGS = "。！？!seconds…\n"
 
 
 @dataclass(frozen=True)
@@ -128,39 +128,39 @@ def build_budget_hint_text(
     plan: ContinuationRoundPlan,
     continuation_guidance: str | None = None,
 ) -> str:
-    lines: list[str] = ["【续写预算】", f"- 当前总字数：{plan.current_word_count} 字"]
+    lines: list[str] = ["[Continuation Budget]", f"- Current total words: {plan.current_word_count}"]
 
     if plan.target_word_count is not None:
-        lines.append(f"- 目标总字数：{plan.target_word_count} 字")
+        lines.append(f"- Target total words: {plan.target_word_count}")
     if plan.remaining_word_count is not None:
-        lines.append(f"- 剩余字数：约 {max(plan.remaining_word_count, 0)} 字")
+        lines.append(f"- Remaining words: about {max(plan.remaining_word_count, 0)}")
     if plan.mode != "prompt_only":
         if plan.is_final_round:
-            lines.append(f"- 当前轮次：第 {plan.round_index} 轮（本轮收尾）")
+            lines.append(f"- Current round: {plan.round_index} (finalizing this round)")
         else:
-            lines.append(f"- 当前轮次：第 {plan.round_index} 轮（预计最多 {plan.max_rounds} 轮）")
+            lines.append(f"- Current round: {plan.round_index} (estimated max {plan.max_rounds} rounds)")
     if plan.suggested_word_count is not None and plan.mode != "prompt_only":
-        lines.append(f"- 本轮建议规模：约 {plan.suggested_word_count} 字")
+        lines.append(f"- Suggested size this round: about {plan.suggested_word_count} words")
     if plan.hard_word_limit is not None:
-        lines.append(f"- 本轮硬上限：约 {plan.hard_word_limit} 字（超出会提前停轮）")
+        lines.append(f"- Hard limit this round: about {plan.hard_word_limit} words (round stops early if exceeded)")
 
     guidance = (continuation_guidance or "").strip()
     if guidance:
-        lines.append(f"- 续写指导：{guidance}")
+        lines.append(f"- Continuation guidance: {guidance}")
 
     if plan.mode == "prompt_only":
-        lines.append("- 当前为提示词约束模式：目标字数仅作参考，以文风和连贯性优先。")
+        lines.append("- Prompt-constrained mode: target word count is reference only; prioritize style and coherence.")
     else:
-        lines.append("- 当前为智能字数控制模式：前两轮优先推进剧情，后续逐步收束字数并完成结尾。")
+        lines.append("- Smart word-count mode: first rounds advance plot; later rounds tighten pacing and finish ending.")
 
     if plan.should_warn_wrap_up:
         if plan.rounds_left >= 3:
-            lines.append("- 已进入最后一千字的收尾阶段：请开始压缩支线、回收信息，并为后续 600 / 300 / 100 的收尾节奏预留空间。")
+            lines.append("- Final 1000-word phase: compress side plots, resolve information, and reserve room for 600 / 300 / 100 ending cadence.")
         elif plan.rounds_left == 2:
-            lines.append("- 只剩最后两轮：请明显加快收束节奏，不要再开启新支线，并把最后一轮尽量压到约 100 字。")
+            lines.append("- Only two rounds remain: tighten pacing clearly, avoid new side plots, and keep final round near 100 words.")
 
     if plan.mode != "prompt_only" and plan.is_final_round:
-        lines.append("- 这是最后一轮：请只做结尾收束，严控字数，不要开启新支线，不要明显超出预算；结尾要自然，并保留余味或轻微悬念。")
+        lines.append("- Final round: only close the ending, control word count, avoid new side plots, avoid exceeding budget, keep ending natural with slight aftertaste or suspense.")
 
     return "\n".join(lines).strip()
 

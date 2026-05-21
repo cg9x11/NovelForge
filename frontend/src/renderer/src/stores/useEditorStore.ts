@@ -11,7 +11,6 @@ export interface ChapterSelectionRange {
   snapshotHash?: string
 }
 
-// 兼容旧路径：未显式声明 mode 的对象，仍按文本替换处理。
 export type ChapterReplaceTextOp = {
   mode?: 'text'
   from: string
@@ -38,23 +37,18 @@ export interface ChapterExtractRunOptions {
 }
 
 export const useEditorStore = defineStore('editor', () => {
-  // 当前激活的编辑器
   const activeEditor = ref<{ type: string; id: string; data?: any } | null>(null)
-  
-  // 侧栏宽度
+
   const leftSidebarWidth = ref(250)
   const rightSidebarWidth = ref(300)
-  
-  // 侧栏宽度限制
+
   const minLeftWidth = 180
   const maxLeftWidth = 400
   const minRightWidth = 220
   const maxRightWidth = 500
-  
-  // 导航树展开状态
+
   const expandedKeys = ref<string[]>(['content-root'])
-  
-  // 右键菜单状态
+
   const contextMenu = reactive({
     visible: false,
     x: 0,
@@ -62,35 +56,27 @@ export const useEditorStore = defineStore('editor', () => {
     items: [] as { label: string; action: () => void }[],
     nodeData: null as any | null
   })
-  
-  // AI配置对话框状态
+
   const aiConfigDialog = reactive({
     visible: false,
     task: '',
     input: {} as any
   })
-  
-  // 拖拽调整状态
+
   const resizing = ref<'left' | 'right' | null>(null)
   let startX = 0
   let startWidth = 0
 
-  // 编辑器跨组件修订接口（由 NovelEditor 注册）
   const applyChapterReplacements = ref<null | ((pairs: ChapterReplaceOp[]) => Promise<void> | void)>(null)
   const persistActiveChapterDraftRef = ref<null | (() => Promise<boolean>)>(null)
 
-  // 用于跨组件触发“提取动态信息”的回调
   const triggerExtractDynamicInfoRef = ref<null | ((opts: ChapterExtractRunOptions) => Promise<void>)>(null)
-  // 用于跨组件触发“提取关系入图”的回调
   const triggerExtractRelationsRef = ref<null | ((opts: ChapterExtractRunOptions) => Promise<void>)>(null)
-  // 用于跨组件触发“提取物品状态”的回调
   const triggerExtractItemStateRef = ref<null | ((opts: ChapterExtractRunOptions) => Promise<void>)>(null)
-  // 用于跨组件触发“提取概念掌握”的回调
   const triggerExtractConceptStateRef = ref<null | ((opts: ChapterExtractRunOptions) => Promise<void>)>(null)
   const triggerExtractSceneStateRef = ref<null | ((opts: ChapterExtractRunOptions) => Promise<void>)>(null)
   const triggerExtractOrganizationStateRef = ref<null | ((opts: ChapterExtractRunOptions) => Promise<void>)>(null)
 
-  // 写作上下文共享：卷号/章节号/标题（供其它面板使用）
   const currentVolumeNumber = ref<number | null>(null)
   const currentChapterNumber = ref<number | null>(null)
   const currentChapterTitle = ref<string>('')
@@ -298,7 +284,7 @@ export const useEditorStore = defineStore('editor', () => {
     currentVolumeNumber,
     currentChapterNumber,
     currentChapterTitle,
-    
+
     // Actions
     setActiveEditor,
     setLeftSidebarWidth,

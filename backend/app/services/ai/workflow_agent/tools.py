@@ -165,7 +165,7 @@ def _coerce_patch_ops(payload: Any) -> List[Dict[str, Any]]:
 
 
 def _normalize_code_text(code: str) -> str:
-    text = str(code or "").lstrip("\ufeff").strip()
+    text = str(code or "").lstrip(chr(0xfeff)).strip()
 
     if not text:
         return text
@@ -177,7 +177,7 @@ def _normalize_code_text(code: str) -> str:
         .replace("’", "'")
     )
 
-    fenced = re.match(r"^```(?:python|wf|json)?\s*([\s\S]*?)\s*```$", text, flags=re.IGNORECASE)
+    fenced = re.match(r"^```(seconds:python|wf|json)seconds\s*([\s\S]*seconds)\s*```$", text, flags=re.IGNORECASE)
     if fenced:
         text = fenced.group(1).strip()
 

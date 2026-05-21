@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.locales import localized_text
 
 from app.db.models import Card
 from app.schemas.entity import OrganizationCard, OrganizationCardMemory
@@ -28,7 +29,7 @@ def _load_existing_organization_card(card: Card) -> OrganizationCard:
     payload = dict(card.content or {})
     payload.setdefault("name", card.title)
     payload.setdefault("entity_type", "organization")
-    payload.setdefault("life_span", "长期")
+    payload.setdefault("life_span", localized_text('hardcoded.services_memory_extractors_organization_state_527a5685'))
     payload["description"] = payload.get("description") or ""
     if payload.get("influence") == "":
         payload["influence"] = None
@@ -50,7 +51,7 @@ _SPEC = StructuredCardExtractorSpec(
     related_participant_types=("character", "organization", "scene", "item", "concept"),
     target_participant_key="organization_names",
     related_participant_key="related_entities",
-    reference_title="已有组织卡参考",
+    reference_title="Field",
 )
 
 
@@ -67,8 +68,8 @@ class OrganizationStateExtractor(StructuredCardMemoryExtractor):
     def build_reference_lines(self, model: OrganizationCard) -> list[str]:
         return [
             f"- {model.name}",
-            f"  简介: {model.description or '未填写'}",
-            f"  当前影响力: {model.influence or '未填写'}",
-            f"  对外关系: {'；'.join(model.relationship or []) or '暂无'}",
-            f"  当前状态: {'；'.join(model.dynamic_state or []) or '暂无'}",
+            localized_text('hardcoded.services_memory_extractors_organization_state_c948ca4f'),
+            localized_text('hardcoded.services_memory_extractors_organization_state_231193c4'),
+            localized_text('hardcoded.services_memory_extractors_organization_state_05fd1652'),
+            localized_text('hardcoded.services_memory_extractors_organization_state_ef9af212'),
         ]

@@ -1,7 +1,3 @@
-"""共享工作流运行时状态。
-
-该模块只保存进程内运行控制状态，不持有数据库 Session。
-"""
 
 from __future__ import annotations
 
@@ -26,7 +22,7 @@ class _LoopBoundExecutor:
 
 
 class WorkflowRuntime:
-    """跨请求共享的工作流运行控制器。"""
+
 
     def __init__(self, max_concurrent_runs: int = 5):
         self.max_concurrent_runs = max_concurrent_runs
@@ -40,11 +36,9 @@ class WorkflowRuntime:
         self._pause_requested: set[int] = set()
 
     def register_task(self, run_id: int, task: asyncio.Task | None = None) -> None:
-        """登记当前运行的 asyncio task。"""
         loop = asyncio.get_running_loop()
         task = task or asyncio.current_task()
         if task is None:
-            logger.warning(f"[WorkflowRuntime] 无法登记任务: run_id={run_id}")
             return
 
         with self._lock:
@@ -57,18 +51,12 @@ class WorkflowRuntime:
                     self._tasks.pop(run_id, None)
 
         task.add_done_callback(_cleanup)
-        logger.debug(f"[WorkflowRuntime] 任务已登记: run_id={run_id}")
 
     def unregister_task(self, run_id: int) -> None:
         with self._lock:
             self._tasks.pop(run_id, None)
 
     async def acquire_slot(self, run_id: int) -> str:
-        """等待全局并发槽位。
-
-        Returns:
-            acquired | cancelled | paused
-        """
         with self._lock:
             if run_id in self._cancel_requested:
                 return "cancelled"
@@ -89,7 +77,7 @@ class WorkflowRuntime:
                         self._pending_runs.discard(run_id)
                         self._acquired_runs.add(run_id)
                     logger.info(
-                        f"[WorkflowRuntime] 获得运行槽位: run_id={run_id}, "
+                        f"[WorkflowRuntime] \u83b7\u5f97\u8fd0\u884c\u69fd\u4f4d: run_id={run_id}, "
                         f"running={len(self._acquired_runs)}/{self.max_concurrent_runs}"
                     )
                     return "acquired"
@@ -109,7 +97,7 @@ class WorkflowRuntime:
         if should_release:
             self._semaphore.release()
             logger.info(
-                f"[WorkflowRuntime] 释放运行槽位: run_id={run_id}, "
+                f"[WorkflowRuntime] \u91ca\u653e\u8fd0\u884c\u69fd\u4f4d: run_id={run_id}, "
                 f"running={len(self._acquired_runs)}/{self.max_concurrent_runs}"
             )
 
@@ -117,14 +105,12 @@ class WorkflowRuntime:
         loop = asyncio.get_running_loop()
         with self._lock:
             self._executors[run_id] = _LoopBoundExecutor(executor=executor, loop=loop)
-        logger.debug(f"[WorkflowRuntime] 执行器已登记: run_id={run_id}")
 
     def unregister_executor(self, run_id: int, executor: Any | None = None) -> None:
         with self._lock:
             current = self._executors.get(run_id)
             if current and (executor is None or current.executor is executor):
                 self._executors.pop(run_id, None)
-        logger.debug(f"[WorkflowRuntime] 执行器已清理: run_id={run_id}")
 
     def get_executor(self, run_id: int) -> Optional[Any]:
         with self._lock:
@@ -132,7 +118,6 @@ class WorkflowRuntime:
             return current.executor if current else None
 
     def request_pause(self, run_id: int) -> bool:
-        """请求暂停运行或待运行任务。"""
         with self._lock:
             self._pause_requested.add(run_id)
             executor_ref = self._executors.get(run_id)
@@ -149,7 +134,6 @@ class WorkflowRuntime:
         return active
 
     def request_resume(self, run_id: int) -> bool:
-        """恢复仍在进程内暂停的执行器。"""
         with self._lock:
             self._pause_requested.discard(run_id)
             self._cancel_requested.discard(run_id)
@@ -162,7 +146,6 @@ class WorkflowRuntime:
         return True
 
     def request_cancel(self, run_id: int) -> bool:
-        """请求取消运行或待运行任务。"""
         with self._lock:
             self._cancel_requested.add(run_id)
             self._pause_requested.discard(run_id)
@@ -191,7 +174,6 @@ class WorkflowRuntime:
             return run_id in self._pause_requested
 
     def finish_run(self, run_id: int, *, keep_pause: bool = False) -> None:
-        """清理运行结束后的控制状态。"""
         with self._lock:
             self._tasks.pop(run_id, None)
             self._executors.pop(run_id, None)

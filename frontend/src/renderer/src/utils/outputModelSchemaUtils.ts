@@ -8,9 +8,7 @@ export interface BuilderField {
   relation: { targetModelName: string | null }
   description?: string
   example?: string
-  // tuple element types（仅用于 Builder 展示与生成简单元组）
   tupleItems?: Array<'string' | 'number' | 'integer' | 'boolean'>
-  // 是否从 AI 生成的有效 Schema 中排除
   aiExclude?: boolean
 }
 
@@ -63,7 +61,6 @@ export function schemaToBuilder(schema: any): BuilderField[] {
   const props = schema?.properties || {}
   const required: string[] = schema?.required || []
   const fields: BuilderField[] = []
-  // 允许带 $defs，但此函数只解析主 properties → relation 的 $ref 名称
   for (const key of Object.keys(props)) {
     const rawFieldSchema = props[key]
     const normalizedField = unwrapNullableSchema(rawFieldSchema)
@@ -87,7 +84,6 @@ export function schemaToBuilder(schema: any): BuilderField[] {
       kind = core.type
     }
 
-    // examples[0] 优先，否则 example
     const exs = core?.examples || p?.examples
     let exRaw: any = ''
     if (Array.isArray(exs) && exs.length) exRaw = exs[0]
@@ -145,6 +141,5 @@ export function builderToSchema(fields: BuilderField[]): any {
   }
   const schema: any = { type: 'object', properties }
   if (required.length) schema.required = required
-  // defs 由调用方（SchemaStudio）收集/注入，以便跨模型复用
   return schema
-} 
+}

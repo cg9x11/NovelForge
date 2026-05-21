@@ -1,5 +1,5 @@
 ---
-description: NovelForge 工程开发规则（架构优雅性、低耦合、可维护性）
+description: NovelForge engineering rules for elegant architecture, low coupling, and maintainability
 globs:
   - "backend/**/*.py"
   - "frontend/src/renderer/src/**/*.{ts,vue}"
@@ -9,189 +9,87 @@ alwaysApply: true
 
 # NovelForge Engineering Rule
 
-## 0) 目标
+## 0) Goal
 
-所有开发行为以“长期可维护”为第一优先级：
+All development should prioritize long-term maintainability:
 
-1. 低耦合（模块边界清晰）
-2. 高内聚（单一职责）
-3. 可验证（变更有校验闭环）
-4. 可演进（避免一次性写死）
+1. Low coupling with clear module boundaries.
+2. High cohesion with single responsibility.
+3. Verifiable changes with validation loops.
+4. Evolvable design without one-off hardcoding.
 
-禁止为了“先跑通”引入难以回收的硬编码和隐式行为。
+Do not introduce hardcoded or implicit behavior only to make something work quickly.
 
----
+## 1) Architecture And Decoupling
 
-## 1) 架构与解耦规则
+### 1.1 Prefer Event-Driven Integration
 
-### 1.1 事件驱动优先
+- Cross-domain behavior, such as triggering workflows after saving cards, should use publish/subscribe events first.
+- Do not chain downstream modules directly from business entry points when an event boundary is appropriate.
 
-- 跨域联动（例如“保存卡片后触发工作流”）必须优先采用事件发布/订阅。
-- 禁止在业务入口里直接串联多个下游模块实现“硬调用链”。
+### 1.2 Prefer Plugin Registration
 
-### 1.2 插件化注册优先
+- Extensible capabilities, including initializers, workflow nodes, and event handlers, must register through decorators.
+- New capabilities need two steps: define with the decorator, then import from the relevant `__init__.py` so registration runs.
 
-- 可扩展能力（初始化器、工作流节点、事件处理器）必须通过装饰器注册。
-- 新增能力必须完成“两步”：
-  1) 定义并加装饰器
-  2) 在对应 `__init__.py` 导入，确保注册生效
+### 1.3 Centralize Configuration
 
-### 1.3 配置集中管理
+- Mutable parameters must live in the configuration system: environment variables plus config objects.
+- Do not hardcode URLs, switches, thresholds, model names, timeouts, or retry counts in business code.
 
-- 所有可变参数必须进入统一配置体系（环境变量 + 配置对象）。
-- 禁止在业务代码中硬编码：URL、开关、阈值、模型名、超时、重试次数。
+## 2) Service And API Rules
 
----
+### 2.1 Single Responsibility
 
-## 2) 服务层与接口规则
+- One service should own one domain.
+- Split complex behavior into small services plus an orchestration layer. Avoid god services.
 
-### 2.1 单一职责
+### 2.2 Dependency Injection
 
-- 一个 service 只负责一个领域。
-- 复杂能力拆分为“小服务 + 协调层”，禁止“巨型上帝类服务”。
+- Inject `Session`, config, and dependency objects through parameters.
+- Do not create and retain hidden global dependency instances inside functions.
 
-### 2.2 依赖注入
+### 2.3 Single API Contract Source
 
-- 通过参数注入 `Session`、配置、依赖对象。
-- 禁止在函数内部偷偷创建全局依赖实例并长期持有。
+- Backend schemas are the single source of truth for API types.
+- Frontend types should come from OpenAPI generation via `npm run gen:types`.
+- Do not keep handwritten duplicate API types long term.
+- API endpoints must declare clear response models so contracts can be generated.
 
-### 2.3 API 契约唯一来源
+## 3) Workflow Rules
 
-- 类型定义以后端 schema 为唯一真相。
-- 前端必须使用 OpenAPI 生成类型；禁止手写重复接口类型并长期并存。
-- 前端不要重复构建后端模型或接口类型，优先通过 `npm run gen:types` 从后端生成并复用。
-- 任何 API 端点必须声明清晰响应模型，确保契约可生成。
+### 3.1 Verified Code Change Loop
 
----
+Workflow code changes must follow this loop:
 
-## 3) 工作流系统规则
+1. Generate code or patch.
+2. Parse.
+3. Validate.
+4. Apply only after validation passes.
 
-### 3.1 代码修改闭环
+Do not skip validation before persisting workflow code.
 
-- 任何工作流代码改动必须走“可验证闭环”：
-  1) 生成新代码/补丁
-  2) parse
-  3) validate
-  4) 通过后才应用
+### 3.2 Visual Editing Safety
 
-- 禁止跳过校验直接落库。
+- Visual editors must preserve raw schema and unknown fields unless intentionally removed.
+- UI helpers should not rewrite workflow semantics without parser and validator coverage.
 
-### 3.2 可视化编辑安全性
+## 4) Frontend Rules
 
-- 可视化参数修改不得直接拼接字符串写回。
-- 必须处理好字面量编码/转义，避免把合法值写成带多余引号的错误代码。
-- 任何前端写回都必须经过服务端校验结果确认。
+- User-visible text belongs in locale files unless it is dynamic data from DB or user content.
+- Keep legacy DB value compatibility through stable keys and mapping helpers.
+- Avoid adding new language-specific hardcoded labels in components.
 
-### 3.3 运行能力一致性
+## 5) Backend Rules
 
-- 工作流功能设计必须考虑：
-  - 后台运行可见性（全局状态反馈）
-  - 节点级进度上报
-  - 暂停/恢复
-  - 运行记录保留策略（临时 vs 持久化）
+- Seed data should use stable keys and locale-backed display names where practical.
+- DB-editable content may be Vietnamese data, but code logic must not depend on translated display text.
+- Migrations must preserve existing data and support legacy aliases when display values changed.
 
-- 新功能不得破坏以上能力的一致语义。
+## 6) Validation
 
----
+Before handoff, run the narrowest useful checks first, then broader checks when ready:
 
-## 4) Agent 系统规则
-
-### 4.1 共享层与业务层分离
-
-- 通用消息渲染、流式事件、输入框交互必须复用共享层。
-- 业务 Agent 只实现自己的工具与策略，不复制一套 UI/协议。
-
-### 4.2 单轨展示，避免双实现
-
-- 同一语义（如消息时间线）禁止维护两套并行显示逻辑。
-- 若确需新增模式，必须证明旧模式无法满足需求，并给出迁移计划。
-
-### 4.3 运行期依赖必须明确
-
-- 关键提示词等运行依赖缺失时应明确报错。
-- 禁止加入“只在源码目录可用”的隐式兜底读取逻辑。
-
----
-
-## 5) 前端工程规则
-
-### 5.1 组件规模控制
-
-- 超大组件必须持续拆分（UI、状态、事件处理、数据转换分离）。
-- 优先抽离：共享组件、composable、类型定义。
-
-### 5.2 暗黑模式与主题
-
-- 样式必须优先使用主题变量。
-- 禁止硬编码浅色文本导致暗黑模式不可读。
-
-### 5.3 状态与事件一致性
-
-- 任何流式交互都必须有明确状态机（idle/running/stopped/error）。
-- “发送/中止”必须共用一个动作入口，避免双按钮状态冲突。
-
----
-
-## 6) 数据与健壮性规则
-
-### 6.1 输入容错与字段兜底
-
-- 事件负载和节点输入必须做必需字段防御性处理。
-- 对关键字段允许“多层回退解析”，避免因 `None` 直接中断整条链路。
-
-### 6.2 事务与异常边界
-
-- 失败必须可回滚，不得产生半成功脏状态。
-- 对可降级功能（例如非关键联动）可捕获异常，但必须记录结构化日志。
-
----
-
-## 7) 编码与变更规则
-
-### 7.1 最小变更原则
-
-- 只改与目标相关的文件和逻辑。
-- 禁止无关重构、无关命名重写、无关格式化噪音。
-
-### 7.2 编码与文件安全
-
-- 文本文件统一使用 UTF-8。
-- 禁止在不确认编码的情况下整文件重写，优先局部补丁。
-
-### 7.3 禁止反模式
-
-禁止以下行为：
-
-- 为“快”而复制粘贴同构逻辑（前后端、模块间）
-- 在多个位置维护同一份业务规则
-- 用前端临时字符串规则替代后端正式校验
-- 把过程性调试开关长期暴露给用户而无产品意义
-
----
-
-## 8) 验证与交付规则
-
-### 8.1 必做校验
-
-- 后端改动：至少做目标接口/流程级验证。
-- 前端改动：至少做关键路径交互验证（加载、提交、错误分支）。
-- 工作流相关改动：必须验证 parse/validate/run 的完整链路。
-
-### 8.2 变更说明
-
-- 交付说明必须包含：改动范围、行为变化、已验证内容、已知限制。
-- 如果存在暂未解决的边界问题，必须显式标注，不得隐藏。
-
----
-
-## 9) 决策优先级（冲突时）
-
-当多个方案都能实现功能时，按以下优先级决策：
-
-1. 破坏性最小
-2. 复用性最高
-3. 校验链最完整
-4. 用户体验最一致
-5. 实现复杂度适中
-
-若以上无法兼顾，先保证正确性与可维护性，再优化体验。
+- Backend syntax: `python -m compileall -q backend/app`
+- Frontend types: `npm --prefix frontend run typecheck`
+- Script syntax where changed: `node --check <script>`

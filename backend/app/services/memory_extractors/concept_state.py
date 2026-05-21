@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.locales import localized_text
 
 from app.db.models import Card
 from app.schemas.entity import ConceptCard
@@ -44,7 +45,7 @@ _SPEC = StructuredCardExtractorSpec(
     related_participant_types=("character", "organization", "item"),
     target_participant_key="concept_names",
     related_participant_key="related_entities",
-    reference_title="已有概念卡参考",
+    reference_title="Field",
 )
 
 
@@ -61,7 +62,7 @@ class ConceptStateExtractor(StructuredCardMemoryExtractor):
     def build_reference_lines(self, model: ConceptCard) -> list[str]:
         return [
             f"- {model.name}",
-            f"  类别: {model.category or '未填写'}",
-            f"  规则: {model.rule_definition or '未填写'}",
-            f"  掌握提示: {model.mastery_hint or '未填写'}",
+            localized_text('hardcoded.services_memory_extractors_concept_state_754d776f'),
+            localized_text('hardcoded.services_memory_extractors_concept_state_51739b51'),
+            localized_text('hardcoded.services_memory_extractors_concept_state_cfdce993'),
         ]

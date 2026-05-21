@@ -1,8 +1,5 @@
-"""提示词加载节点
 
-从数据库加载预设提示词并渲染模板变量。
-"""
-
+from app.locales import schema_field_description
 from typing import Any, Dict, Optional, Union, AsyncIterator
 from pydantic import BaseModel, Field
 from loguru import logger
@@ -12,65 +9,57 @@ from app.services.prompt_service import get_prompt, get_prompt_by_identifier, re
 
 
 class PromptLoadInput(BaseModel):
-    """提示词加载输入"""
     prompt_id: Union[int, str] = Field(
         ...,
-        description="提示词 ID 或 名称",
+        description=schema_field_description("prompt_id"),
         json_schema_extra={"x-component": "PromptSelect"}
     )
-    variables: Optional[Dict[str, Any]] = Field(None, description="模板变量（用于渲染）")
+    variables: Optional[Dict[str, Any]] = Field(None, description=schema_field_description("variables"))
 
 
 class PromptLoadOutput(BaseModel):
-    """提示词加载输出"""
-    text: str = Field(..., description="渲染后的提示词文本")
+    text: str = Field(..., description=schema_field_description("text"))
 
 
 @register_node
 class PromptLoadNode(BaseNode[PromptLoadInput, PromptLoadOutput]):
-    """提示词加载节点"""
-    
+
+
     node_type = "Prompt.Load"
     category = "data"
-    label = "加载提示词"
-    description = "从数据库加载预设提示词模板"
-    
+    label = "Load Prompt"
+    description = "Load a prompt template"
+
     input_model = PromptLoadInput
     output_model = PromptLoadOutput
 
     async def execute(self, inputs: PromptLoadInput) -> AsyncIterator[PromptLoadOutput]:
-        """执行提示词加载"""
         variables = inputs.variables or {}
-        
+
         try:
-            # 获取提示词
             prompt_obj = None
-            
-            # 支持通过 ID 或 Name 查找
+
             if isinstance(inputs.prompt_id, int):
                 prompt_obj = get_prompt(self.context.session, inputs.prompt_id)
             else:
                 prompt_obj = get_prompt_by_identifier(self.context.session, str(inputs.prompt_id))
-            
+
             if not prompt_obj:
-                raise ValueError(f"未找到提示词: {inputs.prompt_id}")
-            
-            # 合并全局变量
+                raise ValueError(f"\u672a\u627e\u5230\u63d0\u793a\u8bcd: {inputs.prompt_id}")
+
             template_vars = {
                 **self.context.variables,
                 **variables,
             }
-            
-            # 渲染提示词
+
             rendered_text = render_prompt(prompt_obj.template, template_vars)
-            
+
             logger.info(
-                f"[Prompt.Load] 加载提示词成功: prompt={inputs.prompt_id}, "
+                f"[Prompt.Load] \u52a0\u8f7d\u63d0\u793a\u8bcd\u6210\u529f: prompt={inputs.prompt_id}, "
                 f"length={len(rendered_text)}"
             )
-            
+
             yield PromptLoadOutput(text=rendered_text)
-            
+
         except Exception as e:
-            logger.error(f"[Prompt.Load] 加载提示词失败: {e}")
             raise

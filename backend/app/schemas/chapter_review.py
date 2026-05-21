@@ -1,3 +1,4 @@
+from app.locales import schema_field_description
 from datetime import datetime
 from typing import Any, Dict, Literal, Optional
 
@@ -10,19 +11,19 @@ TargetType = Literal["card"]
 
 
 class ReviewResultCardContent(BaseModel):
-    review_target_card_id: int = Field(description="被审核卡片 ID")
-    review_target_title: str = Field(description="被审核卡片标题")
-    review_target_type: TargetType = Field(default="card", description="被审核目标类型")
-    review_type: ReviewType = Field(default="card", description="审核类型")
-    review_profile: str = Field(description="审核 profile code")
-    review_target_field: Optional[str] = Field(default=None, description="被审核字段路径")
-    quality_gate: QualityGate = Field(description="审核结论")
-    review_markdown: str = Field(description="审核结果正文（Markdown）")
-    prompt_name: str = Field(description="使用的提示词名称")
-    llm_config_id: Optional[int] = Field(default=None, description="审核所用模型配置")
-    reviewed_at: str = Field(description="审核时间（ISO 格式字符串）")
-    target_snapshot: Optional[str] = Field(default=None, description="被审核内容快照")
-    meta: Dict[str, Any] = Field(default_factory=dict, description="扩展元数据")
+    review_target_card_id: int = Field(description=schema_field_description("review_target_card_id"))
+    review_target_title: str = Field(description=schema_field_description("review_target_title"))
+    review_target_type: TargetType = Field(default="card", description=schema_field_description("review_target_type"))
+    review_type: ReviewType = Field(default="card", description=schema_field_description("review_type"))
+    review_profile: str = Field(description=schema_field_description("review_profile"))
+    review_target_field: Optional[str] = Field(default=None, description=schema_field_description("review_target_field"))
+    quality_gate: QualityGate = Field(description=schema_field_description("quality_gate"))
+    review_markdown: str = Field(description=schema_field_description("review_markdown"))
+    prompt_name: str = Field(description=schema_field_description("prompt_name"))
+    llm_config_id: Optional[int] = Field(default=None, description=schema_field_description("llm_config_id"))
+    reviewed_at: str = Field(description=schema_field_description("reviewed_at"))
+    target_snapshot: Optional[str] = Field(default=None, description=schema_field_description("target_snapshot"))
+    meta: Dict[str, Any] = Field(default_factory=dict, description=schema_field_description("meta"))
 
 
 class ReviewResultCardRead(BaseModel):
@@ -70,7 +71,7 @@ class ReviewRunRequest(BaseModel):
     target_text: Optional[str] = None
     context_info: Optional[str] = None
     facts_info: Optional[str] = None
-    content_snapshot: Optional[str] = Field(default=None, description="可选存储的审核目标快照")
+    content_snapshot: Optional[str] = Field(default=None, description=schema_field_description("content_snapshot"))
     llm_config_id: int
     prompt_name: str = Field(default="general_review")
     temperature: Optional[float] = None

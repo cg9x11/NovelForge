@@ -64,6 +64,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { getCardTypeKey } from '@renderer/utils/cardType'
 
 // ==================== Props & Emits ====================
 
@@ -80,24 +81,18 @@ const emit = defineEmits<{
   cancel: []
 }>()
 
-// ==================== 状态管理 ====================
 
 const dialogVisible = ref(false)
 const userPrompt = ref('')
 const useExistingContent = ref(false)
 
-// 示例提示（根据卡片类型动态调整）
 const examples = ref<string[]>([
   t('initial_prompt.examples.character_1'),
   t('initial_prompt.examples.character_2'),
   t('initial_prompt.examples.character_3')
 ])
 
-// ==================== 方法 ====================
 
-/**
- * 处理开始生成
- */
 function handleStartGenerate() {
   emit('confirm', userPrompt.value.trim(), useExistingContent.value)
   dialogVisible.value = false
@@ -105,9 +100,6 @@ function handleStartGenerate() {
   useExistingContent.value = false
 }
 
-/**
- * 处理跳过
- */
 function handleSkip() {
   emit('confirm', '', useExistingContent.value)
   dialogVisible.value = false
@@ -115,16 +107,12 @@ function handleSkip() {
   useExistingContent.value = false
 }
 
-/**
- * 处理取消
- */
 function handleCancel() {
   emit('cancel')
   dialogVisible.value = false
   userPrompt.value = ''
 }
 
-// ==================== 监听 ====================
 
 watch(() => props.visible, (val) => {
   dialogVisible.value = val
@@ -134,24 +122,23 @@ watch(dialogVisible, (val) => {
   emit('update:visible', val)
 })
 
-// 根据卡片类型调整示例
 watch(() => props.cardTypeName, (typeName) => {
   if (!typeName) return
 
-  // 可以根据不同的卡片类型提供不同的示例
-  if (typeName.includes('角色') || typeName.includes('Character')) {
+  const cardTypeKey = getCardTypeKey({ name: typeName, model_name: typeName, output_model_name: typeName }) || typeName
+  if (cardTypeKey === 'character_card') {
     examples.value = [
       t('initial_prompt.examples.character_1'),
       t('initial_prompt.examples.character_2'),
       t('initial_prompt.examples.character_3')
     ]
-  } else if (typeName.includes('章节') || typeName.includes('Chapter')) {
+  } else if (cardTypeKey === 'chapter_body' || cardTypeKey === 'chapter_outline') {
     examples.value = [
       t('initial_prompt.examples.chapter_1'),
       t('initial_prompt.examples.chapter_2'),
       t('initial_prompt.examples.chapter_3')
     ]
-  } else if (typeName.includes('大纲') || typeName.includes('Outline')) {
+  } else if (cardTypeKey.includes('outline') || cardTypeKey === 'story_outline') {
     examples.value = [
       t('initial_prompt.examples.outline_1'),
       t('initial_prompt.examples.outline_2'),

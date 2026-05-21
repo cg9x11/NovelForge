@@ -8,7 +8,9 @@ type KnowledgeCache = {
 let cachePromise: Promise<KnowledgeCache> | null = null
 
 function stripAnnotation(label: string): string {
-  return label.replace(/\s*[\uFF08(][^\uFF08\uFF09()]*[\uFF09)]\s*$/, '').trim()
+  const leftParen = String.fromCharCode(0xff08)
+  const rightParen = String.fromCharCode(0xff09)
+  return label.replace(new RegExp(`\\s*[${leftParen}(][^${leftParen}${rightParen}()]*[${rightParen})]\\s*$`), '').trim()
 }
 
 function parseKnowledgeOptions(text: string): string[] {

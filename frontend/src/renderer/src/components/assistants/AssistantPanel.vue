@@ -49,25 +49,22 @@
 
     <div class="composer">
       <div class="inject-toolbar">
-        <!-- 引用卡片显示区（分成两个容器：标签区 + 更多按钮区） -->
         <div class="chips">
-          <!-- 标签显示区（可滚动溢出） -->
           <div class="chips-tags">
-            <el-tag 
-              v-for="(r, idx) in visibleRefs" 
-              :key="getRefKey(r)" 
-              closable 
-              @close="removeInjectedRef(idx)" 
-              size="small" 
-              effect="plain" 
-              class="chip-tag" 
+            <el-tag
+              v-for="(r, idx) in visibleRefs"
+              :key="getRefKey(r)"
+              closable
+              @close="removeInjectedRef(idx)"
+              size="small"
+              effect="plain"
+              class="chip-tag"
               @click="onChipClick(r)"
             >
               {{ getRefLabel(r) }}
             </el-tag>
           </div>
-          
-          <!-- 更多按钮区（固定显示，不受宽度影响） -->
+
           <div v-if="assistantStore.injectedRefs.length > 0" class="chips-more">
             <el-popover
               placement="bottom-start"
@@ -75,8 +72,8 @@
               trigger="click"
             >
               <template #reference>
-                <el-button 
-                  size="small" 
+                <el-button
+                  size="small"
                   text
                   class="more-refs-btn"
                   :title="t('assistant.refs_total_title', { count: assistantStore.injectedRefs.length })"
@@ -85,16 +82,15 @@
                   <span class="more-refs-count">({{ assistantStore.injectedRefs.length }})</span>
                 </el-button>
               </template>
-              
-              <!-- Popover 内容 -->
+
               <div class="more-refs-popover">
                 <div class="popover-header">
                   <span>{{ t('assistant.referenced_cards') }}</span>
                   <span class="popover-count">{{ t('assistant.count_unit', { count: assistantStore.injectedRefs.length }) }}</span>
                 </div>
                 <div class="more-refs-list">
-                  <div 
-                    v-for="(r, idx) in assistantStore.injectedRefs" 
+                  <div
+                    v-for="(r, idx) in assistantStore.injectedRefs"
                     :key="getRefKey(r)"
                     class="more-ref-item"
                   >
@@ -102,10 +98,10 @@
                       <el-icon><Document /></el-icon>
                       {{ getRefLabel(r) }}
                     </span>
-                    <el-button 
-                      :icon="Close" 
-                      size="small" 
-                      text 
+                    <el-button
+                      :icon="Close"
+                      size="small"
+                      text
                       @click="removeInjectedRef(idx)"
                       :title="t('assistant.remove_reference')"
                     />
@@ -115,16 +111,16 @@
             </el-popover>
           </div>
         </div>
-        
+
         <el-button size="small" :icon="Plus" @click="openInjectSelector" class="add-ref-btn">{{ t('assistant.add_reference') }}</el-button>
       </div>
-      
+
       <div class="composer-subbar">
         <el-select v-model="overrideLlmId" :placeholder="t('assistant.select_model')" size="small" style="width: 200px">
           <el-option v-for="m in llmOptions" :key="m.id" :label="(m.display_name || m.model_name)" :value="m.id" />
         </el-select>
       </div>
-      
+
       <AgentComposer
         v-model="draft"
         :rows="4"
@@ -136,8 +132,8 @@
         <template #actions>
           <div class="composer-actions">
             <el-tooltip :content="t('assistant.thinking_tooltip')" placement="top">
-              <el-switch 
-                v-model="useThinkingMode" 
+              <el-switch
+                v-model="useThinkingMode"
                 size="small"
                 active-text="Thinking"
                 style="margin-right: auto"
@@ -156,7 +152,6 @@
       </AgentComposer>
     </div>
 
-    <!-- 选择器对话框 -->
     <el-dialog v-model="selectorVisible" :title="t('assistant.add_reference_card')" width="760px">
       <div style="display:flex; gap:12px; align-items:center; margin-bottom:10px;">
         <el-select v-model="selectorSourcePid" :placeholder="t('assistant.source_project')" style="width: 260px" @change="onSelectorProjectChange($event as any)">
@@ -171,7 +166,6 @@
       </template>
     </el-dialog>
 
-    <!-- 历史对话抽屉 -->
     <el-drawer
       v-model="historyDrawerVisible"
       :title="t('assistant.chat_history')"
@@ -192,8 +186,8 @@
         </div>
 
         <div v-else class="history-list">
-          <div 
-            v-for="session in historySessions" 
+          <div
+            v-for="session in historySessions"
             :key="session.id"
             :class="['history-item', { 'is-current': session.id === currentSession.id }]"
             @click="loadSession(session.id)"
@@ -204,10 +198,10 @@
             </div>
             <div class="history-item-footer">
               <span class="history-time">{{ formatSessionTime(session.updatedAt) }}</span>
-              <el-button 
-                :icon="Delete" 
-                size="small" 
-                text 
+              <el-button
+                :icon="Delete"
+                size="small"
+                text
                 type="danger"
                 @click.stop="handleDeleteSession(session.id)"
               />
@@ -233,7 +227,6 @@ import { useProjectStore } from '@renderer/stores/useProjectStore'
 import { useCardStore } from '@renderer/stores/useCardStore'
 import { useEditorStore } from '@renderer/stores/useEditorStore'
 import { useLocaleStore } from '@renderer/stores/useLocaleStore'
-import { translateText } from '@renderer/locales/runtimeTranslations'
 import { useAssistantPreferences } from '@renderer/composables/useAssistantPreferences'
 import { useAssistantSessionHistory } from '@renderer/composables/useAssistantSessionHistory'
 import { useAssistantInjectionSelector } from '@renderer/composables/useAssistantInjectionSelector'
@@ -253,25 +246,21 @@ const isStreaming = ref(false)
 let streamCtl: { cancel: () => void } | null = null
 const { messageListRef, scrollToBottom } = useMessageListScroll()
 
-// ---- 多卡片数据引用（跨项目，使用 Pinia） ----
 const assistantStore = useAssistantStore()
 const projectStore = useProjectStore()
 const editorStore = useEditorStore()
 const localeStore = useLocaleStore()
 
 function trRuntime(value?: string | null): string {
-  return translateText(String(value || ''), localeStore.locale)
+  return String(value || '')
 }
 
-// 思考过程折叠状态：key 为 bucket 标识（例如 plain-0-0 / pre-0-0 / g-0-1-0），值为是否展开
-// 默认收起（false），用户点击后再展开
 const reasoningBucketsOpen = ref<Record<string, boolean>>({})
 
 function isReasoningBucketOpen(key: string): boolean {
   return Boolean(reasoningBucketsOpen.value[key])
 }
 
-// ===== 会话管理 =====
 const currentSession = ref<AssistantChatSession>({
   id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   projectId: 0,
@@ -305,20 +294,17 @@ const {
 const lastRun = ref<{ prev: string; tail: string; targetIdx: number } | null>(null)
 const canRegenerate = computed(() => !isStreaming.value && !!lastRun.value && messages.value[lastRun.value.targetIdx]?.role === 'assistant')
 
-// 模型选择（覆盖卡片配置，按项目记忆）
 const llmOptions = ref<LLMConfigRead[]>([])
 const overrideLlmId = ref<number | null>(null)
 const effectiveLlmId = computed(() => overrideLlmId.value || (props.llmConfigId as any) || null)
 const MODEL_KEY_PREFIX = 'nf:assistant:model:'
 function modelKeyForProject(pid: number) { return `${MODEL_KEY_PREFIX}${pid}` }
 
-// Thinking 模式开关（按项目记忆）
 const useThinkingMode = ref(false)
 const THINKING_MODE_KEY_PREFIX = 'nf:assistant:thinking:'
 function thinkingModeKeyForProject(pid: number) { return `${THINKING_MODE_KEY_PREFIX}${pid}` }
 
-// 引用卡片显示控制
-const MAX_VISIBLE_REFS = 5  // 最多显示5个引用（约两行，每行2-3个）
+const MAX_VISIBLE_REFS = 5
 
 const visibleRefs = computed(() => {
   return assistantStore.injectedRefs.slice(0, MAX_VISIBLE_REFS)
@@ -448,7 +434,7 @@ async function startStreaming(targetIdx: number) {
     isStreaming.value = false
     streamCtl = null
 
-    if (messages.value[targetIdx]?.toolsInProgress && 
+    if (messages.value[targetIdx]?.toolsInProgress &&
         !messages.value[targetIdx].toolsInProgress.includes('❌')) {
       nextTick(() => {
         if (messages.value[targetIdx]) {
@@ -460,13 +446,13 @@ async function startStreaming(targetIdx: number) {
     if (messages.value.length > 0) {
       saveCurrentSession()
     }
-  }, (err) => { 
+  }, (err) => {
     if (messages.value[targetIdx]) {
       messages.value[targetIdx].toolsInProgress = undefined
     }
     ElMessage.error(err?.message || t('assistant.messages.generation_failed'))
     isStreaming.value = false
-    streamCtl = null 
+    streamCtl = null
   }) as any
 }
 
@@ -479,18 +465,16 @@ function handleSend() {
   draft.value = ''
   scrollToBottom()
 
-  // 灵感助手不需要 prev/tail，直接在 startStreaming 内部构建请求
   const assistantIdx = messages.value.push({ role: 'assistant', content: '' }) - 1
   scrollToBottom()
   lastRun.value = { prev: '', tail: '', targetIdx: assistantIdx }
   startStreaming(assistantIdx)
 }
 
-function handleCancel() { 
+function handleCancel() {
   try { streamCtl?.cancel() } catch {}
   isStreaming.value = false
-  
-  // 清除所有消息中的工具调用进度提示
+
   messages.value.forEach(msg => {
     if (msg.toolsInProgress) {
       msg.toolsInProgress = undefined
@@ -599,7 +583,6 @@ function regenerateFromCurrent() {
   startStreaming(targetIdx)
 }
 function handleRegenerateWithHistory() {
-  // 优先移除历史中的最后一条助手消息
   try {
     const pid = projectStore.currentProject?.id
     if (pid) {
@@ -633,16 +616,14 @@ onMounted(async () => {
   try {
     llmOptions.value = await listLLMConfigs()
     const pid = projectStore.currentProject?.id
-    
-    // 恢复模型选择
+
     const saved = pid ? Number(localStorage.getItem(modelKeyForProject(pid)) || '') : NaN
     if (saved && Number.isFinite(saved)) {
       overrideLlmId.value = saved
     } else if (!overrideLlmId.value && llmOptions.value.length > 0) {
       overrideLlmId.value = llmOptions.value[0].id
     }
-    
-    // 恢复 Thinking 模式设置
+
     if (pid) {
       const thinkingSaved = localStorage.getItem(thinkingModeKeyForProject(pid))
       if (thinkingSaved !== null) {
@@ -652,64 +633,48 @@ onMounted(async () => {
   } catch {}
 })
 
-// ✅ 处理工具执行结果：将工具结果追加到指定的助手消息上
 function handleToolsExecuted(targetIdx: number, tools: Array<{tool_name: string, result: any}>) {
-  console.log('🔧 工具已执行:', targetIdx, tools)
 
   const msg = messages.value[targetIdx]
   if (!msg || msg.role !== 'assistant') return
-  
-  // 刷新左侧卡片树（如果有卡片被创建或修改）
+
   const needsRefresh = tools.some(t => {
     const toolName = t.tool_name
     const result = t.result
-    
-    // 这些工具调用后需要刷新卡片列表
+
     const refreshTools = ['create_card', 'modify_card_field', 'batch_create_cards', 'replace_field_text', 'replace_card_text_by_lines']
-    
+
     if (refreshTools.includes(toolName)) {
-      console.log(`🔄 检测到 ${toolName} 调用，准备刷新卡片列表`)
       return true
     }
-    
-    // 或者有 card_id 字段的结果
+
     if (result?.card_id) {
-      console.log(`🔄 检测到 card_id: ${result.card_id}，准备刷新卡片列表`)
       return true
     }
-    
+
     return false
   })
-  
+
   if (needsRefresh && projectStore.currentProject?.id) {
     const cardStore = useCardStore()
-    console.log('🔄 开始刷新卡片列表...')
-    // 刷新整个卡片列表
     cardStore.fetchCards(projectStore.currentProject.id).then(() => {
-      console.log('✅ 卡片列表刷新完成')
     }).catch((err) => {
-      console.error('❌ 卡片列表刷新失败:', err)
     })
   }
-  
-  // 显示通知
+
   const successTools = tools.filter(t => t.result?.success)
   if (successTools.length > 0) {
     ElMessage.success(t('assistant.messages.tools_executed', { count: successTools.length }))
   }
 }
 
-// 消息变化时自动保存（防抖，避免频繁保存）
-// 优化：仅监听数组长度和最后一条消息，避免深度监听导致性能问题
 let saveDebounceTimer: any = null
 watch([
   () => messages.value.length,
   () => messages.value[messages.value.length - 1]?.content
 ], () => {
   if (messages.value.length > 0) {
-    // 清除之前的定时器
     if (saveDebounceTimer) clearTimeout(saveDebounceTimer)
-    // 300ms 后保存
     saveDebounceTimer = setTimeout(() => {
       saveCurrentSession()
     }, 300)
@@ -725,18 +690,18 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.assistant-panel { 
-  display: flex; 
-  flex-direction: column; 
-  height: 100%; 
+.assistant-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   font-size: 13px;
   font-family:"Segoe UI", "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
 .panel-header { display: flex; flex-direction: column; gap: 8px; padding: 8px; border-bottom: 1px solid var(--el-border-color-light); background: var(--el-bg-color); }
-.header-title-row { 
-  display: flex; 
-  align-items: center; 
-  gap: 12px; 
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 .title-area {
   flex: 1;
@@ -745,7 +710,7 @@ onBeforeUnmount(() => {
   gap: 8px;
   overflow: hidden;
 }
-.main-title { 
+.main-title {
   font-weight: 600;
   color: var(--el-text-color-primary);
   font-size: 15px;
@@ -766,68 +731,64 @@ onBeforeUnmount(() => {
 .ctx-preview { max-height: 40vh; overflow: auto; white-space: pre-wrap; background: var(--el-bg-color); color: var(--el-text-color-primary); padding: 8px; border: 1px solid var(--el-border-color-lighter); border-radius: 6px; }
 .chat-area { flex: 1; display: flex; flex-direction: column; gap: 6px; overflow: hidden; padding: 6px 8px; }
 .streaming-tip { color: var(--el-text-color-secondary); padding-left: 4px; font-size: 12px; }
-.composer { 
-  display: flex; 
-  flex-direction: column; 
-  gap: 6px; 
-  padding: 10px; 
-  border-top: 1px solid var(--el-border-color-light); 
+.composer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-top: 1px solid var(--el-border-color-light);
 }
 
-/* 引用卡片工具栏 - 固定高度，更紧凑 */
-.inject-toolbar { 
-  display: flex; 
-  align-items: flex-start; 
-  justify-content: space-between; 
-  gap: 8px; 
-  padding-bottom: 6px; 
+.inject-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
   min-height: 28px;
-  max-height: 64px; /* 稍微增加高度容纳两行 + 间距 */
+  max-height: 64px;
 }
 
-.inject-toolbar .chips { 
-  display: flex; 
-  align-items: flex-start; /* 改为顶部对齐 */
-  gap: 6px; 
+.inject-toolbar .chips {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   flex: 1;
   overflow: hidden;
-  max-height: 58px; /* 限制最多两行（24px×2 + 6px间距 + 4px余量） */
+  max-height: 58px;
 }
 
-/* 标签显示区（可换行，整齐排列） */
 .chips-tags {
   display: flex;
-  align-items: flex-start; /* 顶部对齐 */
-  gap: 6px; /* 统一间距 */
-  row-gap: 6px; /* 行间距 */
+  align-items: flex-start;
+  gap: 6px;
+  row-gap: 6px;
   flex-wrap: wrap;
   flex: 1;
   overflow: hidden;
   line-height: 1.2;
-  align-content: flex-start; /* 多行时从顶部开始排列 */
-  min-height: 24px; /* 至少一行的高度 */
+  align-content: flex-start;
+  min-height: 24px;
 }
 
-/* 更多按钮区（固定显示） */
 .chips-more {
-  flex-shrink: 0; /* 不允许收缩 */
+  flex-shrink: 0;
   display: flex;
-  align-items: flex-start; /* 与标签顶部对齐 */
-  padding-top: 2px; /* 微调对齐 */
+  align-items: flex-start;
+  padding-top: 2px;
 }
 
-.chip-tag { 
+.chip-tag {
   cursor: pointer;
   font-size: 12px !important;
   height: 24px !important;
   line-height: 22px !important;
   padding: 0 8px !important;
-  margin: 0; /* 移除上下边距，使用 gap 统一间距 */
-  flex-shrink: 0; /* 防止标签被压缩 */
-  white-space: nowrap; /* 防止标签内文字换行 */
+  margin: 0;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
-/* 输入框样式 */
 .composer-input {
   flex: 1;
   min-height: 90px;
@@ -849,7 +810,7 @@ onBeforeUnmount(() => {
   border: 1px dashed var(--el-color-primary);
   border-radius: 4px;
   flex-shrink: 0;
-  margin: 0; /* 与标签对齐 */
+  margin: 0;
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -871,14 +832,12 @@ onBeforeUnmount(() => {
   opacity: 0.85;
 }
 
-/* 添加引用按钮 */
 .add-ref-btn {
   flex-shrink: 0;
-  align-self: flex-start; /* 顶部对齐 */
-  margin-top: 2px; /* 微调对齐 */
+  align-self: flex-start;
+  margin-top: 2px;
 }
 
-/* 更多引用 Popover */
 .more-refs-popover {
   padding: 0;
 }
@@ -940,19 +899,19 @@ onBeforeUnmount(() => {
   color: var(--el-color-primary);
 }
 
-.composer-subbar { 
-  display: flex; 
-  align-items: center; 
-  gap: 8px; 
+.composer-subbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 2px 0;
 }
 
-.composer-actions { 
-  display: flex; 
-  gap: 6px; 
-  justify-content: flex-end; 
-  flex-wrap: nowrap; 
-  align-items: center; 
+.composer-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  align-items: center;
   padding: 4px 0 0 0;
   width: 100%;
 }
@@ -960,7 +919,6 @@ onBeforeUnmount(() => {
 ::deep(.composer .el-button) { padding: 6px 8px; font-size: 12px; }
 ::deep(.inject-toolbar .el-button) { padding: 4px 8px !important; font-size: 12px; height: 24px; }
 
-/* 历史对话抽屉样式 */
 .history-drawer-content {
   display: flex;
   flex-direction: column;
@@ -1047,4 +1005,4 @@ onBeforeUnmount(() => {
   background: var(--el-fill-color-light);
 }
 
-</style> 
+</style>

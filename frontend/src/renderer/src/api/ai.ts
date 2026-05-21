@@ -9,7 +9,6 @@ export const DEFAULT_ASSISTANT_PROMPT_KEY = 'idea_chat'
 
 export type AssistantChatRequest = components['schemas']['AssistantChatRequest']
 
-// append_continuous_novel_directive（用于控制是否追加"连续小说正文"指令）
 export type ContinuationWordControlMode = 'prompt_only' | 'balanced'
 export type ContinuationRequestExtended = ContinuationRequest & {
   append_continuous_novel_directive?: boolean
@@ -72,7 +71,6 @@ export interface AIConfigOptions {
   response_models: string[]
 }
 
-// 使用后端生成的类型
 export type AssembleContextRequest = components['schemas']['AssembleContextRequest']
 type AssembleContextResponseBase = components['schemas']['AssembleContextResponse']
 
@@ -140,13 +138,11 @@ export function generateContinuationStreaming(
   return createStreamingRequest(endpoint, params, onData, onClose, onError)
 }
 
-// 伏笔建议（占位）
 export interface ForeshadowResponse { goals: string[]; items: string[]; persons: string[] }
 export function foreshadowSuggest(text: string): Promise<ForeshadowResponse> {
   return aiHttpClient.post<ForeshadowResponse>('/foreshadow/suggest', { text })
 }
 
-// 伏笔登记 CRUD
 export interface ForeshadowItem {
   id: number
   project_id: number
@@ -173,9 +169,6 @@ export function deleteForeshadow(projectId: number, itemId: number): Promise<{ s
   return aiHttpClient.post<{ success: boolean }>(`/foreshadow/delete/${itemId}`, { project_id: projectId })
 }
 
-/**
- * 灵感助手专用流式对话
- */
 export function generateAssistantChatStreaming(
   params: AssistantChatRequest,
   onData: (data: string) => void,

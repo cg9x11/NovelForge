@@ -17,7 +17,6 @@ export const usePromptStore = defineStore('prompt', () => {
       const list = await listPrompts()
       prompts.value = list || []
     } catch (error) {
-      console.error('获取提示词列表失败:', error)
       ElMessage.error(t('prompt_store.fetch_failed'))
       throw error
     } finally {

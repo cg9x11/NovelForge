@@ -27,13 +27,13 @@ from app.core import settings
 from app.core.startup import startup, shutdown
 
 
-# 使用 lifespan 事件处理器
+# Internal note.
 @asynccontextmanager
 async def lifespan(app):
-    # 启动时执行
+    # Internal note.
     startup()
     
-    # [Optimize] 启动时清理过期的工作流运行记录
+    # Internal note.
     try:
         from app.db.session import engine
         from sqlmodel import Session
@@ -45,10 +45,10 @@ async def lifespan(app):
         print(f"Startup cleanup failed: {e}")
         
     yield
-    # 关闭时执行
+    # Internal note.
     shutdown()
 
-# 创建 FastAPI 应用实例，注册 lifespan
+# Internal note.
 app = FastAPI(
     title=f"{settings.app.app_name} API",
     version=settings.app.app_version,
@@ -58,11 +58,11 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# 注册工作流 Header 中间件 (在 CORS 之前注册，确保响应头被 CORS 处理)
+# Internal note.
 from app.core.middleware.workflow import WorkflowHeaderMiddleware
 app.add_middleware(WorkflowHeaderMiddleware)
 
-# 设置CORS中间件
+# Internal note.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.app.get_cors_origins_list(),
@@ -72,7 +72,7 @@ app.add_middleware(
     expose_headers=["X-Workflows-Started"],
 )
 
-# 包含API路由
+# Internal note.
 app.include_router(api_router, prefix=settings.app.api_prefix)
 
 

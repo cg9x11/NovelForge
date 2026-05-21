@@ -41,11 +41,15 @@ function normalizeReviewMarkdown(markdown: string): string {
 
   const normalizedMarkdown = normalizedLines.join('\n').trim()
 
+  const sourceConclusion = String(t('simple_markdown.conclusion_source'))
+  const conclusionPattern = new RegExp(`^(-\s*${sourceConclusion}[?:]\s*)(pass|revise|block)(\s*)$`, 'gim')
+
   return normalizedMarkdown.replace(
-    /^(-\s*结论[：:]\s*)(pass|revise|block)(\s*)$/gim,
+    conclusionPattern,
     (_, prefix: string, verdict: string, suffix: string) => {
       const localizedVerdict = getVerdictLabel(verdict.toLowerCase()) || verdict
-      return `${prefix}**${localizedVerdict}**${suffix}`
+      const localizedPrefix = `- ${t('simple_markdown.conclusion')}: `
+      return `${localizedPrefix}**${localizedVerdict}**${suffix}`
     }
   )
 }

@@ -1,4 +1,5 @@
-﻿from __future__ import annotations
+from __future__ import annotations
+from app.locales import schema_field_description
 
 from typing import List, Literal, Optional
 
@@ -11,38 +12,38 @@ CsvJsonFormat = Literal["json", "csv"]
 
 
 class RelationGraphEvent(BaseModel):
-    summary: str = Field(description="事件摘要")
-    volume_number: Optional[int] = Field(default=None, description="卷号")
-    chapter_number: Optional[int] = Field(default=None, description="章节号")
+    summary: str = Field(description=schema_field_description("summary"))
+    volume_number: Optional[int] = Field(default=None, description=schema_field_description("volume_number"))
+    chapter_number: Optional[int] = Field(default=None, description=schema_field_description("chapter_number"))
 
 
 class RelationGraphKey(BaseModel):
-    source: str = Field(description="关系起点实体")
-    target: str = Field(description="关系终点实体")
-    kind_en: str = Field(description="关系英文键")
+    source: str = Field(description=schema_field_description("source"))
+    target: str = Field(description=schema_field_description("target"))
+    kind_en: str = Field(description=schema_field_description("kind_en"))
 
 
 class RelationGraphInput(BaseModel):
-    source: str = Field(description="关系起点实体")
-    target: str = Field(description="关系终点实体")
-    kind_en: Optional[str] = Field(default=None, description="关系英文键")
-    kind_cn: Optional[RelationKind] = Field(default=None, description="关系中文类型")
-    kind: Optional[RelationKind] = Field(default=None, description="关系中文类型（兼容字段）")
-    fact: Optional[str] = Field(default=None, description="关系事实描述")
-    description: Optional[str] = Field(default=None, description="关系描述")
-    a_to_b_addressing: Optional[str] = Field(default=None, description="A 对 B 称呼")
-    b_to_a_addressing: Optional[str] = Field(default=None, description="B 对 A 称呼")
-    recent_dialogues: List[str] = Field(default_factory=list, description="近期对话证据")
-    recent_event_summaries: List[RelationGraphEvent] = Field(default_factory=list, description="近期事件证据")
-    stance: Optional[RelationStance] = Field(default=None, description="立场：友好/中立/敌意")
+    source: str = Field(description=schema_field_description("source"))
+    target: str = Field(description=schema_field_description("target"))
+    kind_en: Optional[str] = Field(default=None, description=schema_field_description("kind_en"))
+    kind_cn: Optional[str] = Field(default=None, description=schema_field_description("kind_cn"))
+    kind: Optional[str] = Field(default=None, description=schema_field_description("kind"))
+    fact: Optional[str] = Field(default=None, description=schema_field_description("fact"))
+    description: Optional[str] = Field(default=None, description=schema_field_description("description"))
+    a_to_b_addressing: Optional[str] = Field(default=None, description=schema_field_description("a_to_b_addressing"))
+    b_to_a_addressing: Optional[str] = Field(default=None, description=schema_field_description("b_to_a_addressing"))
+    recent_dialogues: List[str] = Field(default_factory=list, description=schema_field_description("recent_dialogues"))
+    recent_event_summaries: List[RelationGraphEvent] = Field(default_factory=list, description=schema_field_description("recent_event_summaries"))
+    stance: Optional[RelationStance] = Field(default=None, description=schema_field_description("stance"))
 
 
 class RelationGraphRecord(BaseModel):
     source: str
     target: str
     kind_en: str
-    kind_cn: RelationKind
-    kind: RelationKind
+    kind_cn: str
+    kind: str
     fact: str
     a_to_b_addressing: Optional[str] = None
     b_to_a_addressing: Optional[str] = None
@@ -84,14 +85,14 @@ class RelationGraphBatchDeleteRequest(BaseModel):
 class RelationGraphBatchUpdateKindRequest(BaseModel):
     project_id: int
     keys: List[RelationGraphKey] = Field(default_factory=list)
-    new_kind_en: Optional[str] = Field(default=None, description="新的关系英文键")
-    new_kind_cn: Optional[RelationKind] = Field(default=None, description="新的关系中文类型")
+    new_kind_en: Optional[str] = Field(default=None, description=schema_field_description("new_kind_en"))
+    new_kind_cn: Optional[str] = Field(default=None, description=schema_field_description("new_kind_cn"))
 
 
 class RelationGraphBatchUpdateStanceRequest(BaseModel):
     project_id: int
     keys: List[RelationGraphKey] = Field(default_factory=list)
-    stance: Optional[RelationStance] = Field(default=None, description="新立场")
+    stance: Optional[RelationStance] = Field(default=None, description=schema_field_description("stance"))
 
 
 class RelationGraphBatchAppendEventsRequest(BaseModel):
@@ -136,7 +137,7 @@ class RelationGraphImportResponse(BaseModel):
 
 
 class RelationGraphKindOption(BaseModel):
-    kind_cn: RelationKind
+    kind_cn: str
     kind_en: str
 
 

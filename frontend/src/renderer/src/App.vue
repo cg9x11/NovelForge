@@ -76,28 +76,23 @@ async function syncViewFromHash() {
   }
 }
 
-// 初始化主题和加载全局资源
 onMounted(async () => {
   appStore.initTheme()
   schemaService.loadSchemas() // Load all schemas on app startup
   syncViewFromHash()
   window.addEventListener('hashchange', syncViewFromHash)
-  
-  // 设置工作流监听器（监听响应头中的 X-Workflows-Started）
+
   const cleanupWorkflowListener = workflowStore.setupWorkflowListener()
-  
-  // 在组件卸载时清理
+
   onBeforeUnmount(() => {
     cleanupWorkflowListener()
   })
-  
-  // 自动检测更新（如果开启）
+
   if (updateStore.autoCheckEnabled) {
     try {
       await updateStore.autoCheck()
     } catch (error) {
-      // 静默失败，不打扰用户
-      console.warn('自动检测更新失败:', error)
+      console.warn('Auto update check failed:', error)
     }
   }
 })
@@ -122,7 +117,7 @@ onBeforeUnmount(() => {
       <CodeWorkflowEditor v-else-if="currentView === 'workflows'" />
     </main>
 
-    <SettingsDialog 
+    <SettingsDialog
       v-model="settingsDialogVisible"
       @close="handleCloseSettings"
     />
@@ -143,6 +138,6 @@ onBeforeUnmount(() => {
 
 .main-content {
   flex-grow: 1;
-  overflow: auto; /* Allow content to scroll if needed */
+  overflow: auto;
 }
 </style>

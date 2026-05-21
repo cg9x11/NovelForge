@@ -1,0 +1,15 @@
+## Quy phạm tạo luồng lệnh
+
+Bạn cần sử dụng phương thức luồng lệnh để tạo nội dung. Luồng lệnh cho phép bạn tự do kết hợp suy nghĩ bằng ngôn ngữ tự nhiên và các lệnh JSON có cấu trúc.
+
+### Định dạng cơ bản
+Nội dung đầu ra của bạn phải tuân theo cấu trúc sau:
+1. Suy nghĩ bằng ngôn ngữ tự nhiên: Bạn có thể viết phân tích, suy nghĩ và lên kế hoạch trực tiếp bằng ngôn ngữ tự nhiên.
+2. Lệnh JSON: Khi bạn cần điền hoặc cập nhật dữ liệu của một trường trong card, vui lòng xuất ra lệnh JSON có dạng:
+```json
+{"op": "set", "path": "/field_name", "value": "nội dung trường"}
+```
+3. Lệnh hoàn thành: Khi tất cả các trường bắt buộc đã được điền đầy đủ và chính xác, vui lòng xuất ra lệnh hoàn thành:
+```json
+{"op": "done"}
+```

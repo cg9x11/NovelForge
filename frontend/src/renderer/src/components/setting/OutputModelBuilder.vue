@@ -89,7 +89,6 @@ import { ref, watch, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { type BuilderField } from '@renderer/utils/outputModelSchemaUtils'
 import { useLocaleStore } from '@renderer/stores/useLocaleStore'
-import { translateText } from '@renderer/locales/runtimeTranslations'
 
 export interface OutputModelLite { name: string; json_schema?: any }
 
@@ -101,7 +100,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: BuilderField[]] }>()
 
 const baseKinds: Array<BuilderField['kind']> = ['string', 'number', 'integer', 'boolean', 'tuple']
 const tupleKinds: Array<NonNullable<BuilderField['tupleItems']>[number]> = ['string','number','integer','boolean']
-const cjkRe = /[\u4e00-\u9fff]/
+const cjkRe = new RegExp(`[${String.fromCharCode(0x4e00)}-${String.fromCharCode(0x9fff)}]`)
 
 const localFields = ref<BuilderField[]>(props.modelValue?.map(cloneField) || [])
 const syncingFromProps = ref(false)
@@ -115,10 +114,10 @@ watch(localFields, (v) => { if (!syncingFromProps.value) emit('update:modelValue
 
 const targetModels = computed(() => props.models || [])
 
-function tr(value?: string | null): string { return translateText(String(value || ''), localeStore.locale) }
+function tr(value?: string | null): string { return String(value || '') }
 function cleanDisplayText(value?: string | null, fallback = ''): string {
   const translated = tr(value)
-  return cjkRe.test(translated) ? fallback : translated
+  return translated || fallback
 }
 function cloneField(f: BuilderField): BuilderField {
   const next = JSON.parse(JSON.stringify(f))
@@ -161,4 +160,4 @@ function removeTupleItem(row: BuilderField, idx: number) {
 .ops-col { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; width: 100%; }
 .ops-col .el-button + .el-button { margin-left: 0 !important; }
 .ops-btn { width: 100%; box-sizing: border-box; padding-left: 0; padding-right: 0; display: block; }
-</style> 
+</style>

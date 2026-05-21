@@ -94,7 +94,6 @@ function removeToken(token: string) {
 
 function apply() { emit('apply-context', { kind: activeContextTemplateKind.value, text: aiContext.value }) }
 
-// 在抽屉中输入 @ 时弹出选择器
 let drawerTextarea: HTMLTextAreaElement | null = null
 watch(() => visible.value, (v) => {
   if (v) {
@@ -127,4 +126,4 @@ function handleDrawerInput(ev: Event) {
 .context-area { width: 100%; }
 .actions { display: flex; gap: 8px; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
-</style> 
+</style>

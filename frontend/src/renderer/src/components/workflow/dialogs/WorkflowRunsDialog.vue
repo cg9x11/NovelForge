@@ -6,7 +6,6 @@
     :close-on-click-modal="false"
   >
     <div class="runs-dialog-content">
-      <!-- 过滤器 -->
       <div class="filters">
         <el-select v-model="statusFilter" :placeholder="t('workflow.runs.status_filter')" clearable @change="loadRuns" style="width: 150px">
           <el-option :label="t('workflow.runs.all')" value="" />
@@ -18,10 +17,9 @@
         <el-button @click="loadRuns" :icon="Refresh">{{ t('common.refresh') }}</el-button>
       </div>
 
-      <!-- 运行列表 -->
       <el-table :data="runs" v-loading="loading" stripe style="margin-top: 10px">
         <el-table-column prop="id" :label="t('workflow.runs.id')" width="60" />
-        
+
         <el-table-column :label="t('workflow.runs.workflow')" width="180">
           <template #default="{ row }">
             {{ row.workflow?.name || t('workflow.runs.workflow_fallback', { id: row.workflow_id }) }}
@@ -38,21 +36,21 @@
 
         <el-table-column :label="t('workflow.runs.progress')" width="150">
           <template #default="{ row }">
-            <el-progress 
+            <el-progress
               v-if="row.status === 'running' || row.status === 'paused'"
-              :percentage="getProgress(row.id)" 
+              :percentage="getProgress(row.id)"
               :status="row.status === 'paused' ? 'warning' : undefined"
               :stroke-width="8"
             />
-            <el-progress 
+            <el-progress
               v-else-if="row.status === 'succeeded'"
-              :percentage="100" 
+              :percentage="100"
               status="success"
               :stroke-width="8"
             />
-            <el-progress 
+            <el-progress
               v-else-if="row.status === 'failed'"
-              :percentage="100" 
+              :percentage="100"
               status="exception"
               :stroke-width="8"
             />
@@ -94,7 +92,7 @@
               >
                 {{ t('workflow.runs.status') }}
               </el-button>
-              
+
               <el-button
                 type="danger"
                 @click="deleteRun(row.id)"
@@ -110,7 +108,6 @@
       </el-table>
     </div>
 
-    <!-- 节点状态对话框 -->
     <el-dialog
       v-model="nodeStatusVisible"
       :title="t('workflow.runs.node_execution_status')"
@@ -241,15 +238,13 @@ async function loadRuns(silent = false) {
       params.status = statusFilter.value
     }
 
-    // 如果指定了 workflowId，只加载该工作流的运行记录
-    const url = props.workflowId 
+    const url = props.workflowId
       ? `/workflows/${props.workflowId}/runs`
       : '/runs'
-    
+
     const response = await request.get<WorkflowRun[]>(url, params, '/api')
     runs.value = response
 
-    // 加载运行中任务的进度
     for (const run of runs.value) {
       if (run.status === 'running' || run.status === 'paused') {
         loadProgress(run.id)
@@ -274,7 +269,7 @@ async function loadProgress(runId: number) {
       '/api',
       { showLoading: false }
     )
-    
+
     if (status.nodes && status.nodes.length > 0) {
       const totalProgress = status.nodes.reduce((sum: number, node: NodeStatus) => {
         return sum + node.progress
@@ -282,8 +277,6 @@ async function loadProgress(runId: number) {
       progressCache.value[runId] = Math.round(totalProgress / status.nodes.length)
     }
   } catch (error) {
-    // 静默失败，避免干扰用户
-    console.warn(`[WorkflowRunsDialog] 加载进度失败: runId=${runId}`, error)
   }
 }
 
@@ -313,12 +306,10 @@ async function resumeRun(runId: number) {
 
 async function resumeRunFromDialog(run: WorkflowRun) {
   try {
-    // 关闭对话框
     visible.value = false
-    
-    // 通知父组件恢复执行
+
     emit('resume-run', run)
-    
+
     ElMessage.success(t('workflow_runs.messages.resuming'))
   } catch (error: any) {
     ElMessage.error(t('workflow_runs.messages.resume_failed', { error: error.message || error }))
@@ -406,33 +397,25 @@ function getStatusLabel(status: string): string {
 
 function formatTime(time?: string | number): string {
   if (!time) return '-'
-  
-  // 如果是数字（Unix 时间戳），需要乘以 1000 转换为毫秒
-  // 但如果数字很小（< 100000000），说明可能是错误的数据
+
   if (typeof time === 'number') {
-    console.warn('[formatTime] 收到数字类型的时间戳:', time)
     if (time < 100000000) {
-      console.error('[formatTime] 时间戳异常小，可能是错误数据')
       return t('workflow_runs.time.invalid_data')
     }
-    time = time * 1000 // 转换为毫秒
+    time = time * 1000
   }
-  
+
   const date = new Date(time)
-  
-  // 检查日期是否有效
+
   if (isNaN(date.getTime())) {
-    console.error('[formatTime] 无效的日期:', time)
     return t('workflow_runs.time.invalid_date')
   }
-  
-  // 检查日期是否在合理范围内（2020-2030）
+
   const year = date.getFullYear()
   if (year < 2020 || year > 2030) {
-    console.error('[formatTime] 日期超出合理范围:', date.toISOString(), '原始值:', time)
     return t('workflow_runs.time.abnormal_date')
   }
-  
+
   return date.toLocaleString('zh-CN', {
     year: 'numeric',
     month: '2-digit',

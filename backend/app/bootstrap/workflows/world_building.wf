@@ -1,0 +1,44 @@
+# Workflow:world_building
+# Function:world_buildingcardsaved,extractbatchCreateorganization_card
+# Trigger:world_buildingcardsavedauto trigger
+
+#@node(description="Trigger:Watchworld_buildingcardsaved")
+trigger = Trigger.CardSaved(card_type="world_building")
+#</node>
+
+
+#@node(description="Readcurrent card")
+card = Card.Read(card_id=trigger.card_id)
+#</node>
+
+
+#@node(description="Extract organization list with expression node")
+organizations = Logic.Expression(
+    expression="card.content.world_view.social_system.major_power_camps or []"
+  )
+#</node>
+
+
+#@node(description="batchCreateorganization_card(cardworld_buildingcard)")
+org_cards = Card.BatchUpsert(
+    project_id=trigger.project_id,
+    parent_id=trigger.card_id,
+    card_type="organization_card",
+    title_template="{item.name}",
+    items=organizations.result
+  )
+#</node>
+
+
+#@node(description="Clear source list(Create)")
+update_result = Card.Update(
+    card_id=trigger.card_id,
+    content_merge={
+      "world_view": {
+        "social_system": {
+          "major_power_camps": []
+        }
+      }
+    }
+  )
+#</node>

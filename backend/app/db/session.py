@@ -1,10 +1,8 @@
 from sqlmodel import create_engine, Session
 from app.core.config import settings
 
-# 从配置获取数据库URL
 DATABASE_URL = settings.database.get_database_url()
 
-# 创建数据库引擎（SQLite 需要此参数以允许多线程访问）
 engine = create_engine(
     DATABASE_URL,
     echo=settings.database.echo,
@@ -25,4 +23,4 @@ def get_session():
         session.rollback()
         raise
     finally:
-        session.close() 
+        session.close()

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.locales import localized_text
 
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
@@ -30,13 +31,13 @@ from app.services.memory_service import MemoryService
 router = APIRouter()
 
 
-@router.get("/extractors", response_model=MemoryExtractorListResponse, summary="获取可用记忆抽取器列表")
+@router.get("/extractors", response_model=MemoryExtractorListResponse, summary=localized_text('hardcoded.api_endpoints_memory_bb8f1859'))
 def list_extractors(session: Session = Depends(get_session)):
 	svc = MemoryService(session)
 	return MemoryExtractorListResponse(items=svc.list_extractors())
 
 
-@router.post("/extract-preview", response_model=ExtractPreviewResponse, summary="通用记忆提取预览")
+@router.post("/extract-preview", response_model=ExtractPreviewResponse, summary=localized_text('hardcoded.api_endpoints_memory_37c7df43'))
 async def extract_preview(req: ExtractPreviewRequest, session: Session = Depends(get_session)):
 	svc = MemoryService(session)
 	try:
@@ -60,7 +61,7 @@ async def extract_preview(req: ExtractPreviewRequest, session: Session = Depends
 		raise HTTPException(status_code=500, detail=f"Memory extraction preview failed: {e}")
 
 
-@router.post("/apply-preview", response_model=ApplyPreviewResponse, summary="通用记忆提取确认写入")
+@router.post("/apply-preview", response_model=ApplyPreviewResponse, summary=localized_text('hardcoded.api_endpoints_memory_ce257f53'))
 def apply_preview(req: ApplyPreviewRequest, session: Session = Depends(get_session)):
 	svc = MemoryService(session)
 	try:
@@ -80,14 +81,14 @@ def apply_preview(req: ApplyPreviewRequest, session: Session = Depends(get_sessi
 		raise HTTPException(status_code=500, detail=f"Memory write failed: {e}")
 
 
-@router.post("/query", response_model=QueryResponse, summary="检索子图快照")
+@router.post("/query", response_model=QueryResponse, summary=localized_text('hardcoded.api_endpoints_memory_2a0b6584'))
 def query(req: QueryRequest, session: Session = Depends(get_session)):
 	svc = MemoryService(session)
 	data = svc.graph.query_subgraph(project_id=req.project_id, participants=req.participants, radius=req.radius)
 	return QueryResponse(**data)
 
 
-@router.post("/ingest-relations-llm", response_model=IngestRelationsLLMResponse, summary="使用 LLM 抽取关系并写入图谱")
+@router.post("/ingest-relations-llm", response_model=IngestRelationsLLMResponse, summary=localized_text('hardcoded.api_endpoints_memory_bc50ab0d'))
 async def ingest_relations_llm(req: IngestRelationsLLMRequest, session: Session = Depends(get_session)):
 	svc = MemoryService(session)
 	try:
@@ -116,7 +117,7 @@ async def ingest_relations_llm(req: IngestRelationsLLMRequest, session: Session 
 		raise HTTPException(status_code=500, detail=f"LLM relation extraction or write failed: {e}")
 
 
-@router.post("/extract-relations-llm", response_model=RelationExtraction, summary="仅抽取实体关系（不入图）")
+@router.post("/extract-relations-llm", response_model=RelationExtraction, summary=localized_text('hardcoded.api_endpoints_memory_a249f3d2'))
 async def extract_relations_only(req: ExtractRelationsRequest, session: Session = Depends(get_session)):
 	svc = MemoryService(session)
 	try:
@@ -137,7 +138,7 @@ async def extract_relations_only(req: ExtractRelationsRequest, session: Session 
 		raise HTTPException(status_code=500, detail=f"LLM relation extraction failed: {e}")
 
 
-@router.post("/extract-dynamic-info", response_model=UpdateDynamicInfo, summary="仅提取角色动态信息（不更新）")
+@router.post("/extract-dynamic-info", response_model=UpdateDynamicInfo, summary=localized_text('hardcoded.api_endpoints_memory_9bf25302'))
 async def extract_dynamic_info_only(req: ExtractOnlyRequest, session: Session = Depends(get_session)):
 	svc = MemoryService(session)
 	try:
@@ -157,7 +158,7 @@ async def extract_dynamic_info_only(req: ExtractOnlyRequest, session: Session = 
 		raise HTTPException(status_code=500, detail=f"Dynamic info extraction failed: {e}")
 
 
-@router.post("/ingest-relations", response_model=IngestRelationsFromPreviewResponse, summary="根据 RelationExtraction 结果入图")
+@router.post("/ingest-relations", response_model=IngestRelationsFromPreviewResponse, summary=localized_text('hardcoded.api_endpoints_memory_0fa0f883'))
 def ingest_relations_from_preview(req: IngestRelationsFromPreviewRequest, session: Session = Depends(get_session)):
 	svc = MemoryService(session)
 	try:
@@ -173,7 +174,7 @@ def ingest_relations_from_preview(req: IngestRelationsFromPreviewRequest, sessio
 		raise HTTPException(status_code=500, detail=f"Relationship graph import failed: {e}")
 
 
-@router.post("/update-dynamic-info", response_model=UpdateDynamicInfoResponse, summary="根据预览结果写入角色动态信息")
+@router.post("/update-dynamic-info", response_model=UpdateDynamicInfoResponse, summary=localized_text('hardcoded.api_endpoints_memory_12414db2'))
 def update_dynamic_info(req: UpdateDynamicInfoRequest, session: Session = Depends(get_session)):
 	svc = MemoryService(session)
 	try:

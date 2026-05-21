@@ -42,4 +42,4 @@ export const usePerCardAISettingsStore = defineStore('perCardAISettings', {
       this.saveToLocal()
     }
   }
-}) 
+})

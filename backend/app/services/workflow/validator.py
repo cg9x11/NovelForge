@@ -1,8 +1,5 @@
-"""工作流代码校验器
 
-在工作流保存时进行静态检查，提前发现错误。
-"""
-
+from app.locales import localized_text
 import ast
 import re
 from typing import List, Dict, Any, Optional, Iterable, Tuple, Set
@@ -21,14 +18,13 @@ from .expressions.evaluator import get_expression_dependencies
 
 
 _IMPLICIT_REF_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+$")
-_BRACED_REF_PATTERN = re.compile(r"(?<!\{)\{([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)\}(?!\})")
-_EXPR_LITERAL_VAR_PATTERN = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+")
+_BRACED_REF_PATTERN = re.compile(r"(seconds<!\{)\{([a-zA-Z_][a-zA-Z0-9_]*(seconds:\.[a-zA-Z_][a-zA-Z0-9_]*)+)\}(seconds!\})")
+_EXPR_LITERAL_VAR_PATTERN = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*(seconds:\.[a-zA-Z_][a-zA-Z0-9_]*)+")
 _EXPR_LITERAL_FUNC_PATTERN = re.compile(r"\b(str|int|float|len|sum|min|max|sorted|join)\s*\(")
 
 
 @dataclass
 class ValidationError:
-    """校验错误"""
     line: int
     variable: str
     error_type: str  # 'syntax', 'node_type', 'field_access', 'expression', 'type_mismatch'
@@ -38,13 +34,11 @@ class ValidationError:
 
 @dataclass
 class ValidationResult:
-    """校验结果"""
     is_valid: bool
     errors: List[ValidationError]
     warnings: List[ValidationError]
-    
+
     def to_dict(self) -> Dict[str, Any]:
-        """转换为字典"""
         return {
             'is_valid': self.is_valid,
             'errors': [
@@ -71,8 +65,8 @@ class ValidationResult:
 
 
 class WorkflowValidator:
-    """工作流校验器"""
-    
+
+
     def __init__(self, session: Optional[Session] = None):
         self.registry = NodeRegistry()
         self.session = session
@@ -82,96 +76,75 @@ class WorkflowValidator:
         self._var_to_node_type: Dict[str, str] = {}
         self._var_to_output_schema: Dict[str, Dict[str, Any]] = {}
         self._var_to_output_contract: Dict[str, Dict[str, Any]] = {}
-    
+
     def validate(self, code: str) -> ValidationResult:
-        """校验工作流代码
-        
-        Args:
-            code: 工作流 DSL 代码（注释标记 DSL）
-            
-        Returns:
-            校验结果
-        """
         self.errors = []
         self.warnings = []
-        
+
         try:
-            # 解析代码
             from .parser.marker_parser import WorkflowParser
             parser = WorkflowParser()
-            
-            # 1. 解析代码（会检查语法错误）
+
             plan = parser.parse(code)
-            
-            # 2. 检查节点类型
+
             self._validate_node_types(plan.statements)
-            
-            # 3. 检查字段访问
+
             self._validate_field_access(plan.statements)
-            
-            # 4. 检查表达式语法
+
             self._validate_expressions(plan.statements)
-            
-            # 5. 检查类型匹配
+
             self._validate_type_matching(plan.statements)
-            
-            # 6. 检查 Expression 节点特殊规则
+
             self._validate_expression_nodes(plan.statements)
-            
-            # 7. 检查异步依赖
+
             self._validate_async_dependencies(plan.statements)
-            
-            # 8. 检查参数值的有效性
+
             self._validate_parameter_values(plan.statements)
-            
+
         except SyntaxError as e:
             self.errors.append(ValidationError(
                 line=e.lineno or 0,
                 variable='',
                 error_type='syntax',
-                message=f"语法错误: {str(e)}",
-                suggestion="检查代码语法是否正确"
+                message=f"Syntax error: {str(e)}",
+                suggestion="Check code syntax"
             ))
         except ValueError as e:
-            # 解析器抛出的错误
             self.errors.append(ValidationError(
                 line=0,
                 variable='',
                 error_type='syntax',
                 message=str(e),
-                suggestion="检查代码是否符合 DSL 规范"
+                suggestion="Check whether code follows DSL rules"
             ))
         except Exception as e:
-            logger.error(f"校验失败: {e}")
+            logger.error(f"Validation failed: {e}")
             self.errors.append(ValidationError(
                 line=0,
                 variable='',
                 error_type='unknown',
-                message=f"校验失败: {str(e)}",
-                suggestion="请联系开发人员"
+                message=f"Validation failed: {str(e)}",
+                suggestion="Contact developer"
             ))
-        
+
         return ValidationResult(
             is_valid=len(self.errors) == 0,
             errors=self.errors,
             warnings=self.warnings
         )
-    
+
     def _validate_node_types(self, statements):
-        """检查节点类型是否存在"""
         for stmt in statements:
             if stmt.node_type and not self.registry.has_node(stmt.node_type):
                 self.errors.append(ValidationError(
                     line=stmt.line_number,
                     variable=stmt.variable,
                     error_type='node_type',
-                    message=f"未知的节点类型: {stmt.node_type}",
-                    suggestion=f"可用的节点类型: {', '.join(self.registry.list_nodes())}"
+                    message=f"Unknown node type: {stmt.node_type}",
+                    suggestion=f"Available node types: {', '.join(self.registry.list_nodes())}"
                 ))
-    
+
     def _validate_field_access(self, statements):
-        """检查字段访问是否合法"""
-        # 构建变量 -> 节点类型 / 输出 schema 映射
         var_to_node_type: Dict[str, str] = {}
         var_to_output_schema: Dict[str, Dict[str, Any]] = {}
 
@@ -206,12 +179,6 @@ class WorkflowValidator:
         defined_vars: set[str],
         path: str = "config",
     ) -> Iterable[Tuple[str, str]]:
-        """递归提取配置中的变量字段引用。
-
-        支持：
-        - $var.field
-        - var.field（仅当 var 为已定义变量时，视作隐式引用）
-        """
         if isinstance(value, str):
             text = value.strip()
             if not text:
@@ -229,8 +196,6 @@ class WorkflowValidator:
                 if root in defined_vars:
                     yield path, text
 
-            # 支持在字符串模板中提取内嵌字段引用（如 f"...{debate.summary}..."）
-            # 仅提取 `{var.field}`，并跳过双大括号 `{{...}}` 场景。
             for match in _BRACED_REF_PATTERN.finditer(text):
                 ref = (match.group(1) or "").strip()
                 if not ref:
@@ -259,33 +224,29 @@ class WorkflowValidator:
         var_to_output_schema: Dict[str, Dict[str, Any]],
         source: str,
     ):
-        """检查字段引用是否合法"""
         parts = ref.split('.')
         if len(parts) < 2:
-            return  # 简单变量引用，不检查
-        
+            return  # simple variable reference; skip check
+
         var_name = parts[0]
         field_name = parts[1]
-        
-        # 检查变量是否存在
+
         if var_name not in var_to_node_type:
             self.errors.append(ValidationError(
                 line=stmt.line_number,
                 variable=stmt.variable,
                 error_type='field_access',
-                message=f"字段引用来源 {source} 使用了未定义变量: {var_name}",
-                suggestion=f"确保在使用前定义变量 {var_name}"
+                message=f"Field reference source {source} uses undefined variable: {var_name}",
+                suggestion=f"Define variable {var_name} before use"
             ))
             return
-        
-        # 获取节点类型与输出 schema
+
         node_type = var_to_node_type[var_name]
         output_schema = var_to_output_schema.get(var_name)
 
         if not output_schema:
-            return  # 无法检查
+            return  # cannot check
 
-        # 检查字段路径是否存在
         exists, available_fields = self._validate_schema_field_path(output_schema, parts[1:])
         if not exists:
             field_path = ".".join(parts[1:])
@@ -293,11 +254,11 @@ class WorkflowValidator:
                 line=stmt.line_number,
                 variable=stmt.variable,
                 error_type='field_access',
-                message=f"节点 {var_name} ({node_type}) 没有输出字段路径 '{field_path}'（来源: {source}）",
+                message=f"Node {var_name} ({node_type}) has no output field path {field_path!r} (source: {source})",
                 suggestion=(
-                    f"可用字段: {', '.join(available_fields)}"
+                    f"Available fields: {', '.join(available_fields)}"
                     if available_fields
-                    else "请检查字段路径拼写，或先用 wf_get_node_metadata 查看节点输出 schema"
+                    else "Check field path spelling, or use wf_get_node_metadata to inspect node output schema"
                 )
             ))
 
@@ -306,7 +267,6 @@ class WorkflowValidator:
         root_schema: Dict[str, Any],
         path_parts: List[str],
     ) -> Tuple[bool, List[str]]:
-        """校验输出 schema 字段路径是否存在。"""
         if not path_parts:
             return True, []
 
@@ -356,13 +316,6 @@ class WorkflowValidator:
         schema: Dict[str, Any],
         root_schema: Dict[str, Any],
     ) -> bool:
-        """判断 schema 是否允许继续向下访问任意字段路径。
-
-        典型场景：
-        - `Any`（Pydantic 会生成近似 `{}`）
-        - `type=object` 且未约束 properties / additionalProperties
-        - `additionalProperties=true`
-        """
         if not isinstance(schema, dict):
             return False
 
@@ -385,7 +338,6 @@ class WorkflowValidator:
         if schema_type == "object" and not has_properties and "additionalProperties" not in normalized:
             return True
 
-        # `Any` / 无约束 schema
         structural_keys = (
             "type",
             "properties",
@@ -406,7 +358,6 @@ class WorkflowValidator:
         return False
 
     def _resolve_schema_refs(self, schema: Dict[str, Any], root_schema: Dict[str, Any]) -> Dict[str, Any]:
-        """解析 schema 中的本地 $ref（#/$defs/xxx）。"""
         if not isinstance(schema, dict):
             return {}
 
@@ -421,7 +372,6 @@ class WorkflowValidator:
         return schema
 
     def _expand_schema_options(self, schema: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """展开 anyOf/oneOf/allOf 便于路径检查。"""
         if not isinstance(schema, dict):
             return []
 
@@ -437,15 +387,13 @@ class WorkflowValidator:
         if not expanded:
             return [schema]
 
-        # 过滤掉 null 分支，优先保留对象/可展开分支
         filtered = [
             item for item in options
             if item.get('type') != 'null'
         ]
         return filtered or options
-    
+
     def _validate_expressions(self, statements):
-        """检查表达式语法与变量依赖"""
         var_to_node_type: Dict[str, str] = {}
         var_to_output_schema: Dict[str, Dict[str, Any]] = {}
 
@@ -464,7 +412,6 @@ class WorkflowValidator:
         defined_vars = set()
 
         for stmt in statements:
-            # 1) Logic.Expression 节点 expression 参数
             if stmt.node_type == "Logic.Expression":
                 expression = stmt.config.get('expression', '')
                 if expression:
@@ -477,7 +424,6 @@ class WorkflowValidator:
                         var_to_output_schema=var_to_output_schema,
                     )
 
-            # 2) 通用内联表达式：${...}
             for source, inline_expr in self._extract_inline_expressions(stmt.config):
                 self._validate_single_expression(
                     stmt=stmt,
@@ -488,7 +434,6 @@ class WorkflowValidator:
                     var_to_output_schema=var_to_output_schema,
                 )
 
-            # 当前节点定义的变量在本语句结束后可用
             defined_vars.add(stmt.variable)
 
     def _validate_single_expression(
@@ -500,7 +445,6 @@ class WorkflowValidator:
         var_to_node_type: Optional[Dict[str, str]] = None,
         var_to_output_schema: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> None:
-        """校验单个表达式"""
         expression_errors = validate_expression(expression)
         if expression_errors:
             for expression_error in expression_errors:
@@ -508,21 +452,21 @@ class WorkflowValidator:
                     line=stmt.line_number,
                     variable=stmt.variable,
                     error_type='expression',
-                    message=f"表达式语法错误 ({source}): {expression_error}",
-                    suggestion="检查表达式语法是否正确"
+                    message=f"Expression syntax error ({source}): {expression_error}",
+                    suggestion="Check expression syntax"
                 ))
             return
 
         dependencies = get_expression_dependencies(expression)
         undefined_vars = sorted(var for var in dependencies if var not in defined_vars)
         if undefined_vars:
-            defined_preview = ", ".join(sorted(defined_vars)) if defined_vars else "（当前无可用变量）"
+            defined_preview = ", ".join(sorted(defined_vars)) if defined_vars else "(no variables available)"
             self.errors.append(ValidationError(
                 line=stmt.line_number,
                 variable=stmt.variable,
                 error_type='expression',
-                message=f"表达式引用了未定义变量 ({source}): {', '.join(undefined_vars)}",
-                suggestion=f"请先定义这些变量，或检查变量名拼写。当前可用变量: {defined_preview}"
+                message=f"Expression references undefined variables ({source}): {', '.join(undefined_vars)}",
+                suggestion=f"Define these variables first, or check names. Available variables: {defined_preview}"
             ))
 
         if not var_to_node_type or not var_to_output_schema:
@@ -538,7 +482,6 @@ class WorkflowValidator:
             )
 
     def _extract_expression_field_references(self, expression: str, defined_vars: set[str]) -> List[str]:
-        """提取表达式中的字段引用，如 debate.summary / project.project_id。"""
         if not expression:
             return []
 
@@ -565,7 +508,6 @@ class WorkflowValidator:
         value: Any,
         path: str = ""
     ) -> Iterable[Tuple[str, str]]:
-        """递归提取配置中的内联表达式 ${...}"""
         if isinstance(value, str):
             if value.startswith("${") and value.endswith("}"):
                 source = path if path else "config"
@@ -582,9 +524,8 @@ class WorkflowValidator:
             for key, item in value.items():
                 child_path = f"{path}.{key}" if path else str(key)
                 yield from self._extract_inline_expressions(item, child_path)
-    
+
     def _validate_type_matching(self, statements):
-        """检查类型匹配（支持表达式与变量引用的静态推断）"""
         var_to_output_schema: Dict[str, Dict[str, Any]] = {}
         defined_vars = {stmt.variable for stmt in statements}
         self._var_to_node_type = {
@@ -638,8 +579,8 @@ class WorkflowValidator:
                         line=stmt.line_number,
                         variable=stmt.variable,
                         error_type='type_mismatch',
-                        message=f"缺少必填参数: {field}",
-                        suggestion=f"节点 {stmt.node_type} 需要参数 {field}"
+                        message=f"Missing required parameter: {field}",
+                        suggestion=f"Node {stmt.node_type} requires parameter {field}"
                     ))
 
             properties = input_schema.get('properties', {})
@@ -716,19 +657,19 @@ class WorkflowValidator:
                 if isinstance(card_type_name, str) and card_type_name.strip():
                     schema_fields = self._get_card_schema_fields_preview(card_type_name.strip())
                     if schema_fields:
-                        card_type_hint = f" 可用字段示例：{', '.join(schema_fields)}。"
+                        card_type_hint = f" Available field examples: {', '.join(schema_fields)}."
 
             return ValidationError(
                 line=stmt.line_number,
                 variable=stmt.variable,
                 error_type='type_mismatch',
                 message=(
-                    f"{node_param} 类型不匹配：必须是 dict(object)，"
-                    f"当前检测为 {actual_text}"
+                    f"{node_param} type mismatch: must be dict(object), "
+                    f"detected as {actual_text}"
                 ),
                 suggestion=(
-                    f"请把 {node_param} 改为字面量字典，并严格按卡片 schema 填写字段。"
-                    f"禁止用 `${{表达式}}` 或 `Logic.Expression.result` 直接赋整个内容对象。"
+                    f"Set {node_param} to a literal dict and fill fields according to card schema."
+                    f"Do not assign the whole content object with `${{expression}}` or `Logic.Expression.result`."
                     f"{card_type_hint}"
                 )
             )
@@ -737,8 +678,8 @@ class WorkflowValidator:
             line=stmt.line_number,
             variable=stmt.variable,
             error_type='type_mismatch',
-            message=f"参数 {key} 类型不匹配：期望 {expected_text}，实际推断为 {actual_text}",
-            suggestion=f"请将参数 {key} 改为 {expected_text}。"
+            message=f"Parameter {key} type mismatch: expected {expected_text}, inferred as {actual_text}",
+            suggestion=f"Set parameter {key} to {expected_text}."
         )
 
     def _extract_reference(self, value: Any) -> Optional[str]:
@@ -869,7 +810,6 @@ class WorkflowValidator:
             "maximum",
         )
         if not result and isinstance(normalized, dict) and not any(key in normalized for key in structural_keys):
-            # 无约束 schema（例如 Any -> {}）
             return {"any"}
 
         return result
@@ -1068,8 +1008,6 @@ class WorkflowValidator:
         parts = ref.split(".")
         var_name = parts[0]
 
-        # 根变量引用（$var）在 DSL 中常用于“句柄/延迟解析”语义，
-        # 这里按动态类型处理，避免误判（如 Logic.Wait.tasks=$async_node）。
         if len(parts) == 1:
             return {"any"}
 
@@ -1118,32 +1056,24 @@ class WorkflowValidator:
                 return True
 
         return False
-    
+
     def _validate_expression_nodes(self, statements):
-        """检查 Expression 节点特殊规则"""
         for stmt in statements:
             if stmt.node_type != "Logic.Expression":
                 continue
-            
+
             expression = stmt.config.get('expression', '')
             if not expression:
                 self.errors.append(ValidationError(
                     line=stmt.line_number,
                     variable=stmt.variable,
                     error_type='expression',
-                    message="Expression 节点缺少 expression 参数",
-                    suggestion="请填写表达式内容"
+                    message="Expression node missing expression parameter",
+                    suggestion="Fill expression content"
                 ))
-    
+
     def _validate_async_dependencies(self, statements):
-        """检查异步节点依赖
 
-        规则：如果某个同步节点使用了异步节点的输出，那么在此之前必须出现过一个
-        `Logic.Wait` 来等待该异步任务完成。
-
-        说明：这里采用“代码顺序”的屏障语义做校验（更符合执行器实际行为），不要求
-        下游节点必须显式引用 `wait_xxx` 变量。
-        """
 
         async_nodes = {stmt.variable for stmt in statements if stmt.is_async}
         if not async_nodes:
@@ -1172,10 +1102,8 @@ class WorkflowValidator:
                         waited.add(task_var)
                 return waited
 
-            # 其它复杂类型（极少见）：不做静态推断
             return waited
 
-        # 基于“代码顺序”的屏障语义进行校验：只要在某条语句之前执行过 wait，后续语句就可以安全使用对应异步结果。
         for stmt in statements:
             if stmt.node_type == "Logic.Wait":
                 waited_async_nodes.update(_extract_waited_async_vars(stmt))
@@ -1184,7 +1112,6 @@ class WorkflowValidator:
             if stmt.is_async:
                 continue
 
-            # 收集所有依赖的变量（包括 Expression.expression 内部引用）
             all_deps = set(stmt.depends_on)
             if stmt.node_type == "Logic.Expression":
                 expression = stmt.config.get("expression", "")
@@ -1205,25 +1132,18 @@ class WorkflowValidator:
                         variable=stmt.variable,
                         error_type="async_dependency",
                         message=(
-                            f"同步节点 '{stmt.variable}' 依赖异步节点 '{async_dep}'，但在此之前没有执行 Logic.Wait 等待该异步任务完成"
+                            f"Sync node {stmt.variable!r} depends on async node {async_dep!r}, but no Logic.Wait waits for it before use"
                         ),
                         suggestion=(
-                            f"在使用 '{async_dep}' 之前插入 wait 节点，例如：\n"
-                            f"#@node(description=\"等待 {async_dep} 完成\")\n"
+                            f"Insert a wait node before using {async_dep!r}, for example:\n"
+                            f"#@node(description=\"Wait {async_dep} complete\")\n"
                             f"wait_{async_dep} = Logic.Wait(tasks={async_dep})\n"
                             f"#</node>"
                         ),
                     )
                 )
-    
+
     def _validate_parameter_values(self, statements):
-        """检查参数值的有效性
-        
-        检测常见的错误值，如：
-        - '[object Object]': JavaScript 对象未正确序列化
-        - 'undefined': JavaScript undefined 值
-        - 'null' 字符串（应该是 None）
-        """
         for stmt in statements:
             if not stmt.node_type:
                 continue
@@ -1232,39 +1152,36 @@ class WorkflowValidator:
                 if not isinstance(value, str):
                     continue
 
-                # 检测 [object Object]
                 if value == '[object Object]' or '[object Object]' in value:
                     self.errors.append(ValidationError(
                         line=stmt.line_number,
                         variable=stmt.variable,
                         error_type='invalid_value',
-                        message=f"参数 '{path}' 的值无效: '{value}'",
-                        suggestion="这通常是因为前端未正确序列化对象。请刷新页面或重新编辑该参数。"
+                        message=f"Parameter {path!r} value is invalid: {value!r}",
+                        suggestion="This usually means FE did not serialize object correctly. Refresh or edit this parameter again."
                     ))
                     continue
 
-                # 检测 undefined
                 if value == 'undefined':
                     self.errors.append(ValidationError(
                         line=stmt.line_number,
                         variable=stmt.variable,
                         error_type='invalid_value',
-                        message=f"参数 '{path}' 的值为 undefined",
-                        suggestion="请为该参数提供有效值或删除该参数。"
+                        message=f"Parameter {path!r} value is undefined",
+                        suggestion="Provide a valid value or remove this parameter."
                     ))
                     continue
 
-                # 检测“把表达式包成字符串字面量”的常见错误
                 if stmt.node_type != "Logic.Expression" and self._looks_like_quoted_expression_literal(value):
                     self.errors.append(ValidationError(
                         line=stmt.line_number,
                         variable=stmt.variable,
                         error_type='expression_literal',
                         message=(
-                            f"参数 '{path}' 看起来是表达式字符串字面量，执行时不会被当作表达式计算"
+                            f"Parameter {path!r} looks like an expression string literal and will not be evaluated at runtime"
                         ),
                         suggestion=(
-                            "如果需要计算表达式，请使用 `${...}` 或新增 `Logic.Expression` 节点并引用 `.result`。"
+                            "If expression evaluation is needed, use `${...}` or add a `Logic.Expression` node and reference `.result`."
                         )
                     ))
 
@@ -1272,7 +1189,6 @@ class WorkflowValidator:
             self._validate_card_content_schema(stmt)
 
     def _validate_card_payload_static_rules(self, stmt) -> None:
-        """卡片写入参数的静态约束。"""
         rules = {
             "Card.Create": ("content", False),
             "Card.Update": ("content_merge", False),
@@ -1291,7 +1207,6 @@ class WorkflowValidator:
         if payload is None:
             return
 
-        # 支持结构化输出契约直传（如 content = structured.data）
         if stmt.node_type in ("Card.Create", "Card.BatchUpsert") and self._card_content_reference_matches_contract(stmt, field_name):
             return
 
@@ -1303,15 +1218,15 @@ class WorkflowValidator:
                 if isinstance(card_type_name, str) and card_type_name.strip():
                     schema_fields = self._get_card_schema_fields_preview(card_type_name.strip())
                     if schema_fields:
-                        card_type_hint = f" 可用字段示例：{', '.join(schema_fields)}。"
+                        card_type_hint = f" Available field examples: {', '.join(schema_fields)}."
 
             self.errors.append(ValidationError(
                 line=stmt.line_number,
                 variable=stmt.variable,
                 error_type='type_mismatch',
-                message=f"{node_param} 必须是字面量 dict(object)，当前不是可校验对象。",
+                message=f"{node_param} must be a literal dict(object); current value is not statically checkable.",
                 suggestion=(
-                    f"请直接写成 `{{...}}`"
+                    f"Write directly as `{{...}}`"
                     f"{card_type_hint}"
                 )
             ))
@@ -1327,23 +1242,23 @@ class WorkflowValidator:
             node_param = f"{stmt.node_type}.{field_name}"
             reason_hint = ""
             if reason == "inline_expression":
-                reason_hint = "检测到 `${...}` 表达式。"
+                reason_hint = "Detected `${...}` expression."
             elif reason == "expression_result":
-                reason_hint = "检测到 `Logic.Expression.result` 引用。"
+                reason_hint = "Detected `Logic.Expression.result` reference."
             elif reason == "item_template_not_allowed":
-                reason_hint = "检测到 `{item.xxx}` 模板，但该节点不支持。"
+                reason_hint = "Detected `{item.xxx}` template, but this node does not support it."
             elif reason == "unknown_reference":
-                reason_hint = "检测到无法识别的变量引用。"
+                reason_hint = "Detected unrecognized variable reference."
             self.errors.append(ValidationError(
                 line=stmt.line_number,
                 variable=stmt.variable,
                 error_type='type_mismatch',
                 message=(
-                    f"{node_param} 包含不可静态校验的动态赋值: {bad_path} = {bad_value!r}"
+                    f"{node_param} contains dynamic assignment that cannot be statically checked: {bad_path} = {bad_value!r}"
                 ),
                 suggestion=(
-                    "卡片写入参数必须可静态校验。"
-                    "请使用字面量 dict"
+                    "Card write parameters must be statically checkable."
+                    "Use a literal dict"
                     f" {reason_hint}"
                 )
             ))
@@ -1384,7 +1299,6 @@ class WorkflowValidator:
         if not normalized:
             return None
 
-        # 允许 `$var.path`，后续由契约匹配或 schema 校验决定是否通过
         if normalized.startswith("$"):
             return None
 
@@ -1397,7 +1311,6 @@ class WorkflowValidator:
         return None
 
     def _iter_config_values(self, value: Any, path: str = "config") -> Iterable[Tuple[str, Any]]:
-        """递归展开配置值，返回 (path, value)。"""
         yield path, value
 
         if isinstance(value, dict):
@@ -1410,7 +1323,6 @@ class WorkflowValidator:
                 yield from self._iter_config_values(item, child_path)
 
     def _looks_like_quoted_expression_literal(self, text: str) -> bool:
-        """启发式检测：字符串是否像“被错误加引号的表达式”。"""
         normalized = (text or "").strip()
         if not normalized:
             return False
@@ -1431,7 +1343,6 @@ class WorkflowValidator:
         return has_comprehension or ((has_var_path or has_func_call) and has_operator)
 
     def _validate_card_content_schema(self, stmt) -> None:
-        """基于卡片类型 schema 做通用 content 结构校验。"""
         if stmt.node_type not in ("Card.Create", "Card.BatchUpsert", "Card.Update"):
             return
 
@@ -1469,7 +1380,6 @@ class WorkflowValidator:
                 self._validate_content_obj_against_schema(stmt, "config.content", content, schema)
             return
 
-        # Card.BatchUpsert：仅校验字面量对象模板；字符串模板无法静态展开
         content_template = stmt.config.get("content_template")
         if isinstance(content_template, dict):
             self._validate_content_obj_against_schema(stmt, "config.content_template", content_template, schema)
@@ -1541,10 +1451,10 @@ class WorkflowValidator:
                     variable=stmt.variable,
                     error_type='type_mismatch',
                     message=(
-                        f"{source_path} 包含 schema 未定义字段: {', '.join(unknown_fields)}"
+                        f"{source_path} contains fields not defined by schema: {', '.join(unknown_fields)}"
                     ),
                     suggestion=(
-                        f"请仅使用该卡片类型已定义字段: {', '.join(sorted(known_fields))}"
+                        f"Use only fields defined by this card type: {', '.join(sorted(known_fields))}"
                     )
                 ))
 
@@ -1562,10 +1472,10 @@ class WorkflowValidator:
                     variable=stmt.variable,
                     error_type='type_mismatch',
                     message=(
-                        f"{source_path} 包含未定义字段: {', '.join(unknown_fields)}"
+                        f"{source_path} contains undefined fields: {', '.join(unknown_fields)}"
                     ),
                     suggestion=(
-                        f"请仅使用该卡片类型 schema 中定义的字段: {', '.join(sorted(props.keys()))}"
+                        localized_text('hardcoded.services_workflow_validator_3b70b704')
                     )
                 ))
 
@@ -1576,9 +1486,9 @@ class WorkflowValidator:
                     variable=stmt.variable,
                     error_type='type_mismatch',
                     message=(
-                        f"{source_path} 缺少必填字段: {', '.join(missing_required)}"
+                        localized_text('hardcoded.services_workflow_validator_ba60cd2c', source_path=source_path)
                     ),
-                    suggestion="请补齐 schema 要求的必填字段。"
+                    suggestion=localized_text('hardcoded.services_workflow_validator_4778d702')
                 ))
             return
 
@@ -1600,8 +1510,8 @@ class WorkflowValidator:
                     line=stmt.line_number,
                     variable=stmt.variable,
                     error_type='type_mismatch',
-                    message=f"{full_path} 不符合卡片 schema 约束: {err.message}",
-                    suggestion="请根据该卡片类型 schema 修正字段结构与类型。"
+                    message=localized_text('hardcoded.services_workflow_validator_a6418f15', full_path=full_path, err_message=err.message),
+                    suggestion=localized_text('hardcoded.services_workflow_validator_6e795d14')
                 ))
         except Exception as exc:
             logger.warning("[WorkflowValidator] jsonschema validation failed: {}", exc)
@@ -1625,7 +1535,6 @@ class WorkflowValidator:
         return known_fields
 
     def _is_dynamic_value_string(self, text: str) -> bool:
-        """是否为运行期动态值引用。"""
         normalized = (text or "").strip()
         if not normalized:
             return False
@@ -1639,13 +1548,5 @@ class WorkflowValidator:
 
 
 def validate_workflow(code: str, session: Optional[Session] = None) -> ValidationResult:
-    """便捷函数：校验工作流代码
-    
-    Args:
-        code: 工作流代码
-        
-    Returns:
-        校验结果
-    """
     validator = WorkflowValidator(session=session)
     return validator.validate(code)

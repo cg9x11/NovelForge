@@ -1,12 +1,11 @@
+from app.locales import localized_text
 from typing import List, Optional
 from sqlmodel import Session, select
 from app.db.models import Knowledge
 from app.services.builtin_key_registry import KNOWLEDGE_NAME_TO_KEY, resolve_builtin_key
 
 class KnowledgeService:
-    """知识库服务：提供知识库的增删改查。
-    注意：内置（built_in=True）的知识库不允许删除。
-    """
+
 
     def __init__(self, db: Session) -> None:
         self.db = db
@@ -66,7 +65,7 @@ class KnowledgeService:
         if not kb:
             return False
         if getattr(kb, 'built_in', False):
-            raise ValueError("系统内置知识库不可删除")
+            raise ValueError(localized_text('hardcoded.services_knowledge_service_2d8b3f24'))
         self.db.delete(kb)
         self.db.commit()
-        return True 
+        return True

@@ -1,6 +1,6 @@
-"""知识库初始化
+"""Knowledge bootstrap.
 
-从文件系统加载知识库内容并初始化到数据库。
+Loads built-in knowledge files and initializes them into database.
 """
 
 import os
@@ -10,24 +10,26 @@ from loguru import logger
 from app.db.models import Knowledge
 from app.services.builtin_key_registry import KNOWLEDGE_NAME_TO_KEY, resolve_builtin_key
 from app.core.config import settings
+from app.locales import locale_section
 from .registry import initializer
 
 
-@initializer(name="知识库", order=30)
+@initializer(name="knowledge", order=30)
 def init_knowledge(session: Session) -> None:
-    """初始化知识库
-    
-    从 bootstrap/knowledge 目录导入 *.txt 和 *.md 文件。
-    
-    Args:
-        session: 数据库会话
-    """
+    """Initialize built-in knowledge files from bootstrap/knowledge."""
     knowledge_dir = os.path.join(os.path.dirname(__file__), 'knowledge')
     if not os.path.exists(knowledge_dir):
         logger.warning(f"Knowledge directory not found at {knowledge_dir}. Cannot load knowledge base.")
         return
 
-    existing = {k.name: k for k in session.exec(select(Knowledge)).all()}
+    knowledge_names = locale_section("knowledge_names")
+    existing_items = session.exec(select(Knowledge)).all()
+    for item in existing_items:
+        mapped_key = KNOWLEDGE_NAME_TO_KEY.get((item.name or '').strip())
+        if mapped_key or not getattr(item, "key", None):
+            item.key = mapped_key or resolve_builtin_key(item.name, KNOWLEDGE_NAME_TO_KEY)
+    existing_by_name = {k.name: k for k in existing_items}
+    existing_by_key = {k.key: k for k in existing_items if getattr(k, "key", None)}
     created = 0
     updated = 0
     skipped = 0
@@ -37,29 +39,32 @@ def init_knowledge(session: Session) -> None:
         if not filename.lower().endswith(('.txt', '.md')):
             continue
         file_path = os.path.join(knowledge_dir, filename)
-        name = os.path.splitext(filename)[0]
+        key = os.path.splitext(filename)[0]
+        name = knowledge_names.get(key, key)
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read().strip()
-        except Exception as e:
-            logger.warning(f"读取知识库文件失败 {file_path}: {e}")
+        except Exception:
             continue
-        description = f"预置知识库：{name}"
-        if name in existing:
+        description = f"Preset knowledge: {name}"
+        existing = existing_by_key.get(key) or existing_by_name.get(name)
+        if existing:
             if overwrite:
-                kb = existing[name]
-                kb.content = content
-                kb.description = description
-                kb.built_in = True
+                existing.name = name
+                existing.key = key
+                existing.content = content
+                existing.description = description
+                existing.built_in = True
                 updated += 1
             else:
+                if not getattr(existing, "key", None):
+                    existing.key = key
                 skipped += 1
         else:
-            session.add(Knowledge(name=name, description=description, content=content, built_in=True))
+            session.add(Knowledge(key=key, name=name, description=description, content=content, built_in=True))
             created += 1
 
     if created or updated:
         session.commit()
-        logger.info(f"知识库初始化完成：新增 {created}，更新 {updated}（overwrite={overwrite}，跳过 {skipped}）")
     else:
-        logger.info(f"知识库已是最新状态（overwrite={overwrite}，跳过 {skipped}）。")
+        pass

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.locales import localized_text
 
 from typing import Any
 
@@ -10,7 +11,7 @@ from app.schemas.memory import ParticipantTyped
 
 class CharacterDynamicExtractor:
     code = "character_dynamic"
-    name = "角色动态信息提取"
+    name = localized_text('hardcoded.services_memory_extractors_character_dynamic_59510c94')
     target = "card"
     preview_supported = True
     output_model = UpdateDynamicInfo

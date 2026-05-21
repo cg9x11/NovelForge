@@ -1,3 +1,4 @@
+from app.locales import localized_text
 from typing import List
 
 import httpx
@@ -50,7 +51,7 @@ def delete_llm_config_endpoint(config_id: int, session: Session = Depends(get_se
     return ApiResponse(message="LLM Config deleted successfully")
 
 
-@router.post("/get-models", response_model=ApiResponse[List[str]], summary="获取模型列表")
+@router.post("/get-models", response_model=ApiResponse[List[str]], summary=localized_text('hardcoded.api_endpoints_llm_configs_941d9a6e'))
 async def get_models_endpoint(request: LLMGetModelsRequest):
     provider = (request.provider or "").lower()
     models: list[str] = []
@@ -83,7 +84,7 @@ async def get_models_endpoint(request: LLMGetModelsRequest):
             if request.api_key:
                 async with httpx.AsyncClient() as client:
                     response = await client.get(
-                        f"https://generativelanguage.googleapis.com/v1beta/models?key={request.api_key}",
+                        f"https://generativelanguage.googleapis.com/v1beta/modelssecondskey={request.api_key}",
                         timeout=10.0,
                     )
                     response.raise_for_status()
@@ -139,7 +140,7 @@ async def test_llm_connection_endpoint(connection_data: LLMConnectionTest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Connection test failed: {e}")
 
-@router.post("/{config_id}/reset-usage", response_model=ApiResponse, summary="重置统计（输入/输出 token 与调用次数）")
+@router.post("/{config_id}/reset-usage", response_model=ApiResponse, summary=localized_text('hardcoded.api_endpoints_llm_configs_ccffe689'))
 def reset_llm_usage(config_id: int, session: Session = Depends(get_session)):
     ok = llm_config_service.reset_usage(session, config_id)
     if not ok:
@@ -147,7 +148,7 @@ def reset_llm_usage(config_id: int, session: Session = Depends(get_session)):
     return ApiResponse(message="Usage reset")
 
 
-@router.post("/{config_id}/copy", response_model=ApiResponse[LLMConfigRead], summary="复制 LLM 配置")
+@router.post("/{config_id}/copy", response_model=ApiResponse[LLMConfigRead], summary=localized_text('hardcoded.api_endpoints_llm_configs_f725303e'))
 def copy_llm_config_endpoint(config_id: int, session: Session = Depends(get_session)):
     config = llm_config_service.copy_llm_config(session=session, config_id=config_id)
     if not config:

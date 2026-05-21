@@ -9,6 +9,8 @@ from langchain_core.tools import BaseTool
 from loguru import logger
 from sqlmodel import Session
 
+from app.locales import localized_text
+
 from .agent_builder import build_agent
 from .chat_model_factory import build_chat_model
 from .quota_manager import precheck_quota, record_usage
@@ -40,7 +42,7 @@ async def stream_agent_with_tools(
         need_calls=1,
     )
     if not ok:
-        raise ValueError(f"LLM配额不足: {reason}")
+        raise ValueError(localized_text('hardcoded.tool_agent_quota_insufficient', reason=reason))
 
     model = build_chat_model(
         session=session,
@@ -254,11 +256,11 @@ async def stream_agent_with_tools(
     if not accumulated_text.strip() and not reasoning_accumulated.strip():
         if tool_end_count > 0:
             if tool_end_failed_count == tool_end_count:
-                fallback_text = "已执行工具调用，但工具结果均未成功，请查看工具结果并调整后重试。"
+                fallback_text = localized_text("hardcoded.tool_agent_empty_reply", "No visible reply text was produced. Retry or adjust the prompt.")
             else:
-                fallback_text = "已执行工具调用，请查看工具结果。"
+                fallback_text = localized_text("hardcoded.tool_agent_empty_reply", "No visible reply text was produced. Retry or adjust the prompt.")
         else:
-            fallback_text = "本轮未产生可见回复文本，请重试或调整提问。"
+            fallback_text = localized_text("hardcoded.tool_agent_empty_reply", "No visible reply text was produced. Retry or adjust the prompt.")
 
         accumulated_text += fallback_text
         yield {

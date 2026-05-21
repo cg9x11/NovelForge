@@ -24,12 +24,10 @@
 <script setup lang="ts">
 import { defineAsyncComponent, computed } from 'vue'
 import { useLocaleStore } from '@renderer/stores/useLocaleStore'
-import { translateText } from '@renderer/locales/runtimeTranslations'
 import type { JSONSchema } from '@renderer/api/schema'
 import { schemaService } from '@renderer/api/schema'
 import { resolveActualSchema as resolveSchemaUnified } from '@renderer/services/schemaFieldParser'
 
-// --- 组件导入 ---
 const StringField = defineAsyncComponent(() => import('./fields/StringField.vue'))
 const NumberField = defineAsyncComponent(() => import('./fields/NumberField.vue'))
 const BooleanField = defineAsyncComponent(() => import('./fields/BooleanField.vue'))
@@ -37,7 +35,6 @@ const ObjectField = defineAsyncComponent(() => import('./fields/ObjectField.vue'
 const ArrayField = defineAsyncComponent(() => import('./fields/ArrayField.vue'))
 const EnumField = defineAsyncComponent(() => import('./fields/EnumField.vue'))
 const TupleField = defineAsyncComponent(() => import('./fields/TupleField.vue'))
-// 用于不支持类型的默认回退组件
 const FallbackField = defineAsyncComponent(() => import('./fields/FallbackField.vue'))
 
 // --- Props & Emits ---
@@ -55,7 +52,6 @@ const props = defineProps<{
 const emit = defineEmits(['update:modelValue'])
 const localeStore = useLocaleStore()
 
-// --- 默认值 ---
 const readonlyFields = props.readonlyFields || []
 
 const visibleProperties = computed(() => {
@@ -70,9 +66,7 @@ const visibleProperties = computed(() => {
   return Object.fromEntries(excluded)
 })
 
-// --- 逻辑 ---
 function resolveActualSchema(schema: JSONSchema): JSONSchema {
-  // 使用统一的Schema解析服务
   return resolveSchemaUnified(schema, props.schema) as JSONSchema
 }
 
@@ -105,7 +99,6 @@ function getFieldComponent(propSchema: JSONSchema) {
     case 'array':
       return ArrayField
     default:
-      console.warn(`不支持的字段类型: ${actualSchema.type} (属性: ${actualSchema.title}). 已使用回退组件。`)
       return FallbackField
   }
 }
@@ -116,7 +109,7 @@ function getFieldLabel(propName: string, propSchema: JSONSchema): string {
     || (propSchema as any).title
     || (actualSchema as any).title
     || propName
-  return translateText(String(raw), localeStore.locale)
+  return String(raw)
 }
 
 function updateModel(propName: string, value: any) {
@@ -129,4 +122,4 @@ function updateModel(propName: string, value: any) {
 .model-driven-form { padding: 0; }
 .form-card { border: none; }
 :deep(.el-card__body) { padding: 20px; }
-</style> 
+</style>

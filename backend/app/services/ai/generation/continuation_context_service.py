@@ -10,7 +10,7 @@ from app.schemas.ai import ContinuationRequest
 from app.services.context_service import ContextAssembleParams, assemble_context
 
 
-_FACTS_SECTION_PATTERN = re.compile(r"【事实子图】\n.*?(?=(?:\n\n【)|\Z)", flags=re.S)
+_FACTS_SECTION_PATTERN = re.compile(r"Facts Summary.*", flags=re.S)
 
 
 def _normalize_participants(participants: List[str] | None) -> List[str]:
@@ -33,7 +33,7 @@ def _merge_facts_into_context(context_info: str | None, facts_subgraph: str | No
     if not facts:
         return raw_context
 
-    facts_block = f"【事实子图】\n{facts}"
+    facts_block = f"【\u4e8b\u5b9e\u5b50\u56fe】\n{facts}"
     if not raw_context:
         return facts_block
 
@@ -63,7 +63,7 @@ def _format_facts_structured(facts_structured: Any) -> str:
     lines: List[str] = []
     fact_summaries = payload.get("fact_summaries")
     if isinstance(fact_summaries, list) and fact_summaries:
-        lines.append("关键事实：")
+        lines.append("Other")
         for item in fact_summaries:
             text = str(item or "").strip()
             if text:
@@ -71,12 +71,12 @@ def _format_facts_structured(facts_structured: Any) -> str:
 
     relation_summaries = payload.get("relation_summaries")
     if isinstance(relation_summaries, list) and relation_summaries:
-        lines.append("关系摘要：")
+        lines.append("Other")
         for rel in relation_summaries:
             relation = _to_dict(rel)
             a = str(relation.get("a") or "").strip()
             b = str(relation.get("b") or "").strip()
-            kind = str(relation.get("kind") or "其他").strip() or "其他"
+            kind = str(relation.get("kind") or "Other").strip() or "Other"
             lines.append(f"- {a} ↔ {b}（{kind}）")
 
             description = str(relation.get("description") or "").strip()
@@ -87,15 +87,15 @@ def _format_facts_structured(facts_structured: Any) -> str:
             b_to_a = str(relation.get("b_to_a_addressing") or "").strip()
             addressing_parts: List[str] = []
             if a_to_b:
-                addressing_parts.append(f"A称B：{a_to_b}")
+                addressing_parts.append(f"A\u79f0B：{a_to_b}")
             if b_to_a:
-                addressing_parts.append(f"B称A：{b_to_a}")
+                addressing_parts.append(f"B\u79f0A：{b_to_a}")
             if addressing_parts:
                 lines.append(f"  · {' ｜ '.join(addressing_parts)}")
 
             recent_dialogues = relation.get("recent_dialogues")
             if isinstance(recent_dialogues, list) and recent_dialogues:
-                lines.append("  · 对话样例：")
+                lines.append("Other")
                 for dialogue in recent_dialogues:
                     text = str(dialogue or "").strip()
                     if text:
@@ -103,7 +103,7 @@ def _format_facts_structured(facts_structured: Any) -> str:
 
             recent_events = relation.get("recent_event_summaries")
             if isinstance(recent_events, list) and recent_events:
-                lines.append("  · 近期事件：")
+                lines.append("Other")
                 for event in recent_events:
                     item = _to_dict(event)
                     summary = str(item.get("summary") or "").strip()
@@ -111,9 +111,9 @@ def _format_facts_structured(facts_structured: Any) -> str:
                         continue
                     tags: List[str] = []
                     if item.get("volume_number") is not None:
-                        tags.append(f"卷{item.get('volume_number')}")
+                        tags.append(f"\u5377{item.get('volume_number')}")
                     if item.get("chapter_number") is not None:
-                        tags.append(f"章{item.get('chapter_number')}")
+                        tags.append(f"\u7ae0{item.get('chapter_number')}")
                     if tags:
                         lines.append(f"    - {summary}（{' '.join(tags)}）")
                     else:
@@ -123,15 +123,12 @@ def _format_facts_structured(facts_structured: Any) -> str:
 
 
 def enrich_continuation_context_info(session: Session, request: ContinuationRequest) -> str:
-    """服务端自动组装事实子图，并合并到续写上下文。"""
     participants = _normalize_participants(request.participants)
 
     if not request.project_id:
-        logger.debug("[续写上下文] project_id 为空，跳过事实子图自动组装")
         return (request.context_info or "").strip()
 
     if not participants:
-        logger.debug("[续写上下文] participants 为空，跳过事实子图自动组装")
         return (request.context_info or "").strip()
 
     try:
@@ -147,7 +144,6 @@ def enrich_continuation_context_info(session: Session, request: ContinuationRequ
             ),
         )
     except Exception as exc:
-        logger.warning("[续写上下文] 自动组装事实子图失败: {}", exc)
         return (request.context_info or "").strip()
 
     structured_facts = _format_facts_structured(assembled.facts_structured)
@@ -156,7 +152,7 @@ def enrich_continuation_context_info(session: Session, request: ContinuationRequ
         structured_facts or assembled.facts_subgraph,
     )
     logger.debug(
-        "[续写上下文] 自动组装事实子图完成 project_id={} participants={} facts_len={} structured={}",
+        "Other",
         request.project_id,
         len(participants),
         len(structured_facts or assembled.facts_subgraph or ""),

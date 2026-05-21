@@ -1,7 +1,3 @@
-"""AI 工作流节点
-
-提供上下文组装、LLM 调用和 Agent 执行能力。
-"""
 
 from .context import ContextAssembleNode
 from .llm import LLMGenerateNode

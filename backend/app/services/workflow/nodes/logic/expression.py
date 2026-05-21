@@ -1,6 +1,6 @@
-"""表达式节点 - 数据转换与提取"""
 
 from __future__ import annotations
+from app.locales import schema_field_description
 
 import inspect
 from typing import Any, AsyncIterator
@@ -15,32 +15,32 @@ from app.services.workflow.registry import register_node
 
 
 class ExpressionInput(BaseModel):
-    """表达式节点输入"""
+
 
     expression: str = Field(
         ...,
-        description="Python 表达式（可以访问所有已定义变量）",
+        description=schema_field_description("expression"),
         json_schema_extra={
             "x-component": "CodeEditor",
             "x-component-props": {
                 "language": "python",
-                "placeholder": "例如：card.content.field or []\n[item.name for item in items if item.name]"
+                "placeholder": "Expression helper"
             }
         },
     )
 
 
 class ExpressionOutput(BaseModel):
-    """表达式节点输出"""
 
-    result: Any = Field(..., description="表达式计算结果")
+
+    result: Any = Field(..., description=schema_field_description("result"))
 
 
 def _build_helper_docs() -> list[str]:
     helpers = get_builtin_functions()
     helper_meta = get_helper_metadata()
     if not helpers:
-        return ["- （无业务 helper）"]
+        return ["Expression helper"]
 
     ranked_names = sorted(
         helpers.keys(),
@@ -48,25 +48,25 @@ def _build_helper_docs() -> list[str]:
         reverse=True,
     )
 
-    lines: list[str] = ["### 推荐 helper（按优先级）"]
+    lines: list[str] = ["Expression helper"]
     for name in ranked_names[:3]:
         func = helpers[name]
         signature = str(inspect.signature(func))
         meta = helper_meta.get(name)
-        summary = (meta.summary if meta else ((inspect.getdoc(func) or "").splitlines()[0] if inspect.getdoc(func) else "业务辅助函数")).strip()
-        scenario = meta.scenario if meta else "通用"
+        summary = (meta.summary if meta else ((inspect.getdoc(func) or "").splitlines()[0] if inspect.getdoc(func) else "Expression helper")).strip()
+        scenario = meta.scenario if meta else "Expression helper"
         example = meta.example if meta else ""
-        line = f"- `{name}{signature}`（场景：{scenario}，优先级：{meta.priority if meta else 50}）\n  - 说明：{summary}"
+        line = f"- `{name}{signature}`（\u573a\u666f：{scenario}，\u4f18\u5148\u7ea7：{meta.priority if meta else 50}）\n  - \u8bf4\u660e：{summary}"
         if example:
-            line += f"\n  - 示例：`{example}`"
+            line += f"\n  - \u793a\u4f8b：`{example}`"
         lines.append(line)
 
-    lines.append("\n### 全量 helper 列表")
+    lines.append("Expression helper")
     for name in ranked_names:
         func = helpers[name]
         signature = str(inspect.signature(func))
         meta = helper_meta.get(name)
-        summary = (meta.summary if meta else ((inspect.getdoc(func) or "").splitlines()[0] if inspect.getdoc(func) else "业务辅助函数")).strip()
+        summary = (meta.summary if meta else ((inspect.getdoc(func) or "").splitlines()[0] if inspect.getdoc(func) else "Expression helper")).strip()
         lines.append(f"- `{name}{signature}`：{summary}")
     return lines
 
@@ -81,44 +81,39 @@ def _build_expression_documentation() -> str:
     builtin_line = _build_builtin_docs()
 
     return f"""
-表达式节点用于执行**受控 Python 表达式**，适合做字段提取、列表转换、条件拼装。
+\u8868\u8fbe\u5f0f\u8282\u70b9\u7528\u4e8e\u6267\u884c**\u53d7\u63a7 Python \u8868\u8fbe\u5f0f**，\u9002\u5408\u505a\u5b57\u6bb5\u63d0\u53d6、\u5217\u8868\u8f6c\u6362、\u6761\u4ef6\u62fc\u88c5。
 
-## 核心规则（AI 必读）
-1. 节点输出结构固定为 `{{"result": <计算结果>}}`，后续节点必须通过 `.result` 访问。
-2. 可直接访问工作流上下文变量（如 `project`、`cards`、`wait_xxx`）。
-3. 推荐优先使用标准 Python 表达式语法（推导式、三元表达式、f-string）。
-4. 字典支持点号访问（如 `card.content.title`），缺失字段会按空值处理。
+1. \u8282\u70b9\u8f93\u51fa\u7ed3\u6784\u56fa\u5b9a\u4e3a `{{"result": <\u8ba1\u7b97\u7ed3\u679c>}}`，\u540e\u7eed\u8282\u70b9\u5fc5\u987b\u901a\u8fc7 `.result` \u8bbf\u95ee。
+2. \u53ef\u76f4\u63a5\u8bbf\u95ee\u5de5\u4f5c\u6d41\u4e0a\u4e0b\u6587\u53d8\u91cf（\u5982 `project`、`cards`、`wait_xxx`）。
+3. \u63a8\u8350\u4f18\u5148\u4f7f\u7528\u6807\u51c6 Python \u8868\u8fbe\u5f0f\u8bed\u6cd5（\u63a8\u5bfc\u5f0f、\u4e09\u5143\u8868\u8fbe\u5f0f、f-string）。
+4. \u5b57\u5178\u652f\u6301\u70b9\u53f7\u8bbf\u95ee（\u5982 `card.content.title`），\u7f3a\u5931\u5b57\u6bb5\u4f1a\u6309\u7a7a\u503c\u5904\u7406。
 
-## 推荐写法
 ```python
 card.content.items or []
 [item for item in items if item.status == "active"]
-f"共处理 {{len(items)}} 项"
+f"\u5171\u5904\u7406 {{len(items)}} \u9879"
 items if wait_ai.count > 0 else []
 ```
 
-## 输出访问示例
 ```python
 mapped = Logic.Expression(expression="{{item.id: item.name for item in cards}}")
 Card.BatchUpsert(items=mapped.result)
 ```
 
-## 可用 Python 内置函数
 {builtin_line}
 
-## 业务 helper（自动生成）
 {helper_lines}
 """.strip()
 
 
 @register_node
 class ExpressionNode(BaseNode):
-    """表达式节点（受控 Python eval）"""
+
 
     node_type = "Logic.Expression"
     category = "logic"
-    label = "表达式计算"
-    description = "执行受控 Python 表达式，输出 result"
+    label = "Expression"
+    description = "Run a safe Python expression and output result"
 
     input_model = ExpressionInput
     output_model = ExpressionOutput
@@ -131,7 +126,6 @@ class ExpressionNode(BaseNode):
         return metadata
 
     async def execute(self, input_data: ExpressionInput) -> AsyncIterator[ExpressionOutput]:
-        """执行表达式"""
         expr_context = self.context.variables
 
         try:
@@ -139,7 +133,7 @@ class ExpressionNode(BaseNode):
             yield ExpressionOutput(result=result)
         except Exception as e:
             raise ValueError(
-                f"表达式执行失败: {str(e)}\n"
-                f"表达式: {input_data.expression}\n"
-                f"可用变量: {', '.join(expr_context.keys())}"
+                f"\u8868\u8fbe\u5f0f\u6267\u884c\u5931\u8d25: {str(e)}\n"
+                f"\u8868\u8fbe\u5f0f: {input_data.expression}\n"
+                f"\u53ef\u7528\u53d8\u91cf: {', '.join(expr_context.keys())}"
             )

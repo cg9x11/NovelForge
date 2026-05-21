@@ -14,7 +14,7 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - backend/**
-# 将后端放到与可执行文件同级
+# Internal note.
 extraFiles:
   - from: ../backend/dist
     to: backend
@@ -33,7 +33,7 @@ extraMetadata:
   FileDescription: NovelForge
   ProductName: NovelForge
   OriginalFilename: NovelForge.exe
-# 移除 NSIS 安装器相关配置（仅保留便携版）
+# Internal note.
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:

@@ -57,7 +57,6 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent } from 'vue'
 import { useLocaleStore } from '@renderer/stores/useLocaleStore'
-import { translateText } from '@renderer/locales/runtimeTranslations'
 import { useI18n } from 'vue-i18n'
 import type { JSONSchema } from '@renderer/api/schema'
 import { Delete, Plus } from '@element-plus/icons-vue'
@@ -86,7 +85,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const addItemLabel = computed(() => {
   const raw = (props.displayNameMap && props.displayNameMap[itemSchema.value.title || '']) || itemSchema.value.title || t('arrayField.newItem')
-  return translateText(String(raw), localeStore.locale)
+  return String(raw)
 })
 
 const itemSchema = computed((): JSONSchema => {
@@ -150,7 +149,7 @@ function addItem() {
   let defaultValue: any
 
   if ((base as any).anyOf) {
-    defaultValue = { name: '', entity_type: 'character', life_span: '短期' }
+    defaultValue = { name: '', entity_type: 'character', life_span: 'short_term' }
   } else {
     defaultValue = createArrayItemDefaultValue(base)
   }

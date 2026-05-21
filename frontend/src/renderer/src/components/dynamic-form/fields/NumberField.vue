@@ -1,8 +1,8 @@
 <template>
   <el-form-item :label="label" :prop="prop">
-    <el-input-number 
-      v-model="internalValue" 
-      @change="handleChange" 
+    <el-input-number
+      v-model="internalValue"
+      @change="handleChange"
       :disabled="readonly"
       class="full-width"
       :step="step"
@@ -37,7 +37,6 @@ watch(() => props.modelValue, (newValue) => {
 
 function handleChange(value: number | undefined) {
   if (value != null && props.schema?.type === 'integer') {
-    // 强制转为整数，避免出现小数
     const intVal = Math.floor(value)
     emit('update:modelValue', intVal)
   } else {
@@ -50,4 +49,4 @@ function handleChange(value: number | undefined) {
 .full-width {
   width: 100%;
 }
-</style> 
+</style>

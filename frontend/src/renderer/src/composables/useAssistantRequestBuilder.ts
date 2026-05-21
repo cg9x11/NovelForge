@@ -63,26 +63,26 @@ function serializeInjectedRef(ref: AssistantRef): string | null {
     try {
       const cleaned = pruneEmpty(ref.content)
       const text = JSON.stringify(cleaned ?? {}, null, 2)
-      return `### 【整卡引用】${ref.projectName} / ${ref.cardTitle}\n\`\`\`json\n${clipText(text)}\n\`\`\``
+      return `### [Full Card Reference]${ref.projectName} / ${ref.cardTitle}\n\`\`\`json\n${clipText(text)}\n\`\`\``
     } catch {
       return null
     }
   }
 
   if (ref.refType === 'chapter_excerpt') {
-    const header = `${ref.projectName} / ${ref.cardTitle} (${ref.fieldPath} 第${ref.startLine}-${ref.endLine}行)`
-    const body = ref.numberedText?.trim() || ref.text?.trim() || '(空片段)'
-    return `### 【正文片段】${header}\n\`\`\`text\n${clipText(body)}\n\`\`\`\n- snapshot_hash: ${ref.snapshotHash}\n- 若需修改这段正文，请优先调用 replace_card_text_by_lines，不要优先用 replace_field_text`
+    const header = `${ref.projectName} / ${ref.cardTitle} (${ref.fieldPath} lines ${ref.startLine}-${ref.endLine})`
+    const body = ref.numberedText?.trim() || ref.text?.trim() || '(empty excerpt)'
+    return `### [Chapter Excerpt]${header}\n\`\`\`text\n${clipText(body)}\n\`\`\`\n- snapshot_hash: ${ref.snapshotHash}\n- If this chapter excerpt needs changes, prefer replace_card_text_by_lines over replace_field_text.`
   }
 
   const lines: string[] = []
-  lines.push(`### 【审核结果卡片】目标: ${ref.targetTitle} (review_card_id=${ref.reviewCardId})`)
-  lines.push(`- 审核类型: ${ref.reviewType}`)
-  if (ref.reviewProfile) lines.push(`- 审核档案: ${ref.reviewProfile}`)
-  lines.push(`- 质量门结论: ${ref.qualityGate}`)
+  lines.push(`### [Review Result Card] Target: ${ref.targetTitle} (review_card_id=${ref.reviewCardId})`)
+  lines.push(`- Review type: ${ref.reviewType}`)
+  if (ref.reviewProfile) lines.push(`- Review profile: ${ref.reviewProfile}`)
+  lines.push(`- Quality gate: ${ref.qualityGate}`)
   if (ref.contentSnapshot) lines.push(`- content_snapshot: ${clipText(ref.contentSnapshot, 800)}`)
   lines.push('```text')
-  lines.push(clipText(ref.resultText || '(空审核结果)'))
+  lines.push(clipText(ref.resultText || '(empty review result)'))
   lines.push('```')
   return lines.join('\n')
 }
@@ -94,11 +94,11 @@ export function useAssistantRequestBuilder(options: UseAssistantRequestBuilderOp
         const prefix = message.role === 'user' ? 'User:' : 'Assistant:'
         let text = `${prefix} ${message.content}`
         if (message.tools && message.tools.length > 0) {
-          text += '\n\n[工具调用记录]'
+          text += '\n\n[Tool Call Log]'
           for (const tool of message.tools) {
-            text += `\n- 工具: ${tool.tool_name}`
+            text += `\n- Tool: ${tool.tool_name}`
             if (tool.result) {
-              text += `\n  结果: ${JSON.stringify(tool.result, null, 2)}`
+              text += `\n  Result: ${JSON.stringify(tool.result, null, 2)}`
             }
           }
         }
@@ -112,39 +112,39 @@ export function useAssistantRequestBuilder(options: UseAssistantRequestBuilderOp
     const projectStructure = options.assistantStore.projectStructure
 
     if (projectStructure) {
-      parts.push(`# 项目: ${projectStructure.project_name}`)
-      parts.push(`项目ID: ${projectStructure.project_id} | 卡片总数: ${projectStructure.total_cards}`)
+      parts.push(`# Project: ${projectStructure.project_name}`)
+      parts.push(`Project ID: ${projectStructure.project_id} | Total cards: ${projectStructure.total_cards}`)
       parts.push('')
 
       const stats = Object.entries(projectStructure.stats)
-        .map(([type, count]) => `- ${type}: ${count} 张`)
+        .map(([type, count]) => `- ${type}: ${count} cards`)
         .join('\n')
-      parts.push(`## 📊 项目统计\n${stats}`)
+      parts.push(`## Project Stats\n${stats}`)
       parts.push('')
 
-      parts.push(`## 🌲 卡片结构树\nROOT\n${projectStructure.tree_text}`)
+      parts.push(`## Card Tree\nROOT\n${projectStructure.tree_text}`)
       parts.push('')
 
-      parts.push('## 🏷️ 可用卡片类型')
+      parts.push('## does not exist Available Card Types')
       parts.push(projectStructure.available_card_types.join(' | '))
       parts.push('')
     }
 
     const opsText = options.assistantStore.formatRecentOperations()
     if (opsText) {
-      parts.push(`## 📝 近期操作\n${opsText}`)
+      parts.push(`## Recent Operations\n${opsText}`)
       parts.push('')
     }
 
     const context = options.assistantStore.getContextForAssistant()
     if (context.active_card) {
-      parts.push('## ⭐ 当前卡片')
-      parts.push(`"${context.active_card.title}" (ID: ${context.active_card.card_id}, 类型: ${context.active_card.card_type})`)
+      parts.push('## ? Current Card')
+      parts.push(`"${context.active_card.title}" (ID: ${context.active_card.card_id}, Type: ${context.active_card.card_type})`)
 
       if (options.effectiveSchema.value) {
         try {
           const schemaText = JSON.stringify(options.effectiveSchema.value, null, 2)
-          parts.push('\n### 卡片结构 (JSON Schema)')
+          parts.push('\n### Card Structure (JSON Schema)')
           parts.push('```json')
           parts.push(schemaText)
           parts.push('```')
@@ -162,16 +162,16 @@ export function useAssistantRequestBuilder(options: UseAssistantRequestBuilderOp
         const block = serializeInjectedRef(ref)
         if (block) blocks.push(block)
       }
-      parts.push(`## 📎 引用内容\n${blocks.join('\n\n')}`)
+      parts.push(`## Referenced Content\n${blocks.join('\n\n')}`)
       parts.push('')
     }
 
     if (options.resolvedContext.value) {
-      parts.push(`## 🔗 上下文引用\n${options.resolvedContext.value}`)
+      parts.push(`## Context References\n${options.resolvedContext.value}`)
       parts.push('')
     }
 
-    parts.push('## 💬 对话历史')
+    parts.push('## Conversation History')
     parts.push(buildConversationText())
 
     const lastUserMessage = options.messages.value.filter(message => message.role === 'user').pop()

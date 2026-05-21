@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.locales import localized_text
 
 import json
 from dataclasses import dataclass
@@ -21,7 +22,7 @@ class CardExportPayload:
 
 
 class CardExportService:
-    """项目卡片导出服务（范围筛选 + 格式序列化）。"""
+
 
     _MEDIA_TYPES = {
         "txt": "text/plain; charset=utf-8",
@@ -39,7 +40,7 @@ class CardExportService:
 
         cards = self._load_cards(project_id=project_id, request=request)
         if not cards:
-            raise BusinessException("当前条件下没有可导出的卡片", status_code=404)
+            raise BusinessException(localized_text('hardcoded.services_card_export_service_2b45a02d'), status_code=404)
 
         exported_at = datetime.now()
         if request.format == "json":
@@ -70,18 +71,18 @@ class CardExportService:
 
         if request.scope == "single":
             if request.card_id is None:
-                raise BusinessException("scope=single 缺少 card_id", status_code=400)
+                raise BusinessException(localized_text('hardcoded.services_card_export_service_f5275a6b'), status_code=400)
             card = next((item for item in ordered_cards if item.id == request.card_id), None)
             if not card:
-                raise BusinessException("目标卡片不存在或不属于当前项目", status_code=404)
+                raise BusinessException(localized_text('hardcoded.services_card_export_service_6ffdef21'), status_code=404)
             return [card]
 
         if request.scope == "type":
             if request.card_type_id is None:
-                raise BusinessException("scope=type 缺少 card_type_id", status_code=400)
+                raise BusinessException(localized_text('hardcoded.services_card_export_service_01e54abe'), status_code=400)
             card_type = self.db.get(CardType, request.card_type_id)
             if not card_type:
-                raise BusinessException("卡片类型不存在", status_code=404)
+                raise BusinessException(localized_text('hardcoded.services_card_export_service_047473a1'), status_code=404)
             return [card for card in ordered_cards if card.card_type_id == request.card_type_id]
 
         return ordered_cards
@@ -168,11 +169,11 @@ class CardExportService:
     ) -> str:
         lines: List[str] = [
             "NovelForge Card Export",
-            f"项目: {project.name}",
-            f"导出范围: {self._scope_text(request, cards)}",
-            f"导出格式: {request.format}",
-            f"导出时间: {exported_at.isoformat()}",
-            f"卡片数量: {len(cards)}",
+            localized_text('hardcoded.services_card_export_service_8f0fee8f', project_name=project.name),
+            localized_text('hardcoded.services_card_export_service_2c81af4e'),
+            localized_text('hardcoded.services_card_export_service_9262830b', request_format=request.format),
+            localized_text('hardcoded.services_card_export_service_afd5b7e9', exported_at_isoformat=exported_at.isoformat()),
+            localized_text('hardcoded.services_card_export_service_d1b28f76', len_cards=len(cards)),
             "",
         ]
 
@@ -181,10 +182,10 @@ class CardExportService:
                 [
                     "=" * 72,
                     f"[{index}] {card.title}",
-                    f"类型: {self._card_type_name(card)}",
+                    localized_text('hardcoded.services_card_export_service_529767ea', self__card_type_name_card=self._card_type_name(card)),
                     f"ID: {card.id}",
-                    f"父级ID: {card.parent_id}",
-                    f"创建时间: {card.created_at.isoformat() if card.created_at else ''}",
+                    localized_text('hardcoded.services_card_export_service_f7f40636', card_parent_id=card.parent_id),
+                    localized_text('hardcoded.services_card_export_service_6b567885'),
                     "-" * 72,
                     self._format_content(card.content),
                     "",
@@ -201,22 +202,22 @@ class CardExportService:
         exported_at: datetime,
     ) -> str:
         lines: List[str] = [
-            "# NovelForge 卡片导出",
+            localized_text('hardcoded.services_card_export_service_9b587e05'),
             "",
-            f"- 项目：{project.name}",
-            f"- 导出范围：{self._scope_text(request, cards)}",
-            f"- 导出格式：{request.format}",
-            f"- 导出时间：{exported_at.isoformat()}",
-            f"- 卡片数量：{len(cards)}",
+            localized_text('hardcoded.services_card_export_service_b356d19c', project_name=project.name),
+            localized_text('hardcoded.services_card_export_service_03192991'),
+            localized_text('hardcoded.services_card_export_service_2dca034a', request_format=request.format),
+            localized_text('hardcoded.services_card_export_service_e109e939', exported_at_isoformat=exported_at.isoformat()),
+            localized_text('hardcoded.services_card_export_service_f6931853', len_cards=len(cards)),
             "",
         ]
 
         for index, card in enumerate(cards, start=1):
             lines.append(f"## {index}. {card.title}")
-            lines.append(f"- 类型：{self._card_type_name(card)}")
+            lines.append(localized_text('hardcoded.services_card_export_service_7ceaa956', self__card_type_name_card=self._card_type_name(card)))
             lines.append(f"- ID：{card.id}")
-            lines.append(f"- 父级ID：{card.parent_id}")
-            lines.append(f"- 创建时间：{card.created_at.isoformat() if card.created_at else ''}")
+            lines.append(localized_text('hardcoded.services_card_export_service_94b8e3b1', card_parent_id=card.parent_id))
+            lines.append(localized_text('hardcoded.services_card_export_service_5a45e243'))
             lines.append("")
             text_content = self._extract_text_content(card.content)
             if text_content is not None:
@@ -231,15 +232,15 @@ class CardExportService:
 
     def _scope_text(self, request: CardExportRequest, cards: List[Card]) -> str:
         if request.scope == "all":
-            return "全部卡片"
+            return localized_text('hardcoded.services_card_export_service_2bc64bb8')
         if request.scope == "single":
             if cards:
-                return f"单个卡片（{cards[0].title}）"
-            return "单个卡片"
+                return localized_text('hardcoded.services_card_export_service_63c4b213', cards_0_title=cards[0].title)
+            return localized_text('hardcoded.services_card_export_service_8bf9f43e')
         if request.scope == "type":
             if cards:
-                return f"类型卡片（{self._card_type_name(cards[0])}）"
-            return "类型卡片"
+                return localized_text('hardcoded.services_card_export_service_5f62592b', self__card_type_name_cards_0=self._card_type_name(cards[0]))
+            return localized_text('hardcoded.services_card_export_service_a135910f')
         return request.scope
 
     def _card_to_dict(self, card: Card) -> Dict[str, Any]:
@@ -262,7 +263,7 @@ class CardExportService:
 
     def _format_content(self, content: Any) -> str:
         if content is None:
-            return "(空内容)"
+            return localized_text('hardcoded.services_card_export_service_6fe97424')
         text_content = self._extract_text_content(content)
         if text_content is not None:
             return text_content
@@ -292,7 +293,7 @@ class CardExportService:
             return None
 
     def _sanitize_filename(self, value: str) -> str:
-        illegal_chars = '<>:"/\\|?*'
+        illegal_chars = '<>:"/\\|seconds*'
         sanitized = value.strip()
         for ch in illegal_chars:
             sanitized = sanitized.replace(ch, "_")

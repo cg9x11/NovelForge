@@ -3,7 +3,7 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import vue from '@vitejs/plugin-vue'
 import { readFileSync } from 'fs'
 
-// 读取 package.json 中的版本号
+// Read version from package.json
 const packageJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'))
 const version = packageJson.version
 
@@ -26,7 +26,7 @@ export default defineConfig({
     },
     plugins: [
       vue(),
-      // 添加一个插件来修改CSP
+      // Add plugin to modify CSP
       {
         name: 'configure-response-headers',
         configureServer: (server) => {

@@ -16,14 +16,12 @@ import { useAppStore } from './stores/useAppStore'
 import { usePerCardAISettingsStore } from './stores/usePerCardAISettingsStore'
 import { useLocaleStore } from './stores/useLocaleStore'
 import { i18n } from './i18n'
-import { installRuntimeTranslator } from './locales/runtimeTranslations'
 
 const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia)
 
-// 初始化主题（必须在挂载前）
 const appStore = useAppStore()
 appStore.initTheme()
 
@@ -41,7 +39,6 @@ perCardStore.loadFromLocal()
 
 app.mount('#app')
 
-installRuntimeTranslator(() => localeStore.locale)
 
 localeStore.$subscribe((_mutation, state) => {
   i18n.global.locale.value = state.locale

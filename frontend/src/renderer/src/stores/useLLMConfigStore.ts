@@ -17,7 +17,6 @@ export const useLLMConfigStore = defineStore('llmConfig', () => {
       const list = await listLLMConfigs()
       llmConfigs.value = list || []
     } catch (error) {
-      console.error('获取LLM配置列表失败:', error)
       ElMessage.error(t('llm_config_store.fetch_failed'))
       throw error
     } finally {

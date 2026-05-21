@@ -11,12 +11,10 @@ const { activeRunCount, completedRuns, activeRuns, totalRunCount } = storeToRefs
 
 const visible = ref(false)
 
-// 清空已完成的记录
 const clearCompleted = () => {
   store.clearCompleted()
 }
 
-// --- 拖拽逻辑 ---
 const statusBarRef = ref<HTMLElement | null>(null)
 const isDragging = ref(false)
 const position = ref<{ left: number; top: number } | null>(null)
@@ -25,13 +23,13 @@ let dragStartElPos = { left: 0, top: 0 }
 
 const handleMouseDown = (e: MouseEvent) => {
   if (!statusBarRef.value) return
-  
+
   isDragging.value = false
-  
+
   const rect = statusBarRef.value.getBoundingClientRect()
   dragStartElPos = { left: rect.left, top: rect.top }
   dragStartPos = { x: e.clientX, y: e.clientY }
-  
+
   document.addEventListener('mousemove', handleMouseMove)
   document.addEventListener('mouseup', handleMouseUp)
 }
@@ -39,11 +37,11 @@ const handleMouseDown = (e: MouseEvent) => {
 const handleMouseMove = (e: MouseEvent) => {
   const dx = e.clientX - dragStartPos.x
   const dy = e.clientY - dragStartPos.y
-  
+
   if (!isDragging.value && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
     isDragging.value = true
   }
-  
+
   if (isDragging.value) {
     position.value = {
       left: dragStartElPos.left + dx,
@@ -55,7 +53,7 @@ const handleMouseMove = (e: MouseEvent) => {
 const handleMouseUp = () => {
   document.removeEventListener('mousemove', handleMouseMove)
   document.removeEventListener('mouseup', handleMouseUp)
-  
+
   if (isDragging.value) {
      setTimeout(() => { isDragging.value = false }, 0)
   }
@@ -100,11 +98,9 @@ const getStatusIcon = (status: string) => {
     }
 }
 
-// 计算总节点数和已完成节点数
 const getNodeStats = (run: any) => {
-  // 根据进度百分比估算节点数
   if (run.progress !== undefined && run.progress > 0) {
-    const total = 10 // 假设平均10个节点
+    const total = 10
     const completed = Math.floor((run.progress / 100) * total)
     return {
       completed,
@@ -114,40 +110,33 @@ const getNodeStats = (run: any) => {
   return null
 }
 
-// 闪烁提醒逻辑
 const isFlashing = ref(false)
 let flashTimer: any = null
 let lastCompletedCount = 0
 
 watch(() => completedRuns.value.length, (newVal, oldVal) => {
   const previous = oldVal ?? 0
-  console.log('[WorkflowStatusBar] completedRuns 变化:', oldVal, '->', newVal)
   if (newVal > previous && newVal > lastCompletedCount) {
-    console.log('[WorkflowStatusBar] 触发闪烁动画')
     isFlashing.value = true
     lastCompletedCount = newVal
     if (flashTimer) clearTimeout(flashTimer)
     flashTimer = setTimeout(() => {
       isFlashing.value = false
-      console.log('[WorkflowStatusBar] 闪烁动画结束')
     }, 2000)
   }
 }, { immediate: true })
 
-// 调试日志
 watch(() => activeRuns.value, (runs) => {
-  console.log('[WorkflowStatusBar] activeRuns 更新:', runs)
 }, { deep: true })
 
 watch(() => activeRunCount.value, (count) => {
-  console.log('[WorkflowStatusBar] activeRunCount 更新:', count)
 })
 </script>
 
 <template>
-  <div 
-    class="workflow-status-bar" 
-    ref="statusBarRef" 
+  <div
+    class="workflow-status-bar"
+    ref="statusBarRef"
     :style="style"
     @mousedown="handleMouseDown"
   >
@@ -166,7 +155,7 @@ watch(() => activeRunCount.value, (count) => {
               <el-icon v-else><Connection /></el-icon>
               <span v-if="activeRunCount > 0" class="collapsed-badge">{{ activeRunCount }}</span>
            </div>
-           
+
            <div class="status-content">
              <span class="status-text">
                <template v-if="activeRunCount > 0">
@@ -179,7 +168,7 @@ watch(() => activeRunCount.value, (count) => {
            </div>
         </div>
       </template>
-      
+
       <div class="run-list">
         <template v-if="activeRuns.length > 0">
             <div class="list-header">{{ t('workflow_status.running') }}</div>
@@ -191,14 +180,12 @@ watch(() => activeRunCount.value, (count) => {
                       <span>ID: {{ run.id }}</span>
                       <span v-if="run.created_at"> · {{ formatTime(run.created_at) }}</span>
                     </div>
-                    
-                    <!-- 当前节点 -->
+
                     <div v-if="run.current_node" class="run-node">
                         <el-icon><Connection /></el-icon>
                         <span>{{ t('workflow_status.currentNode') }}: {{ run.current_node }}</span>
                     </div>
-                    
-                    <!-- 进度条 -->
+
                     <div v-if="run.progress !== undefined" class="progress-wrapper">
                       <el-progress
                         :percentage="Math.round(run.progress)"
@@ -210,7 +197,7 @@ watch(() => activeRunCount.value, (count) => {
                 </div>
             </div>
         </template>
-        
+
         <template v-if="completedRuns.length > 0">
             <div class="list-header">
                 <span>{{ t('workflow_status.completed') }}</span>
@@ -236,7 +223,7 @@ watch(() => activeRunCount.value, (count) => {
                 </div>
             </div>
         </template>
-        
+
         <div v-if="activeRuns.length === 0 && completedRuns.length === 0" class="empty-tip">
             {{ t('workflow_status.noRuns') }}
         </div>
@@ -257,26 +244,26 @@ watch(() => activeRunCount.value, (count) => {
 .status-trigger {
   display: flex;
   align-items: center;
-  height: 40px; 
+  height: 40px;
   padding: 0;
-  
+
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  
+
   border-radius: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   cursor: pointer;
-  
+
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-  
+
   font-size: 13px;
   color: var(--el-text-color-primary);
   user-select: none;
   overflow: hidden;
-  
-  width: 40px; 
+
+  width: 40px;
 }
 
 html.dark .status-trigger {
@@ -289,7 +276,7 @@ html.dark .status-trigger {
   width: auto;
   min-width: 200px;
   padding-right: 16px;
-  
+
   background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   border-color: var(--el-color-primary-light-5);
@@ -313,7 +300,7 @@ html.dark .status-trigger:hover {
 }
 
 .status-trigger .el-icon {
-  font-size: 18px; 
+  font-size: 18px;
   margin: 0;
 }
 

@@ -9,10 +9,10 @@ class WorkflowBase(BaseModel):
     is_active: Optional[bool] = True
     is_built_in: Optional[bool] = False
     version: Optional[int] = 1
-    dsl_version: Optional[int] = 2  # 代码式工作流版本
-    definition_code: str = ""  # 工作流代码
+    dsl_version: Optional[int] = 2
+    definition_code: str = ""
     keep_run_history: Optional[bool] = False  # Default to False (Transient)
-    triggers_cache: Optional[List[dict]] = None  # 触发器缓存
+    triggers_cache: Optional[List[dict]] = None
 
 
 class WorkflowCreate(WorkflowBase):
@@ -46,9 +46,9 @@ class WorkflowRunRead(BaseModel):
     idempotency_key: Optional[str] = None
     summary_json: Optional[dict] = None
     error_json: Optional[dict] = None
-    created_at: Optional[datetime] = None  # 添加创建时间
-    started_at: Optional[datetime] = None  # 添加开始时间
-    finished_at: Optional[datetime] = None  # 添加完成时间
+    created_at: Optional[datetime] = None
+    started_at: Optional[datetime] = None
+    finished_at: Optional[datetime] = None
     workflow: Optional["WorkflowRead"] = None  # Include basic info
 
     class Config:
@@ -70,7 +70,6 @@ class CancelResponse(BaseModel):
 
 
 class NodeExecutionStatus(BaseModel):
-    """节点执行状态"""
     node_id: str
     node_type: str
     status: str  # idle | pending | running | success | error | skipped
@@ -79,7 +78,6 @@ class NodeExecutionStatus(BaseModel):
 
 
 class RunStatus(BaseModel):
-    """工作流运行状态（包含节点状态）"""
     run_id: int
     workflow_id: int
     status: str  # idle | pending | running | succeeded | failed | cancelled
@@ -93,7 +91,6 @@ class RunStatus(BaseModel):
 # ---- Node Types ----
 
 class NodeTypeInfo(BaseModel):
-    """节点类型信息"""
     type: str
     category: str
     label: str
@@ -103,6 +100,5 @@ class NodeTypeInfo(BaseModel):
 
 
 class NodeTypesResponse(BaseModel):
-    """节点类型列表响应"""
     node_types: List[NodeTypeInfo]
 

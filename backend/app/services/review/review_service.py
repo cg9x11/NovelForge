@@ -1,3 +1,4 @@
+from app.locales import localized_text
 import re
 from datetime import datetime
 from typing import List, Optional
@@ -20,14 +21,14 @@ from app.services.ai.core import llm_service
 from app.services.review.review_prompt_builders import build_review_prompt
 
 QUALITY_GATE_PATTERN = re.compile(
-    r"(?:结论|quality\s*gate)(?:\*\*)?\s*[:：]\s*(?:\*\*)?(pass|revise|block)(?:\*\*)?",
+    r"(conclusion|quality\s*gate)\s*[:?]\s*(pass|revise|block)",
     re.IGNORECASE,
 )
 
 DEFAULT_REVIEW_PROFILE = "generic_card_review"
 REVIEW_RESULT_CARD_TYPE_NAME = "review_result_card"
 REVIEW_RESULT_FOLDER_CARD_TYPE_NAME = "folder"
-REVIEW_RESULT_FOLDER_TITLE = "审核结果"
+REVIEW_RESULT_FOLDER_TITLE = localized_text('hardcoded.services_review_review_service_db705376')
 
 
 def parse_quality_gate(result_text: str) -> str:
@@ -52,14 +53,14 @@ def _resolve_review_profile_code(review_profile: str | None) -> str:
 def _build_system_prompt(session: Session, prompt_name: str) -> str:
     prompt = prompt_service.get_prompt_by_identifier(session, prompt_name)
     if not prompt or not prompt.template:
-        raise HTTPException(status_code=400, detail=f"未找到提示词名称: {prompt_name}")
+        raise HTTPException(status_code=400, detail=localized_text('hardcoded.services_review_review_service_68c3c2e5', prompt_name=prompt_name))
     return prompt_service.inject_knowledge(session, str(prompt.template))
 
 
 def _get_review_card_type_or_500(session: Session) -> CardType:
     card_type = get_card_type_by_identifier(session, REVIEW_RESULT_CARD_TYPE_NAME)
     if not card_type:
-        raise HTTPException(status_code=500, detail=f"缺少卡片类型: {REVIEW_RESULT_CARD_TYPE_NAME}")
+        raise HTTPException(status_code=500, detail=localized_text('hardcoded.services_review_review_service_670bead4', REVIEW_RESULT_CARD_TYPE_NAME=REVIEW_RESULT_CARD_TYPE_NAME))
     return card_type
 
 
@@ -106,7 +107,7 @@ def _get_or_create_review_folder_card(session: Session, project_id: int) -> Card
 
 
 def _resolve_review_card_title(target_title: str) -> str:
-    return f"{(target_title or '未命名目标').strip() or '未命名目标'} · 审核结果"
+    return localized_text('hardcoded.services_review_review_service_ce5dc511')
 
 
 def _build_review_card_content(
@@ -253,10 +254,10 @@ async def run_review(session: Session, request: ReviewRunRequest) -> ReviewRunRe
     card = _get_target_card_or_404(session, request.card_id)
     project_id = request.project_id or getattr(card, "project_id", None)
     if not project_id:
-        raise HTTPException(status_code=400, detail="缺少 project_id")
+        raise HTTPException(status_code=400, detail=localized_text('hardcoded.services_review_review_service_32c30e34'))
 
     review_profile = _resolve_review_profile_code(request.review_profile)
-    prompt_name = request.prompt_name or "通用审核"
+    prompt_name = request.prompt_name or localized_text('hardcoded.services_review_review_service_a1d0db03')
     system_prompt = _build_system_prompt(session, prompt_name)
     user_prompt = build_review_prompt(request)
 
@@ -380,7 +381,7 @@ def delete_review_result_card(session: Session, review_card_id: int) -> bool:
         return False
     review_card_type = _get_review_card_type_or_500(session)
     if card.card_type_id != review_card_type.id:
-        raise HTTPException(status_code=400, detail="目标卡片不是审核结果卡片")
+        raise HTTPException(status_code=400, detail=localized_text('hardcoded.services_review_review_service_ec6db532'))
     session.delete(card)
     session.commit()
     return True

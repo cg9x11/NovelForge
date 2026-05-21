@@ -1,0 +1,36 @@
+## Tags tac pham
+
+Dung cho trinh chon tag. Co the them/bot muc, giu dinh dang danh sach.
+Ghi chu trong ngoac duoc an tren giao dien nhung co the gui cho AI de hieu ngu canh.
+
+- Chu de
+  - Huyen ao
+  - Phieu luu
+  - Do thi
+  - Khoa hoc vien tuong
+  - Lich su
+  - Kinh di
+  - Lang man
+  - Hai huoc
+- Doc gia muc tieu
+  - Pho thong
+  - Nam
+  - Nu
+- Ngoi ke
+  - Ngoi thu nhat
+  - Ngoi thu ba
+- Nhom tag
+  - Truong thanh
+  - Tra thu
+  - Sinh ton
+  - Xay dung the luc
+  - He thong
+  - Hoc vien
+  - Chien tranh
+  - Dieu tra
+  - Gia dinh
+- Quan he tinh cam
+  - Khong tap trung
+  - Cham nhiet
+  - Doi thu thanh nguoi yeu
+  - Ban dong hanh

@@ -1,7 +1,4 @@
-"""ChatModel 工厂。
-
-统一管理 LLM 配置读取与 LangChain ChatModel 构建，避免业务层重复拼装参数。
-"""
+from app.locales import localized_text
 
 from typing import Optional
 
@@ -35,9 +32,6 @@ def _sanitize_common_generation_kwargs(
 def _build_openai_family_transport_kwargs(transport: dict) -> dict:
     kwargs: dict = {}
     if transport["request_base"]:
-        # LangChain 这里统一接收 `base_url`。
-        # 之前传成 `openai_api_base` 会导致 `ChatQwen` 忽略自定义网关，
-        # 旧的 openai_compatible 配置就会错误落回默认供应商端点。
         kwargs["base_url"] = transport["request_base"]
     if transport["default_headers"]:
         kwargs["default_headers"] = transport["default_headers"]
@@ -64,7 +58,7 @@ def build_chat_model_from_payload(
     thinking_enabled: Optional[bool] = None,
 ):
     if not api_key:
-        raise ValueError("未提供 API Key")
+        raise ValueError(localized_text('hardcoded.backend_app_services_ai_core_chat_model_factory_45f29236'))
 
     transport = llm_config_service.resolve_transport_settings(
         provider=provider,
@@ -91,9 +85,6 @@ def build_chat_model_from_payload(
         if thinking_enabled is not None:
             model_kwargs["extra_body"] = {"enable_thinking": thinking_enabled}
 
-        # `responses` 模式下统一走 `ChatOpenAI`。
-        # 原先 openai_compatible 仍走 `ChatQwen`，会在流式 continuation 时构造出
-        # 不满足 openai-python Responses API 要求的 payload，触发
         # “Missing required arguments; Expected either ('messages' and 'model') ...”。
         if transport["use_responses_api"]:
             return ChatOpenAI(**model_kwargs)
@@ -127,15 +118,15 @@ def build_chat_model_from_payload(
             model_kwargs["timeout"] = common_kwargs["timeout"]
         return ChatGoogleGenerativeAI(**model_kwargs)
 
-    raise ValueError(f"不支持的 LLM 提供商: {provider}")
+    raise ValueError(localized_text('hardcoded.backend_app_services_ai_core_chat_model_factory_e5a1f1d6'))
 
 
 def _get_llm_config(session: Session, llm_config_id: int) -> LLMConfig:
     cfg = llm_config_service.get_llm_config(session, llm_config_id)
     if not cfg:
-        raise ValueError(f"LLM 配置不存在，ID: {llm_config_id}")
+        raise ValueError(localized_text('hardcoded.backend_app_services_ai_core_chat_model_factory_a3504971'))
     if not cfg.api_key:
-        raise ValueError(f"未找到 LLM 配置 {cfg.display_name or cfg.model_name} 的 API 密钥")
+        raise ValueError(localized_text('hardcoded.backend_app_services_ai_core_chat_model_factory_78e8de4f'))
     return cfg
 
 

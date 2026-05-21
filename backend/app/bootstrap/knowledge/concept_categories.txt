@@ -1,0 +1,14 @@
+## Phan loai khai niem
+
+Dung cho truong category cua the khai niem. Co the them/bot, giu dinh dang danh sach.
+
+- Cong phap
+- Quy tac
+- Phap tac
+- Che do
+- Cam ky
+- Nghi le
+- Truyen thuyet
+- Ky thuat
+- Thuat ngu
+- Khac

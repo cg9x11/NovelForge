@@ -1,0 +1,105 @@
+# Workflow:volume_outline
+# Function:volume_outlinesaved,Create,,stage,writing_guide
+# Trigger:volume_outlinecardsavedauto trigger
+
+#@node(description="Trigger:Watchvolume_outlinecardsaved")
+trigger = Trigger.CardSaved(card_type="volume_outline")
+#</node>
+
+
+#@node(description="Readvolume_outline")
+volume = Card.Read(card_id=trigger.card_id)
+#</node>
+
+
+#@node(description="extract")
+new_characters = Logic.Expression(
+    expression="volume.content.new_character_cards or []"
+  )
+#</node>
+
+
+#@node(async=true, description="batchCreatecharacter_card(async)")
+char_cards = Card.BatchUpsert(
+    project_id=trigger.project_id,
+    parent_id=trigger.card_id,
+    card_type="character_card",
+    title_template="{item.name}",
+    items=new_characters.result
+  )
+#</node>
+
+
+#@node(description="extract")
+new_scenes = Logic.Expression(
+    expression="volume.content.new_scene_cards or []"
+  )
+#</node>
+
+
+#@node(async=true, description="batchCreatescene_card(async)")
+scene_cards = Card.BatchUpsert(
+    project_id=trigger.project_id,
+    parent_id=trigger.card_id,
+    card_type="scene_card",
+    title_template="{item.name}",
+    items=new_scenes.result
+  )
+#</node>
+
+
+#@node(description="stage")
+stages = Logic.Expression(
+    expression="[{'index': i, 'volume_number': volume.content.volume_number} for i in range(1, (volume.content.stage_count or 0) + 1)]"
+  )
+#</node>
+
+
+#@node(async=true, description="batchCreatestage_outline(async)")
+stage_cards = Card.BatchUpsert(
+    project_id=trigger.project_id,
+    parent_id=trigger.card_id,
+    card_type="stage_outline",
+    title_template="stage{item.index}",
+    content_template={
+      "stage_number": "{item.index}",
+      "volume_number": "{item.volume_number}"
+    },
+    items=stages.result
+  )
+#</node>
+
+
+#@node(description="Createwriting_guide()")
+guide_item = Logic.Expression(
+    expression="[volume.content]"
+  )
+#</node>
+
+
+#@node(async=true, description="batchCreatewriting_guide(async)")
+guide_card = Card.BatchUpsert(
+    project_id=trigger.project_id,
+    parent_id=trigger.card_id,
+    card_type="writing_guide",
+    title_template="writing_guide",
+    content_template="{item}",
+    items=guide_item.result
+  )
+#</node>
+
+
+#@node(description="waitasynccomplete")
+wait_result = Logic.Wait(tasks=[char_cards, scene_cards, stage_cards, guide_card])
+#</node>
+
+
+#@node(description="")
+update_result = Card.Update(
+    card_id=trigger.card_id,
+    content_merge={
+      "new_character_cards": [],
+      "new_scene_cards": []
+    }
+  )
+#</node>

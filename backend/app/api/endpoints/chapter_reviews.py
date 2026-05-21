@@ -1,3 +1,4 @@
+from app.locales import localized_text
 from typing import List
 
 from fastapi import APIRouter, Depends
@@ -25,7 +26,7 @@ router = APIRouter()
 @router.post(
     "/cards/run",
     response_model=ApiResponse[ReviewRunResponse],
-    summary="运行卡片审核（返回审核草稿）",
+    summary=localized_text('hardcoded.api_endpoints_chapter_reviews_772747e8'),
 )
 async def run_review_endpoint(
     request: ReviewRunRequest,
@@ -38,7 +39,7 @@ async def run_review_endpoint(
 @router.post(
     "/cards/upsert",
     response_model=ApiResponse[ReviewResultCardRead],
-    summary="创建或更新审核结果卡片",
+    summary=localized_text('hardcoded.api_endpoints_chapter_reviews_bd3c0aa5'),
 )
 def upsert_review_card_endpoint(
     request: ReviewCardUpsertRequest,
@@ -51,7 +52,7 @@ def upsert_review_card_endpoint(
 @router.get(
     "/cards/{card_id}",
     response_model=ApiResponse[List[ReviewResultCardRead]],
-    summary="获取某张卡片绑定的审核结果卡片",
+    summary=localized_text('hardcoded.api_endpoints_chapter_reviews_81383bd1'),
 )
 def list_review_cards_by_target_endpoint(
     card_id: int,
@@ -63,7 +64,7 @@ def list_review_cards_by_target_endpoint(
 @router.delete(
     "/{review_card_id}",
     response_model=ApiResponse[bool],
-    summary="删除审核结果卡片",
+    summary=localized_text('hardcoded.api_endpoints_chapter_reviews_35c04e87'),
 )
 def delete_review_card_endpoint(
     review_card_id: int,

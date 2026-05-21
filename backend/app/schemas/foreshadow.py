@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.locales import schema_field_description
 
 from typing import List, Optional
 from pydantic import BaseModel, Field
@@ -6,7 +7,7 @@ from app.db.models import ForeshadowItem as ForeshadowItemModel
 
 
 class SuggestRequest(BaseModel):
-	text: str = Field(..., description="待分析文本")
+	text: str = Field(..., description=schema_field_description("text"))
 
 class SuggestResponse(BaseModel):
 	goals: List[str]
@@ -31,4 +32,4 @@ class ForeshadowResolveRequest(BaseModel):
 	project_id: int
 
 class ForeshadowDeleteRequest(BaseModel):
-	project_id: int 
+	project_id: int

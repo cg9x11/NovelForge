@@ -14,7 +14,6 @@ interface LayoutSources {
   frontendDefault?: SectionConfig[] | undefined
 }
 
-// 简单合并策略：schemaMeta>backend>frontend
 export function mergeSections(sources: LayoutSources): SectionConfig[] | undefined {
   if (sources.schemaMeta && Array.isArray(sources.schemaMeta.sections)) {
     return normalizeSections(sources.schemaMeta.sections, sources.schemaMeta)
@@ -92,4 +91,4 @@ function resolveType(s: any): string {
   }
   if (s.$ref) return 'object'
   return s.type || 'object'
-} 
+}

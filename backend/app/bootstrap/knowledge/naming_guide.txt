@@ -1,0 +1,20 @@
+## Huong dan dat ten
+
+Muc tieu: ten ngan, ro nghia, de lap lai trong truyen, khong pho truong.
+
+### Nguyen tac
+- Ngan va truc quan: 2-4 tu, toi da 6 tu.
+- Dung tong giong voi the loai: co phong, hien dai, khoa hoc vien tuong, do thi.
+- Mot he phan cap nhat quan: neu co cap bac, giu cung mot bo tu vung.
+- Uu tien ten co the dung truc tiep trong van ban.
+
+### Mau nhanh
+- Dia diem: [dac diem] + [loai dia diem]
+- To chuc: [ly tuong/quyen luc] + [hinh thuc]
+- Vat pham: [vat lieu/tac dung] + [vat the]
+- Khai niem: [quy tac] + [pham vi]
+
+### Tranh
+- Qua nhieu tu hoa my rong nghia.
+- Ten giong nhau giua nhan vat, vat pham, dia danh.
+- Dung dau hai cham hang loat trong tieu de chuong.

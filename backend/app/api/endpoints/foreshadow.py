@@ -1,3 +1,4 @@
+from app.locales import localized_text
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 
@@ -12,25 +13,25 @@ from app.schemas.foreshadow import (
 
 router = APIRouter()
 
-@router.post('/suggest', response_model=SuggestResponse, summary='伏笔候选建议（启发式占位）')
+@router.post('/suggest', response_model=SuggestResponse, summary=localized_text('hardcoded.api_endpoints_foreshadow_1f537d42'))
 def suggest(req: SuggestRequest, session: Session = Depends(get_session)):
     svc = ForeshadowService(session)
     data = svc.suggest(req.text)
     return SuggestResponse(**data)
 
-@router.get('/list', response_model=ForeshadowListResponse, summary='列出项目的伏笔登记')
+@router.get('/list', response_model=ForeshadowListResponse, summary=localized_text('hardcoded.api_endpoints_foreshadow_d5581fac'))
 def list_items(project_id: int, status: str | None = None, session: Session = Depends(get_session)):
     svc = ForeshadowService(session)
     items = svc.list(project_id, status=status)
     return ForeshadowListResponse(items=items)
 
-@router.post('/register', response_model=ForeshadowListResponse, summary='登记一组伏笔条目')
+@router.post('/register', response_model=ForeshadowListResponse, summary=localized_text('hardcoded.api_endpoints_foreshadow_d0b56ce7'))
 def register(req: ForeshadowRegisterRequest, session: Session = Depends(get_session)):
     svc = ForeshadowService(session)
     out = svc.register(req.project_id, [i.model_dump() for i in req.items])
     return ForeshadowListResponse(items=out)
 
-@router.post('/resolve/{item_id}', response_model=ForeshadowItemModel, summary='将伏笔标记为已回收')
+@router.post('/resolve/{item_id}', response_model=ForeshadowItemModel, summary=localized_text('hardcoded.api_endpoints_foreshadow_bef9457b'))
 def resolve(item_id: int, req: ForeshadowResolveRequest, session: Session = Depends(get_session)):
     svc = ForeshadowService(session)
     item = svc.resolve(req.project_id, item_id)
@@ -38,8 +39,8 @@ def resolve(item_id: int, req: ForeshadowResolveRequest, session: Session = Depe
         raise HTTPException(status_code=404, detail='Foreshadow item not found')
     return item
 
-@router.post('/delete/{item_id}', summary='删除伏笔条目')
+@router.post('/delete/{item_id}', summary=localized_text('hardcoded.api_endpoints_foreshadow_62243abc'))
 def delete(item_id: int, req: ForeshadowDeleteRequest, session: Session = Depends(get_session)):
     svc = ForeshadowService(session)
     ok = svc.delete(req.project_id, item_id)
-    return {"success": ok} 
+    return {"success": ok}

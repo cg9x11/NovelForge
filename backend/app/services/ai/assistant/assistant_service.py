@@ -1,10 +1,6 @@
-"""灵感助手服务
-
-提供基于 LangChain 的工具调用与流式对话能力。
-React 文本协议模式与 Workflow Agent 共享核心实现。
-"""
 
 from __future__ import annotations
+from app.locales import localized_text
 
 import asyncio
 import json
@@ -33,19 +29,7 @@ from .tools import (
 MAX_REACT_STEPS = 100
 
 
-ASSISTANT_REACT_PROTOCOL_INSTRUCTIONS = """
-你处于写作助手 React-Tool 模式。
-
-工具调用格式（严格）：
-<Action>{"tool":"工具名","args":{"参数名":参数值}}</Action>
-
-执行规则：
-1) 只能调用“可用工具列表”里的工具，禁止调用任何 wf_* 工具。
-2) 用户要求创建/修改卡片内容时，必须通过工具执行（如 create_card / update_card / modify_card_field / replace_field_text）。
-3) 每一轮最多输出一个 Action 块；工具执行结果会以 Observation 返回，再决定下一步。
-4) 若参数中包含长文本，必须输出合法 JSON（换行与引号要正确转义）。
-5) 不要输出伪调用文本（例如 tool(...)）。
-""".strip()
+ASSISTANT_REACT_PROTOCOL_INSTRUCTIONS = """You are in writing assistant React-Tool mode. Use real tool calls when changing cards. Output at most one <Action> JSON block per turn, then wait for Observation.""".strip()
 
 
 def _should_fallback_to_plain_chat(session: Session, llm_config_id: int) -> bool:
@@ -80,7 +64,7 @@ async def stream_chat_plain(
         need_calls=1,
     )
     if not ok:
-        raise ValueError(f"LLM配额不足: {reason}")
+        raise ValueError(localized_text('hardcoded.services_ai_assistant_assistant_service_da08d442', reason=reason))
 
     model = build_chat_model(
         session=session,
@@ -181,7 +165,6 @@ async def stream_chat_with_tools(
     request: AssistantChatRequest,
     system_prompt: str,
 ) -> AsyncGenerator[dict, None]:
-    """标准模式：复用共享 Tool Agent 流式核心。"""
     parts: list[str] = []
     if request.context_info:
         parts.append(request.context_info)
@@ -223,13 +206,12 @@ async def generate_assistant_chat_streaming(
     system_prompt: str,
     track_stats: bool = True,
 ) -> AsyncGenerator[str, None]:
-    """灵感助手专用流式对话生成（结构化事件流协议）。"""
     _ = track_stats
     react_enabled = bool(getattr(request, "react_mode_enabled", False))
     fallback_plain_chat = _should_fallback_to_plain_chat(session, request.llm_config_id)
     logger.info(
-        "[LangChain] generate_assistant_chat_streaming: 使用{}模式，模型id:{}",
-        "Responses降级纯对话" if fallback_plain_chat else ("React" if react_enabled else "标准"),
+        localized_text('hardcoded.services_ai_assistant_assistant_service_c33dec20'),
+        localized_text('hardcoded.services_ai_assistant_assistant_service_96e0b6b6') if fallback_plain_chat else ("React" if react_enabled else localized_text('hardcoded.services_ai_assistant_assistant_service_8beedd9b')),
         request.llm_config_id
     )
 
@@ -260,9 +242,9 @@ async def generate_assistant_chat_streaming(
 
         if not has_visible_output:
             fallback_text = (
-                "已执行工具调用，请查看工具结果。"
+                localized_text('hardcoded.services_ai_assistant_assistant_service_74a96b5f')
                 if has_tool_events
-                else "本轮未产生可见回复文本，请重试或调整提问。"
+                else localized_text('hardcoded.services_ai_assistant_assistant_service_df031cd9')
             )
             yield json.dumps(
                 {
@@ -272,10 +254,10 @@ async def generate_assistant_chat_streaming(
                 ensure_ascii=False,
             )
     except asyncio.CancelledError:
-        logger.info("[LangChain] 助手调用被取消（CancelledError）")
+        logger.info("[LangChain] Assistant call cancelled (CancelledError)")
         return
     except Exception as exc:
-        logger.error("[LangChain] 灵感助手生成失败: {}", exc)
+        logger.error("[LangChain] Assistant generation failed: {}", exc)
         error_event = {
             "type": "error",
             "data": {"error": str(exc)},

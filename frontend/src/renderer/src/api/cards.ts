@@ -21,10 +21,8 @@ export const getCardsForProject = (projectId: number): Promise<CardRead[]> => re
 export const searchCards = (projectId: number, query: string): Promise<CardRead[]> => request.get(`/projects/${projectId}/cards/search`, { q: query })
 export const createCard = (projectId: number, data: CardCreate): Promise<CardRead> => request.post(`/projects/${projectId}/cards`, data)
 export const updateCard = (id: number, data: CardUpdate): Promise<CardRead> => request.put(`/cards/${id}`, data)
-// 原始响应：用于读取 X-Workflows-Started
 export const updateCardRaw = (id: number, data: CardUpdate): Promise<AxiosResponse<CardRead>> => (request as any).request({ method: 'PUT', url: `/api/cards/${id}`, data, rawResponse: true })
 
-// 批量更新卡片排序
 export interface CardOrderItem {
   card_id: number
   display_order: number
@@ -38,7 +36,7 @@ export interface CardBatchReorderResponse {
   updated_count: number
   message: string
 }
-export const batchReorderCards = (data: CardBatchReorderRequest): Promise<CardBatchReorderResponse> => 
+export const batchReorderCards = (data: CardBatchReorderRequest): Promise<CardBatchReorderResponse> =>
   request.post('/cards/batch-reorder', data)
 
 export const deleteCard = (id: number): Promise<void> => request.delete(`/cards/${id}`)
@@ -49,7 +47,7 @@ export const moveCard = (id: number, params: { target_project_id: number; parent
 export const getContentModels = (): Promise<string[]> => request.get('/ai/content-models')
 
 // --- Card AI Params API ---
-export const getCardAIParams = (cardId: number): Promise<{ ai_params: any; effective_params: any; follow_type: boolean }> => request.get(`/cards/${cardId}/ai-params`) 
+export const getCardAIParams = (cardId: number): Promise<{ ai_params: any; effective_params: any; follow_type: boolean }> => request.get(`/cards/${cardId}/ai-params`)
 
 // --- Card Export API ---
 export type CardExportScope = 'all' | 'single' | 'type'

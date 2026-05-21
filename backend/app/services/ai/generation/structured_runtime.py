@@ -1,9 +1,3 @@
-"""指令流结构化生成运行时。
-
-对外仅暴露与 `llm_service.generate_structured` 对齐的模型入口：
-- 输入 `output_type: Type[BaseModel]`
-- 输出 `BaseModel`（可选附带 logs）
-"""
 
 from __future__ import annotations
 
@@ -37,16 +31,8 @@ async def _run_instruction_flow_with_schema(
     max_retry: int = 3,
     fail_soft: bool = False,
 ) -> Dict[str, Any]:
-    """按 schema 运行指令流并聚合最终结果（内部函数）。
-
-    Returns:
-        {
-            "data": Dict[str, Any],
-            "logs": List[Dict[str, Any]],
-        }
-    """
     if not isinstance(schema, dict) or not schema:
-        raise ValueError("schema 不能为空")
+        raise ValueError("Structured generation failed")
 
     final_card_prompt = card_prompt if card_prompt is not None else system_prompt
     final_system_prompt = build_instruction_system_prompt(
@@ -86,8 +72,10 @@ async def _run_instruction_flow_with_schema(
                     validate_instruction(instruction, schema)
                     apply_instruction(assembled_data, instruction)
                 except Exception as apply_error:
-                    logger.debug(f"[InstructionFlowRuntime] 本地应用指令失败: {apply_error}")
 
+
+                    pass
+        pass
         if event_type == "done":
             if not event.get("success"):
                 continue
@@ -101,11 +89,11 @@ async def _run_instruction_flow_with_schema(
 
     if final_data is None:
         if not fail_soft:
-            raise ValueError("指令流未返回可用结果")
+            raise ValueError("Structured generation failed")
         logs.append(
             {
                 "type": "warning",
-                "text": "指令流未完整结束，已按 fail_soft 返回部分结果",
+                "text": "Instruction stream did not finish; partial result returned.",
             }
         )
         final_data = assembled_data
@@ -136,7 +124,6 @@ async def generate_structured_via_instruction_flow_model(
     fail_soft: bool = False,
     return_logs: bool = False,
 ) -> BaseModel | Dict[str, Any]:
-    """指令流结构化生成（对齐 `generate_structured` 签名）。"""
     del deps
 
     schema = output_type.model_json_schema(ref_template="#/$defs/{model}")
@@ -156,7 +143,7 @@ async def generate_structured_via_instruction_flow_model(
             need_calls=1,
         )
         if not ok:
-            raise ValueError(f"LLM配额不足: {reason}")
+            raise ValueError(f"LLM\u914d\u989d\u4e0d\u8db3: {reason}")
 
     generated = await _run_instruction_flow_with_schema(
         session=session,
@@ -182,8 +169,7 @@ async def generate_structured_via_instruction_flow_model(
         model_result = output_type.model_validate(data)
     except ValidationError as error:
         if not fail_soft:
-            raise ValueError(f"输出模型校验失败: {error}") from error
-        logger.warning(f"[InstructionFlowRuntime] fail_soft=1，输出模型未完全通过校验: {error}")
+            raise ValueError(f"\u8f93\u51fa\u6a21\u578b\u6821\u9a8c\u5931\u8d25: {error}") from error
         model_result = output_type.model_construct(**(data if isinstance(data, dict) else {}))
 
     if track_stats:

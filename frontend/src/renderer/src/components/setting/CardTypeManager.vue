@@ -99,9 +99,7 @@ import { schemaService } from '@renderer/api/schema'
 import { listCardTypes, createCardType, updateCardType, deleteCardType, listLLMConfigs, listPrompts, type CardTypeRead as CTR, type CardTypeCreate as CTC, type CardTypeUpdate as CTU } from '@renderer/api/setting'
 import SchemaStudio from '../shared/SchemaStudio.vue'
 import { useLocaleStore } from '@renderer/stores/useLocaleStore'
-import { translateText } from '@renderer/locales/runtimeTranslations'
 
-// 后端 CardType 类型
 type CardTypeRead = CTR
 type CardTypeCreate = CTC
 type CardTypeUpdate = CTU
@@ -111,8 +109,8 @@ function isBuiltInCardType(row: any): boolean { return !!row?.built_in }
 const cardStore = useCardStore()
 const { t } = useI18n()
 const localeStore = useLocaleStore()
-const tr = (value?: string | null) => translateText(String(value || ''), localeStore.locale)
-const cjkRe = /[\u4e00-\u9fff]/
+const tr = (value?: string | null) => String(value || '')
+const cjkRe = new RegExp(`[${String.fromCharCode(0x4e00)}-${String.fromCharCode(0x9fff)}]`)
 const originalDefaultContextTemplate = ref<string | null>(null)
 function cleanEditableText(value?: string | null): string {
   const text = String(value || '')
@@ -134,7 +132,6 @@ const filteredTypes = computed(() => {
 const drawer = ref({ visible: false, editing: false, id: 0 })
 const form = ref<any>({ key: '', name: '', description: '', is_ai_enabled: true, is_singleton: false, default_ai_context_template: '' })
 const uiLayoutText = ref('')
-// AI 参数与可选项
 const aiParams = ref<{ llm_config_id?: number; prompt_name?: string; temperature?: number; max_tokens?: number; timeout?: number }>({})
 const defaultAIParams = { temperature: 0.7, max_tokens: 1024, timeout: 60 }
 const llmConfigs = ref<any[]>([])
@@ -146,7 +143,6 @@ function openEditor(row?: CardTypeRead) {
   originalDefaultContextTemplate.value = row ? String((row as any).default_ai_context_template || '') : null
   uiLayoutText.value = row?.ui_layout ? JSON.stringify(row.ui_layout, null, 2) : ''
   aiParams.value = (row as any)?.ai_params ? { ...defaultAIParams, ...(row as any).ai_params } : { ...defaultAIParams }
-  // 首次打开加载可选项
   if (llmConfigs.value.length === 0) { listLLMConfigs().then((v) => { llmConfigs.value = v; if (!aiParams.value.llm_config_id && v?.length) aiParams.value.llm_config_id = v[0].id }).catch(() => {}) }
   else if (!aiParams.value.llm_config_id && llmConfigs.value?.length) { aiParams.value.llm_config_id = llmConfigs.value[0].id }
   if (prompts.value.length === 0) { listPrompts().then((v:any) => prompts.value = v).catch(() => {}) }
@@ -203,7 +199,6 @@ onBeforeUnmount(() => {
   if (handler) window.removeEventListener('card-types-updated', handler as any)
 })
 
-// 启用AI时若参数为空，为其填充默认值
 watch(() => form.value.is_ai_enabled, (v) => {
   if (v) {
     aiParams.value = { ...defaultAIParams, ...(aiParams.value || {}) }
@@ -220,4 +215,4 @@ watch(() => form.value.is_ai_enabled, (v) => {
 .hint { color: var(--el-text-color-secondary); }
 .ai-section-title { font-weight: 600; color: var(--el-text-color-regular); margin-top: 4px; }
 .ai-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-</style> 
+</style>

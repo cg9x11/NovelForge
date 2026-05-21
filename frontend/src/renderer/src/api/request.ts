@@ -2,17 +2,11 @@ import { i18n } from '@renderer/i18n'
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
 import { ElMessage, ElLoading } from 'element-plus'
 
-// 后端API的基础URL
-// 约定：
-//  - web 开发环境：使用同源 + Vite 代理（BASE_URL = ''，请求走 /api 前缀）
-//  - web 生产环境：使用当前 hostname:54321
-//  - Electron / 其他：默认 http://127.0.0.1:54321
 export const BASE_URL: string = (() => {
   const platform = import.meta.env.VITE_APP_PLATFORM
 
   if (platform === 'web') {
     if (import.meta.env.DEV) {
-      // 开发模式走 Vite 代理：/api -> http://127.0.0.1:54321
       return ''
     }
     if (typeof window !== 'undefined') {
@@ -23,16 +17,13 @@ export const BASE_URL: string = (() => {
     return ''
   }
 
-  // Electron 等非 web 场景
   return 'http://127.0.0.1:54321'
 })()
 
-// 带 /api 前缀的基础 URL，供流式接口使用
 export const API_BASE_URL: string = BASE_URL
   ? `${BASE_URL.replace(/\/$/, '')}/api`
   : '/api'
 
-// API响应格式，与后端约定一致
 interface ApiResponse<T> {
   status: 'success' | 'error'
   data: T
@@ -91,7 +82,6 @@ class HttpClient {
             if (this.loadingCount === 0) this.loadingInstance?.close()
           } catch { }
         }
-        // 检查是否有由于请求触发的工作流运行
         const startedWorkflows = response.headers['x-workflows-started']
         if (startedWorkflows) {
           const runIds = startedWorkflows.split(',').map(Number)
@@ -100,13 +90,10 @@ class HttpClient {
           }
         }
 
-        // 允许透传原始响应（用于读取 headers）
         if ((response.config as any).rawResponse === true) {
           return response as any
         }
         const res = response.data
-        // 只有当 status 是 'success' 或 'error' 时才认为是包装格式
-        // 避免误判业务对象中的 status 字段（如 WorkflowRunRead.status）
         if (res.status === 'success' || res.status === 'error') {
           if (res.status === 'error') {
             ElMessage.error(res.message || String(i18n.global.t('common.operation_failed')))
@@ -114,7 +101,6 @@ class HttpClient {
           }
           return res.data
         }
-        // 其他情况直接返回原始数据
         return res
       },
       (error) => {
@@ -144,7 +130,7 @@ class HttpClient {
           const errorMessage = translateBackendError(error.response?.data?.detail, error.response?.data?.message || error.message || String(i18n.global.t('errors.requestFailed')))
           ElMessage.error(errorMessage)
         }
-        console.error('请求错误:', error.response?.data || error)
+        console.error('Request error:', error.response?.data || error)
         return Promise.reject(error)
       }
     )

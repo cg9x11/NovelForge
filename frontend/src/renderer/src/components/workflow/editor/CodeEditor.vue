@@ -23,7 +23,6 @@ const emit = defineEmits(['update:modelValue', 'change'])
 const editorRef = ref(null)
 let view = null
 
-// 检测暗黑模式
 const isDark = computed(() => {
   if (typeof document !== 'undefined') {
     return document.documentElement.classList.contains('dark')
@@ -31,17 +30,16 @@ const isDark = computed(() => {
   return false
 })
 
-// 创建主题
 const createTheme = () => {
   const dark = isDark.value
-  
+
   return EditorView.theme({
-    "&": { 
-      height: "100%", 
+    "&": {
+      height: "100%",
       fontSize: "14px",
       backgroundColor: dark ? '#1e1e1e' : '#ffffff'
     },
-    ".cm-scroller": { 
+    ".cm-scroller": {
       overflow: "auto",
       fontFamily: "'Monaco', 'Menlo', 'Courier New', monospace"
     },
@@ -129,11 +127,9 @@ onMounted(() => {
     state: startState,
     parent: editorRef.value
   })
-  
-  // 监听暗黑模式变化
+
   const observer = new MutationObserver(() => {
     if (view) {
-      // 重新配置主题
       view.dispatch({
         effects: EditorView.reconfigure.of([
           createTheme(),
@@ -142,13 +138,12 @@ onMounted(() => {
       })
     }
   })
-  
+
   observer.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['class']
   })
-  
-  // 保存 observer 以便清理
+
   view._themeObserver = observer
 })
 

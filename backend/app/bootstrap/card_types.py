@@ -1,6 +1,7 @@
-"""卡片类型初始化
+from app.locales import schema_field_description
+"""Card type bootstrap.
 
-初始化默认卡片类型及其Schema定义。
+Initializes built-in card types and schema definitions.
 """
 
 import re
@@ -13,73 +14,15 @@ from app.core.config import settings
 from app.db.models import Card, CardType, LLMConfig
 from app.services.builtin_key_registry import CARD_TYPE_NAME_TO_KEY, resolve_builtin_key
 from app.schemas.response_registry import RESPONSE_MODEL_MAP
+from app.locales import locale_section
 from .registry import initializer
 
 
-FIELD_TITLE_ZH_MAP: Dict[str, str] = {
-    "content": "N?i dung",
-    "theme": "Ch? ??",
-    "audience": "??c gi? m?c ti?u",
-    "narrative_person": "Ng?i k?",
-    "story_tags": "Tags truy?n",
-    "affection": "Quan h? t?nh c?m",
-    "name": "T?n",
-    "description": "M? t?",
-    "special_abilities_thinking": "Suy ngh? thi?t k? b?n tay v?ng",
-    "special_abilities": "B?n tay v?ng",
-    "one_sentence_thinking": "Suy ngh? t?m t?t m?t c?u",
-    "one_sentence": "T?m t?t m?t c?u",
-    "overview_thinking": "Suy ngh? m? r?ng ?? c??ng",
-    "overview": "T?ng quan",
-    "power_structure": "C?u tr?c quy?n l?c",
-    "currency_system": "H? th?ng ti?n t?",
-    "background": "B?i c?nh",
-    "major_power_camps": "Phe th? l?c ch?nh",
-    "world_view_thinking": "Suy ngh? thi?t k? th? gi?i quan",
-    "world_view": "Th? gi?i quan",
-    "volume_count": "T?ng s? quy?n",
-    "character_thinking": "Suy ngh? thi?t k? nh?n v?t",
-    "character_cards": "Th? nh?n v?t",
-    "scene_thinking": "Suy ngh? thi?t k? b?i c?nh",
-    "scene_cards": "Th? b?i c?nh",
-    "organization_thinking": "Suy ngh? thi?t k? t? ch?c",
-    "organization_cards": "Th? t? ch?c",
-    "volume_number": "S? quy?n",
-    "title": "Ti?u ??",
-    "main_target": "M?c ti?u tuy?n ch?nh",
-    "branch_line": "Tuy?n ph?",
-    "new_character_cards": "Th? nh?n v?t m?i",
-    "new_scene_cards": "Th? b?i c?nh m?i",
-    "stage_count": "S? giai ?o?n",
-    "character_action_list": "Danh s?ch h?nh ??ng nh?n v?t",
-    "entity_snapshot": "?nh ch?p tr?ng th?i th?c th?",
-    "stage_number": "S? giai ?o?n",
-    "chapter_number": "S? ch??ng",
-    "entity_list": "Danh s?ch th?c th?",
-    "stage_name": "T?n giai ?o?n",
-    "reference_chapter": "Ph?m vi ch??ng tham chi?u",
-    "analysis": "Ph?n t?ch",
-    "chapter_outline_list": "Danh s?ch ?? c??ng ch??ng",
-    "entity_type": "Lo?i th?c th?",
-    "life_span": "V?ng ??i",
-    "role_type": "Vai tr?",
-    "born_scene": "B?i c?nh xu?t hi?n",
-    "personality": "T?nh c?ch",
-    "core_drive": "??ng l?c c?t l?i",
-    "character_arc": "Cung ph?t tri?n nh?n v?t",
-    "influence": "?nh h??ng",
-    "relationship": "Quan h?",
-    "dynamic_info": "Th?ng tin ??ng",
-    "category": "Danh m?c",
-    "current_state": "Tr?ng th?i hi?n t?i",
-    "power_or_effect": "S?c m?nh ho?c hi?u ?ng",
-    "rule_definition": "??nh ngh?a quy t?c",
-    "mastery_hint": "G?i ? n?m b?t",
-}
+FIELD_TITLE_ZH_MAP: Dict[str, str] = locale_section("schema_field_titles")
+FIELD_DESCRIPTION_VI_MAP: Dict[str, str] = locale_section("schema_field_descriptions")
+_DESCRIPTION_PLACEHOLDERS = {"Field description", "Mo ta truong.", "Mo ta truong"}
 
-_CJK_RE = re.compile(r"[\u4e00-\u9fff]")
-
-
+_CJK_RE = re.compile(f"[{chr(0x4e00)}-{chr(0x9fff)}]")
 def _contains_cjk(text: str) -> bool:
     return bool(_CJK_RE.search(text or ""))
 
@@ -91,7 +34,7 @@ def _derive_title_from_description(description: Any) -> str | None:
     if not desc or not _contains_cjk(desc):
         return None
 
-    candidate = re.split(r"[，。；;：:（(\n]", desc, maxsplit=1)[0].strip()
+    candidate = re.split(r"[,.;:(\n]", desc, maxsplit=1)[0].strip()
     if not candidate:
         return None
     if len(candidate) > 16:
@@ -112,12 +55,21 @@ def _localize_schema_titles(schema: Any) -> Any:
                         continue
                     current_title = str(field_schema.get("title") or "")
                     localized = FIELD_TITLE_ZH_MAP.get(field_name)
-                    if localized and (not current_title or _contains_cjk(current_title)):
+                    default_title = field_name.replace("_", " ").title()
+                    if localized and (not current_title or _contains_cjk(current_title) or current_title == default_title):
                         field_schema["title"] = localized
                     elif not current_title:
                         derived = _derive_title_from_description(field_schema.get("description"))
                         if derived:
                             field_schema["title"] = derived
+                    current_description = field_schema.get("description")
+                    localized_description = FIELD_DESCRIPTION_VI_MAP.get(field_name)
+                    if localized_description and (
+                        not isinstance(current_description, str)
+                        or current_description.strip() in _DESCRIPTION_PLACEHOLDERS
+                        or _contains_cjk(current_description)
+                    ):
+                        field_schema["description"] = localized_description
                     visit(field_schema)
 
             defs = node.get("$defs")
@@ -142,192 +94,87 @@ def _localize_schema_titles(schema: Any) -> Any:
     visit(schema)
     return schema
 
-@initializer(name="卡片类型", order=20)
+@initializer(name="card_types", order=20)
 def create_default_card_types(session: Session) -> None:
-    """初始化默认卡片类型
-    
-    创建所有内置卡片类型及其Schema、AI参数预设等。
-    
+    """Initialize built-in card types.
+
+    Create built-in card types, schemas, and AI parameter presets.
+
     Args:
-        session: 数据库会话
+        session: Database session.
     """
-    stage_review_context_template = (
-        "世界观设定: @世界观设定.content.world_view\n"
-        "组织/势力设定:@type:组织卡[previous:global].{content.name,content.entity_type,content.life_span,content.description,content.influence,content.relationship}\n"
-        "分卷主线:@parent.content.main_target\n"
-        "分卷辅线:@parent.content.branch_line\n"
-        "角色卡信息:@type:角色卡[previous:global].{content.name,content.life_span,content.role_type,content.born_scene,content.description,content.personality,content.core_drive,content.character_arc}\n"
-        "地图/场景卡信息:@type:场景卡[previous].{content.name,content.description}\n"
-        "之前的阶段故事大纲:@type:阶段大纲[previous:global:1].{content.stage_name,content.reference_chapter,content.analysis,content.overview,content.entity_snapshot}\n"
-        "上一章节大纲概述:@type:章节大纲[previous:global:1].{content.title,content.overview,content.entity_list}\n"
-        "本卷的StageCount总数为：@parent.content.stage_count\n"
-        "卷末实体状态快照:@parent.content.entity_snapshot\n"
-    )
-
-    chapter_review_context_template = (
-        "世界观设定: @世界观设定.content\n"
-        "组织/势力设定:@type:组织卡[index=filter:content.name in $self.content.entity_list].{content.name,content.description,content.influence,content.relationship,content.dynamic_state}\n"
-        "场景卡:@type:场景卡[index=filter:content.name in $self.content.entity_list].{content.name,content.description,content.dynamic_state}\n"
-        "当前故事阶段大纲: @parent.content.overview\n"
-        "角色卡:@type:角色卡[index=filter:content.name in $self.content.entity_list].{content.name,content.role_type,content.born_scene,content.description,content.personality,content.core_drive,content.character_arc,content.dynamic_info}\n"
-        "物品卡:@type:物品卡[index=filter:content.name in $self.content.entity_list].{content.name,content.category,content.description,content.current_state,content.power_or_effect}\n"
-        "概念卡:@type:概念卡[index=filter:content.name in $self.content.entity_list].{content.name,content.category,content.description,content.rule_definition,content.mastery_hint}\n"
-        "最近的章节原文:@type:章节正文[previous:1].{content.title,content.chapter_number,content.content}\n"
-        "参与者实体列表:@self.content.entity_list\n"
-        "当前章节大纲:@type:章节大纲[index=filter:content.volume_number = $self.content.volume_number&&content.stage_number= $self.content.stage_number&&content.chapter_number= $self.content.chapter_number].{content.title,content.overview,content.entity_list}\n"
-        "下一章节大纲:@type:章节大纲[index=filter:content.volume_number = $self.content.volume_number && content.chapter_number = $self.content.chapter_number+1].{content.title,content.overview,content.entity_list}\n"
-    )
-
     default_types = {
-        "通用文本": {"editor_component": "MarkdownTextEditor", "is_singleton": False, "is_ai_enabled": False, "default_ai_context_template": None},
-        "作品标签": {"editor_component": "TagsEditor", "is_singleton": True, "is_ai_enabled": False, "default_ai_context_template": None},
-        "金手指": {"is_singleton": True, "default_ai_context_template": "作品标签: @作品标签.content"},
-        "一句话梗概": {"is_singleton": True, "default_ai_context_template": "作品标签: @作品标签.content\n金手指/特殊能力: @金手指.content.special_abilities"},
-        "故事大纲": {"is_singleton": True, "default_ai_context_template": "作品标签: @作品标签.content\n金手指/特殊能力: @金手指.content.special_abilities\n故事梗概: @一句话梗概.content.one_sentence"},
-        "世界观设定": {"is_singleton": True, "default_ai_context_template": "作品标签: @作品标签.content\n金手指/特殊能力: @金手指.content.special_abilities\n故事大纲: @故事大纲.content.overview"},
-        "核心蓝图": {"is_singleton": True, "default_ai_context_template": "作品标签: @作品标签.content\n金手指/特殊能力: @金手指.content.special_abilities\n故事大纲: @故事大纲.content.overview\n世界观设定: @世界观设定.content\n组织/势力设定:@type:组织卡[previous:global].{content.name,content.description,content.influence,content.relationship}"},
-        "分卷大纲": {"default_ai_context_template": (
-            "总卷数:@核心蓝图.content.volume_count\n"
-            "故事大纲:@故事大纲.content.overview\n"
-            "作品标签:@作品标签.content\n"
-            "世界观设定: @世界观设定.content.world_view\n"
-            "组织/势力设定:@type:组织卡[previous:global].{content.name,content.description,content.influence,content.relationship}\n"
-            "character_card:@type:角色卡[previous]\n"
-            "scene_card:@type:场景卡[previous]\n"
-            "上一卷信息: @type:分卷大纲[index=$current.volumeNumber-1].content\n"
-            "接下来请你创作第 @self.content.volume_number 卷的细纲\n"
-        )},
-        "写作指南": {
-            "is_singleton": False,
-            "default_ai_context_template": (
-                "世界观设定: @世界观设定.content.world_view\n"
-                "组织/势力设定:@type:组织卡[previous:global].{content.name,content.entity_type,content.life_span,content.description,content.influence,content.relationship}\n"
-                "当前分卷主线:@parent.content.main_target\n"
-                "当前分卷辅线:@parent.content.branch_line\n"
-                "该卷的阶段数量及卷末实体状态快照:@parent.{content.stage_count,content.entity_snapshot}\n"
-                "角色卡信息:@type:角色卡[previous]\n"
-                "地图/场景卡信息:@type:场景卡[previous]\n"
-                "请为第 @self.content.volume_number 卷生成一份写作指南。"
-            )
-        },
-        "阶段大纲": {"default_ai_context_template": (
-            "世界观设定: @世界观设定.content.world_view\n"
-            "组织/势力设定:@type:组织卡[previous:global].{content.name,content.entity_type,content.life_span,content.description,content.influence,content.relationship}\n"
-            "分卷主线:@parent.content.main_target\n"
-            "分卷辅线:@parent.content.branch_line\n"
-            "角色卡信息:@type:角色卡[previous:global].{content.name,content.life_span,content.role_type,content.born_scene,content.description,content.personality,content.core_drive,content.character_arc}\n"
-            "地图/场景卡信息:@type:场景卡[previous]\n"
-            "该卷的角色行动简述:@parent.content.character_action_list\n"
-            "之前的阶段故事大纲，确保章节范围、剧情能够衔接:@type:阶段大纲[previous:global:1].{content.stage_name,content.reference_chapter,content.analysis,content.overview,content.entity_snapshot}\n"
-            "上一章节大纲概述，确保能够衔接剧情:@type:章节大纲[previous:global:1].{content.overview}\n"
-            "本卷的StageCount总数为：@parent.content.stage_count\n"
-            "注意，请务必在@parent.content.stage_count 个阶段内将故事按分卷主线收束，并达到卷末实体快照状态:@parent.content.entity_snapshot\n"
-            "该卷的写作注意事项:@type:写作指南[sibling].content.content \n"
-            "接下来请你创作第 @self.content.stage_number 阶段的故事细纲。"
-        ), "default_ai_context_template_review": stage_review_context_template},
-        "章节大纲": {"default_ai_context_template": (
-            "word_view: @世界观设定.content\n"
-            "volume_number: @self.content.volume_number\n"
-            "volume_main_target: @type:分卷大纲[index=$current.volumeNumber].content.main_target\n"
-            "volume_branch_line: @type:分卷大纲[index=$current.volumeNumber].content.branch_line\n"
-            "本卷的实体action列表: @parent.content.entity_action_list\n"
-            "当前阶段故事概述: @stage:current.overview\n"
-            "当前阶段覆盖章节范围: @stage:current.reference_chapter\n"
-            "之前的章节大纲: @type:章节大纲[sibling].{content.chapter_number,content.overview}\n"
-            "请开始创作第 @self.content.chapter_number 章的大纲，保证连贯性"
-        )},
-        "章节正文": {"editor_component": "CodeMirrorEditor", "is_ai_enabled": False, "default_ai_context_template": (
-            "世界观设定: @世界观设定.content\n"
-            "组织/势力设定:@type:组织卡[index=filter:content.name in $self.content.entity_list].{content.name,content.description,content.influence,content.relationship,content.dynamic_state}\n"
-            "场景卡:@type:场景卡[index=filter:content.name in $self.content.entity_list].{content.name,content.description,content.dynamic_state}\n"
-            "当前故事阶段大纲: @parent.content.overview\n"
-            "角色卡:@type:角色卡[index=filter:content.name in $self.content.entity_list].{content.name,content.role_type,content.born_scene,content.description,content.personality,content.core_drive,content.character_arc,content.dynamic_info}\n"
-            "物品卡:@type:物品卡[index=filter:content.name in $self.content.entity_list].{content.name,content.category,content.description,content.current_state,content.power_or_effect}\n"
-            "概念卡:@type:概念卡[index=filter:content.name in $self.content.entity_list].{content.name,content.category,content.description,content.rule_definition,content.mastery_hint}\n"
-            "最近的章节原文，确保能够衔接剧情:@type:章节正文[previous:1].{content.title,content.chapter_number,content.content}\n"
-            "参与者实体列表，确保生成内容只会出场这些实体:@self.content.entity_list\n"
-            "请根据 @self.content.chapter_number： @self.content.title 的大纲@type:章节大纲[index=filter:content.volume_number = $self.content.volume_number&&content.stage_number= $self.content.stage_number&&content.chapter_number= $self.content.chapter_number].{content.overview} 来创作章节正文内容，可以适当发散、设计与大纲内容不冲突的剧情来进行扩充。你无需在正文中重复标题：@self.content.title \n"
-            "注意，写作时必须保证结尾剧情与下一章的剧情大纲不会冲突，且不会提前涉及下一章剧情(如果存在的话):@type:章节大纲[index=filter:content.volume_number = $self.content.volume_number && content.chapter_number = $self.content.chapter_number+1].{content.title,content.overview}\n"
-            "写作时请结合写作指南要求:@type:写作指南[index=filter:content.volume_number = $self.content.volume_number].{content.content}\n"
-            ), "default_ai_context_template_review": chapter_review_context_template},
-        "内容审核卡片": {
-            "editor_component": "ReviewResultCardEditor",
-            "is_ai_enabled": False,
-            "default_ai_context_template": None,
-            "default_ai_context_template_review": None,
-        },
-        "角色卡": {"default_ai_context_template": None},
-        "场景卡": {"default_ai_context_template": None},
-        "组织卡": {"default_ai_context_template": None},
-        "物品卡": {"default_ai_context_template": None, "is_ai_enabled": False},
-        "概念卡": {"default_ai_context_template": None, "is_ai_enabled": False},
-        "文件夹": {"is_singleton": False, "is_ai_enabled": False, "default_ai_context_template": None},
+        "general_text": {"editor_component": "MarkdownTextEditor", "is_singleton": False, "is_ai_enabled": False, "default_ai_context_template": None},
+        "work_tags": {"editor_component": "TagsEditor", "is_singleton": True, "is_ai_enabled": False, "default_ai_context_template": None},
+        "special_ability": {"is_singleton": True, "default_ai_context_template": None},
+        "one_sentence": {"is_singleton": True, "default_ai_context_template": None},
+        "story_outline": {"is_singleton": True, "default_ai_context_template": None},
+        "world_building": {"is_singleton": True, "default_ai_context_template": None},
+        "blueprint": {"is_singleton": True, "default_ai_context_template": None},
+        "volume_outline": {"default_ai_context_template": None},
+        "writing_guide": {"is_singleton": False, "default_ai_context_template": None},
+        "stage_outline": {"default_ai_context_template": None, "default_ai_context_template_review": None},
+        "chapter_outline": {"default_ai_context_template": None},
+        "chapter_body": {"editor_component": "CodeMirrorEditor", "is_ai_enabled": False, "default_ai_context_template": None, "default_ai_context_template_review": None},
+        "review_result_card": {"editor_component": "ReviewResultCardEditor", "is_ai_enabled": False, "default_ai_context_template": None, "default_ai_context_template_review": None},
+        "character_card": {"default_ai_context_template": None},
+        "scene_card": {"default_ai_context_template": None},
+        "organization_card": {"default_ai_context_template": None},
+        "item_card": {"is_ai_enabled": False, "default_ai_context_template": None},
+        "concept_card": {"is_ai_enabled": False, "default_ai_context_template": None},
+        "folder": {"is_singleton": False, "is_ai_enabled": False, "default_ai_context_template": None},
     }
 
-    # 类型默认 AI 参数预设（不包含 llm_config_id）
     DEFAULT_AI_PARAMS = {
-        "金手指": {"prompt_name": "special_ability_generation", "temperature": 0.6, "max_tokens": 4096, "timeout": 120},
-        "一句话梗概": {"prompt_name": "one_sentence", "temperature": 0.6, "max_tokens": 4096, "timeout": 120},
-        "故事大纲": {"prompt_name": "paragraph_outline", "temperature": 0.7, "max_tokens": 8192, "timeout": 120},
-        "世界观设定": {"prompt_name": "world_building", "temperature": 0.7, "max_tokens": 4096, "timeout": 150},
-        "核心蓝图": {"prompt_name": "blueprint", "temperature": 0.7, "max_tokens": 8192, "timeout": 150},
-        "分卷大纲": {"prompt_name": "volume_outline", "temperature": 0.7, "max_tokens": 8192, "timeout": 150},
-        "写作指南": {"prompt_name": "writing_guide", "temperature": 0.6, "max_tokens": 8192, "timeout": 120},
-        "阶段大纲": {"prompt_name": "stage_outline", "temperature": 0.7, "max_tokens": 8192, "timeout": 120},
-        "章节大纲": {"prompt_name": "chapter_outline", "temperature": 0.7, "max_tokens": 8192, "timeout": 120},
-        "章节正文": {"prompt_name": "content_generation", "temperature": 0.7, "max_tokens": 8192, "timeout": 120},
-        "内容审核卡片": None,
-        "角色卡": {"prompt_name": "character_dynamic_info_extraction", "temperature": 0.6, "max_tokens": 4096, "timeout": 120},
-        "场景卡": {"prompt_name": "content_generation", "temperature": 0.6, "max_tokens": 4096, "timeout": 120},
-        "组织卡": {"prompt_name": "relationship_extraction", "temperature": 0.6, "max_tokens": 4096, "timeout": 120},
-        "物品卡": None,
-        "概念卡": None,
+        "special_ability": {"prompt_name": "special_ability_generation", "temperature": 0.6, "max_tokens": 4096, "timeout": 120},
+        "one_sentence": {"prompt_name": "one_sentence", "temperature": 0.6, "max_tokens": 4096, "timeout": 120},
+        "story_outline": {"prompt_name": "paragraph_outline", "temperature": 0.7, "max_tokens": 8192, "timeout": 120},
+        "world_building": {"prompt_name": "world_building", "temperature": 0.7, "max_tokens": 4096, "timeout": 150},
+        "blueprint": {"prompt_name": "blueprint", "temperature": 0.7, "max_tokens": 8192, "timeout": 150},
+        "volume_outline": {"prompt_name": "volume_outline", "temperature": 0.7, "max_tokens": 8192, "timeout": 150},
+        "writing_guide": {"prompt_name": "writing_guide", "temperature": 0.6, "max_tokens": 8192, "timeout": 120},
+        "stage_outline": {"prompt_name": "stage_outline", "temperature": 0.7, "max_tokens": 8192, "timeout": 120},
+        "chapter_outline": {"prompt_name": "chapter_outline", "temperature": 0.7, "max_tokens": 8192, "timeout": 120},
+        "chapter_body": {"prompt_name": "content_generation", "temperature": 0.7, "max_tokens": 8192, "timeout": 120},
+        "review_result_card": None,
+        "character_card": {"prompt_name": "character_dynamic_info_extraction", "temperature": 0.6, "max_tokens": 4096, "timeout": 120},
+        "scene_card": {"prompt_name": "content_generation", "temperature": 0.6, "max_tokens": 4096, "timeout": 120},
+        "organization_card": {"prompt_name": "relationship_extraction", "temperature": 0.6, "max_tokens": 4096, "timeout": 120},
+        "item_card": None,
+        "concept_card": None,
     }
 
-    # 类型名称到内置响应模型的映射（直接用于生成 json_schema）
     TYPE_TO_MODEL_KEY = {
-        "通用文本" : "Text",
-        "作品标签": "Tags",
-        "金手指": "SpecialAbilityResponse",
-        "一句话梗概": "OneSentence",
-        "故事大纲": "ParagraphOverview",
-        "世界观设定": "WorldBuilding",
-        "核心蓝图": "Blueprint",
-        "分卷大纲": "VolumeOutline",
-        "写作指南": "WritingGuide",
-        "阶段大纲": "StageLine",
-        "章节大纲": "ChapterOutline",
-        "章节正文": "Chapter",
-        "内容审核卡片": "ReviewResultCardContent",
-        "角色卡": "CharacterCard",
-        "场景卡": "SceneCard",
-        "组织卡": "OrganizationCard",
-        "物品卡": "ItemCard",
-        "概念卡": "ConceptCard",
-        "文件夹": "Text",
+        "general_text": "Text",
+        "work_tags": "Tags",
+        "special_ability": "SpecialAbilityResponse",
+        "one_sentence": "OneSentence",
+        "story_outline": "ParagraphOverview",
+        "world_building": "WorldBuilding",
+        "blueprint": "Blueprint",
+        "volume_outline": "VolumeOutline",
+        "writing_guide": "WritingGuide",
+        "stage_outline": "StageLine",
+        "chapter_outline": "ChapterOutline",
+        "chapter_body": "Chapter",
+        "review_result_card": "ReviewResultCardContent",
+        "character_card": "CharacterCard",
+        "scene_card": "SceneCard",
+        "organization_card": "OrganizationCard",
+        "item_card": "ItemCard",
+        "concept_card": "ConceptCard",
+        "folder": "Text",
     }
 
-    CARD_TYPE_KEY_TO_VI_NAME = {
-        "general_text": "Văn bản chung",
-        "work_tags": "Tags tác phẩm",
-        "special_ability": "Bàn tay vàng",
-        "one_sentence": "Tóm tắt một câu",
-        "story_outline": "Đại cương cốt truyện",
-        "world_building": "Thiết lập thế giới quan",
-        "blueprint": "Bản thiết kế cốt lõi",
-        "volume_outline": "Đề cương phân quyển",
-        "writing_guide": "Hướng dẫn viết",
-        "stage_outline": "Đề cương giai đoạn",
-        "chapter_outline": "Đề cương chương",
-        "chapter_body": "Chính văn chương",
-        "review_result_card": "Thẻ duyệt nội dung",
-        "character_card": "Thẻ nhân vật",
-        "scene_card": "Thẻ bối cảnh",
-        "organization_card": "Thẻ tổ chức",
-        "item_card": "Thẻ vật phẩm",
-        "concept_card": "Thẻ khái niệm",
-        "folder": "Thư mục",
-    }
+    card_type_names = locale_section("card_type_names")
+    card_context_templates = locale_section("card_context_templates")
+    for card_type_key, templates in card_context_templates.items():
+        details = default_types.get(card_type_key)
+        if not details or not isinstance(templates, dict):
+            continue
+        details["default_ai_context_template"] = templates.get("generation")
+        details["default_ai_context_template_review"] = templates.get("review")
+    default_suffix = str(locale_section("common").get("default_suffix", "default"))
 
     overwrite_card_schemas = settings.bootstrap.should_overwrite_card_schemas
 
@@ -339,32 +186,32 @@ def create_default_card_types(session: Session) -> None:
     existing_type_by_name = {ct.name: ct for ct in existing_types}
     existing_type_by_key = {ct.key: ct for ct in existing_types if getattr(ct, "key", None)}
 
-    # 默认 llm_config_id：取第一个可用 LLM 配置（若存在）
+    # Default llm_config_id: first available LLM config, if any.
     default_llm = session.exec(select(LLMConfig)).first()
 
-    for name, details in default_types.items():
-        card_type_key = resolve_builtin_key(name, CARD_TYPE_NAME_TO_KEY)
+    for card_type_key, details in default_types.items():
+        name = card_type_names.get(card_type_key, card_type_key)
         existing_type = existing_type_by_key.get(card_type_key) or existing_type_by_name.get(name)
         if not existing_type:
-            # 直接在卡片类型上存储结构（json_schema）
+            # Store json_schema directly on card type.
             schema = None
             try:
-                model_class = RESPONSE_MODEL_MAP.get(TYPE_TO_MODEL_KEY.get(name))
+                model_class = RESPONSE_MODEL_MAP.get(TYPE_TO_MODEL_KEY.get(card_type_key))
                 if model_class:
                     schema = model_class.model_json_schema(ref_template="#/$defs/{model}")
                     schema = _localize_schema_titles(schema)
             except Exception:
                 schema = None
-            # AI 参数预设（llm_config_id 由前端选择，不在此指定）
-            ai_params = DEFAULT_AI_PARAMS.get(name)
+            # AI parameter preset; llm_config_id remains user-selectable.
+            ai_params = DEFAULT_AI_PARAMS.get(card_type_key)
             if ai_params is not None:
-                # 若存在可用的默认 LLM，则写入其 ID；避免写 0 导致前端无法识别
+                # Use default LLM id when available; avoid 0 because FE cannot identify it.
                 ai_params = {**ai_params, "llm_config_id": (default_llm.id if default_llm else None)}
             card_type = CardType(
                 key=card_type_key,
-                name=CARD_TYPE_KEY_TO_VI_NAME.get(card_type_key, name),
-                model_name=TYPE_TO_MODEL_KEY.get(name, name),
-                description=details.get("description", f"{CARD_TYPE_KEY_TO_VI_NAME.get(card_type_key, name)} mặc định"),
+                name=card_type_names.get(card_type_key, name),
+                model_name=TYPE_TO_MODEL_KEY.get(card_type_key, card_type_key),
+                description=details.get("description", f"{card_type_names.get(card_type_key, name)} {default_suffix}"),
                 json_schema=schema,
                 ai_params=ai_params,
                 editor_component=details.get("editor_component"),
@@ -375,14 +222,14 @@ def create_default_card_types(session: Session) -> None:
                 built_in=True,
             )
             session.add(card_type)
-            logger.info(f"Created default card type: {name}")
+            logger.info(f"Created default card type: {card_type_key}")
         else:
-            # 增量更新：刷新类型结构与元信息
+            # Incremental update: refresh schema and metadata.
             ct = existing_type
-            ct.name = CARD_TYPE_KEY_TO_VI_NAME.get(card_type_key, name)
+            ct.name = card_type_names.get(card_type_key, name)
             ct.key = card_type_key
             try:
-                model_class = RESPONSE_MODEL_MAP.get(TYPE_TO_MODEL_KEY.get(name))
+                model_class = RESPONSE_MODEL_MAP.get(TYPE_TO_MODEL_KEY.get(card_type_key))
                 if model_class:
                     schema = model_class.model_json_schema(ref_template="#/$defs/{model}")
                     schema = _localize_schema_titles(schema)
@@ -392,18 +239,18 @@ def create_default_card_types(session: Session) -> None:
                         ct.json_schema = _localize_schema_titles(ct.json_schema)
             except Exception:
                 pass
-            # 若缺失 ai_params 则按预设填充（不覆盖用户已设置的）
+            # Fill missing ai_params from preset without overwriting user settings.
             if getattr(ct, 'ai_params', None) is None:
-                preset = DEFAULT_AI_PARAMS.get(name)
+                preset = DEFAULT_AI_PARAMS.get(card_type_key)
                 if preset is not None:
                     ct.ai_params = {**preset, "llm_config_id": (default_llm.id if default_llm else None)}
-            # 若缺失 model_name 则按映射补齐
+            # Fill missing model_name from mapping.
             if not getattr(ct, 'model_name', None):
-                ct.model_name = TYPE_TO_MODEL_KEY.get(name, name)
+                ct.model_name = TYPE_TO_MODEL_KEY.get(card_type_key, card_type_key)
             ct.editor_component = details.get("editor_component")
             ct.is_ai_enabled = details.get("is_ai_enabled", True)
             ct.is_singleton = details.get("is_singleton", False)
-            ct.description = details.get("description", f"{CARD_TYPE_KEY_TO_VI_NAME.get(card_type_key, name)} mặc định")
+            ct.description = details.get("description", f"{card_type_names.get(card_type_key, name)} {default_suffix}")
             ct.default_ai_context_template = details.get("default_ai_context_template")
             ct.default_ai_context_template_review = details.get("default_ai_context_template_review")
             ct.built_in = True
@@ -422,11 +269,11 @@ def create_default_card_types(session: Session) -> None:
         if getattr(card, "ai_context_template_review", None) is None:
             card.ai_context_template_review = getattr(card_type, "default_ai_context_template_review", None)
 
-    # 自动同步：将未映射到默认卡片类型的内置响应模型写入 CardType
-    # 目的：避免新增响应模型后，前端“设置-卡片类型”看不到对应模型定义。
+    # Auto-sync unmapped built-in response models into CardType.
+    # Purpose: keep settings/card-type model definitions visible after adding models.
     # mapped_model_keys = set(TYPE_TO_MODEL_KEY.values())
     # for model_key, model_class in RESPONSE_MODEL_MAP.items():
-    #     # 已由 default_types 显式管理的模型，不重复创建
+    #     # Skip models explicitly managed by default_types.
     #     if model_key in mapped_model_keys:
     #         continue
 
@@ -445,19 +292,19 @@ def create_default_card_types(session: Session) -> None:
     #         schema = None
 
     #     if existing:
-    #         # 仅对内置类型做增量修复，避免覆盖用户自定义类型
+    #         # Only repair built-in types; do not overwrite user custom types.
     #         if getattr(existing, "built_in", False):
     #             existing.model_name = model_key
     #             if schema is not None:
     #                 existing.json_schema = schema
     #             if not (existing.description or "").strip():
-    #                 existing.description = f"{model_key}（内置响应模型）"
+    #                 existing.description = f"{model_key} (built-in response model)"
     #         continue
 
     #     auto_type = CardType(
     #         name=model_key,
     #         model_name=model_key,
-    #         description=f"{model_key}（内置响应模型）",
+    #         description=f"{model_key} (built-in response model)",
     #         json_schema=schema,
     #         ai_params=None,
     #         editor_component=None,

@@ -35,7 +35,7 @@ export function useAssistantInjectionSelector(options: UseAssistantInjectionSele
   const selectorTreeData = computed(() => {
     const cardsByType: Record<string, any[]> = {}
     for (const card of filteredSelectorCards.value || []) {
-      const typeName = card.card_type?.name || '未分类'
+      const typeName = card.card_type?.name || 'Uncategorized'
       if (!cardsByType[typeName]) {
         cardsByType[typeName] = []
       }

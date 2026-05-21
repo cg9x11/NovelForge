@@ -1,0 +1,14 @@
+## Phan loai vat pham
+
+Dung cho truong category cua the vat pham. Co the them/bot, giu dinh dang danh sach.
+
+- Vu khi
+- Bao vat
+- Lenh bai
+- Tai nguyen
+- Khe uoc
+- Duoc pham
+- Tai lieu
+- Cong cu
+- Phuong tien
+- Khac

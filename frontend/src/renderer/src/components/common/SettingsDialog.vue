@@ -13,7 +13,6 @@ const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [value: boolean]; 'close': [] }>()
 
 const activeTab = ref('llm')
-// 读取全局 store 预设的初始 tab
 import { useAppStore } from '@renderer/stores/useAppStore'
 const appStore = useAppStore()
 const updateStore = useUpdateStore()
@@ -25,7 +24,6 @@ function handleClose() {
   emit('close')
 }
 
-// 当切到 LLM 标签或首次显示时，让子组件刷新
 import { onMounted, watch, nextTick } from 'vue'
 const llmManagerRef = ref()
 function emitRefreshIfLLM() {
@@ -35,16 +33,15 @@ function emitRefreshIfLLM() {
 }
 onMounted(() => emitRefreshIfLLM())
 watch(() => activeTab.value, () => emitRefreshIfLLM())
-// 对话框每次打开也刷新一次（等待子组件渲染完成）
 watch(() => props.modelValue, async (open) => { if (open) { await nextTick(); emitRefreshIfLLM() } })
 </script>
 
 <template>
-  <el-dialog 
-    :model-value="modelValue" 
+  <el-dialog
+    :model-value="modelValue"
     @update:model-value="(val) => emit('update:modelValue', val)"
-    :title="t('app.settings')" 
-    width="85%" 
+    :title="t('app.settings')"
+    width="85%"
     top="4vh"
     @close="handleClose"
   >
@@ -83,4 +80,4 @@ watch(() => props.modelValue, async (open) => { if (open) { await nextTick(); em
 .settings-tabs { height: 100%; }
 :deep(.el-dialog__body) { padding-top: 8px; }
 :deep(.el-tabs__content) { height: 100%; overflow-y: auto; }
-</style> 
+</style>

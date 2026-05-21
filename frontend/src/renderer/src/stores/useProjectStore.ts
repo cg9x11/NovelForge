@@ -6,10 +6,8 @@ import { getFreeProject } from '@renderer/api/projects'
 type Project = components['schemas']['ProjectRead']
 
 export const useProjectStore = defineStore('project', () => {
-  // 当前项目数据
   const currentProject = ref<Project | null>(null)
 
-  // 加载状态
   const isLoading = ref(false)
   const isSaving = ref(false)
 
@@ -48,7 +46,7 @@ export const useProjectStore = defineStore('project', () => {
     currentProject,
     isLoading,
     isSaving,
-    
+
     // Actions
     setCurrentProject,
     setLoading,
@@ -56,4 +54,4 @@ export const useProjectStore = defineStore('project', () => {
     loadFreeProject,
     reset
   }
-}) 
+})

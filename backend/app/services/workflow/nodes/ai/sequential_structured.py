@@ -1,4 +1,5 @@
 
+from app.locales import schema_field_description
 import copy
 import json
 import os
@@ -22,71 +23,63 @@ from ..base import BaseNode
 
 
 class SequentialStructuredInput(BaseModel):
-    """顺序结构化生成输入"""
 
-    items: List[Any] = Field(..., description="数据列表（按顺序处理）")
-    llm_config_id: int = Field(..., description="LLM 配置 ID", json_schema_extra={"x-component": "LLMSelect"})
+
+    items: List[Any] = Field(..., description=schema_field_description("items"))
+    llm_config_id: int = Field(..., description=schema_field_description("llm_config_id"), json_schema_extra={"x-component": "LLMSelect"})
     prompt_template: str = Field(
         ...,
-        description="提示词模板，支持 {{content}} / {{item.xxx}} / {{carry.xxx}}",
+        description=schema_field_description("prompt_template"),
         json_schema_extra={"x-component": "Textarea"},
     )
-    response_model_id: str = Field(..., description="响应模型", json_schema_extra={"x-component": "ResponseModelSelect"})
+    response_model_id: str = Field(..., description=schema_field_description("response_model_id"), json_schema_extra={"x-component": "ResponseModelSelect"})
     temperature: Optional[float] = Field(
         None,
-        description="采样温度（可选，默认使用模型配置）",
+        description=schema_field_description("temperature"),
         ge=0.0,
         le=2.0,
     )
     max_tokens: Optional[int] = Field(
         None,
-        description="最大输出 token（可选，默认使用模型配置）",
+        description=schema_field_description("max_tokens"),
         ge=1,
     )
     timeout: Optional[float] = Field(
         None,
-        description="单次调用超时秒数（可选，默认使用模型配置）",
+        description=schema_field_description("timeout"),
         gt=0,
     )
-    max_retries: int = Field(3, description="最大重试次数", ge=1)
+    max_retries: int = Field(3, description=schema_field_description("max_retries"), ge=1)
     use_instruction_flow: bool = Field(
         False,
-        description="是否使用指令流模式（复杂结构推荐开启，简单结构可关闭以使用原生结构化）",
+        description=schema_field_description("use_instruction_flow"),
     )
-    overlap_size: int = Field(0, description="重叠窗口大小（可选，默认0）", ge=0)
-    initial_carry: Optional[Dict[str, Any]] = Field(None, description="初始承接状态")
+    overlap_size: int = Field(0, description=schema_field_description("overlap_size"), ge=0)
+    initial_carry: Optional[Dict[str, Any]] = Field(None, description=schema_field_description("initial_carry"))
     carry_extract_expr: Optional[str] = Field(
         None,
-        description="从当前轮结果提取下一轮 carry 的表达式（可选）",
+        description=schema_field_description("carry_extract_expr"),
         json_schema_extra={"x-component": "Textarea"},
     )
-    fail_soft: bool = Field(False, description="单项失败时是否降级并继续")
+    fail_soft: bool = Field(False, description=schema_field_description("fail_soft"))
 
 
 class SequentialStructuredOutput(BaseModel):
-    """顺序结构化生成输出"""
 
-    results: List[Dict[str, Any]] = Field(..., description="每轮结果（ai_result/meta/carry_in/carry_out）")
-    final_carry: Dict[str, Any] = Field(..., description="最终 carry 状态")
-    errors: List[Dict[str, Any]] = Field(..., description="错误列表")
+
+    results: List[Dict[str, Any]] = Field(..., description=schema_field_description("results"))
+    final_carry: Dict[str, Any] = Field(..., description=schema_field_description("final_carry"))
+    errors: List[Dict[str, Any]] = Field(..., description=schema_field_description("errors"))
 
 
 @register_node
 class SequentialStructuredNode(BaseNode[SequentialStructuredInput, SequentialStructuredOutput]):
-    """
-    按顺序执行结构化生成并承接 carry 的 AI 节点。
-    用法要点：
-    - `items` 按顺序逐项处理，天然支持跨项上下文承接。
-    - `prompt_template` 支持 `{{content}}`、`{{item.xxx}}`、`{{carry.xxx}}`、`{{overlap_size}}` 占位。
-    - 通过 `carry_extract_expr` 从本轮 `ai_result` 提取下一轮 carry（必须返回 dict 或 None）。
-    - 可选透传 `temperature/max_tokens/timeout`，细调结构化生成质量与稳定性。
-    - 运行中会持续产出 `ProgressEvent`，并把 `partial_results/carry_state` 写入 checkpoint，支持断点恢复。
-    """
+
 
     node_type = "AI.SequentialStructured"
     category = "ai"
-    label = "顺序结构化生成"
-    description = "顺序调用结构化生成，支持跨轮 carry 承接与断点恢复"
+    label = "Sequential Structured Generation"
+    description = "Generate structured data for items sequentially"
 
     input_model = SequentialStructuredInput
     output_model = SequentialStructuredOutput
@@ -99,10 +92,10 @@ class SequentialStructuredNode(BaseNode[SequentialStructuredInput, SequentialStr
 
         items = inputs.items
         if not isinstance(items, list):
-            raise ValueError("输入 items 必须是列表")
+            raise ValueError("Invalid sequential structured input")
 
         if not inputs.prompt_template:
-            raise ValueError("提示词模板为空")
+            raise ValueError("Invalid sequential structured input")
 
         if not items:
             yield SequentialStructuredOutput(
@@ -115,7 +108,7 @@ class SequentialStructuredNode(BaseNode[SequentialStructuredInput, SequentialStr
         total = len(items)
         schema = self._get_schema(self.context.session, inputs)
         if not schema:
-            raise ValueError(f"无法加载模型 Schema: {inputs.response_model_id}")
+            raise ValueError(f"\u65e0\u6cd5\u52a0\u8f7d\u6a21\u578b Schema: {inputs.response_model_id}")
         dynamic_output = build_model_from_json_schema(
             f"SequentialStructured_{inputs.response_model_id}",
             schema,
@@ -139,7 +132,7 @@ class SequentialStructuredNode(BaseNode[SequentialStructuredInput, SequentialStr
 
         if current_index > 0:
             logger.info(
-                f"[SequentialStructured] 从检查点恢复: 已处理 {current_index}/{total}, "
+                f"[SequentialStructured] \u4ece\u68c0\u67e5\u70b9\u6062\u590d: \u5df2\u5904\u7406 {current_index}/{total}, "
                 f"errors={len(errors)}"
             )
 
@@ -163,7 +156,6 @@ class SequentialStructuredNode(BaseNode[SequentialStructuredInput, SequentialStr
                     overlap_size=inputs.overlap_size,
                 )
 
-                logger.info(f"[SequentialStructured] Item {index}: 开始 LLM 调用")
                 generated = await generate_structured(
                     session=self.context.session,
                     llm_config_id=inputs.llm_config_id,
@@ -180,7 +172,6 @@ class SequentialStructuredNode(BaseNode[SequentialStructuredInput, SequentialStr
                     return_logs=True,
                 )
                 ai_result = generated["result"].model_dump(mode="json")
-                logger.info(f"[SequentialStructured] Item {index}: ✅ LLM 调用完成")
 
                 carry_out = self._extract_carry(
                     expr=inputs.carry_extract_expr,
@@ -205,7 +196,6 @@ class SequentialStructuredNode(BaseNode[SequentialStructuredInput, SequentialStr
                 processed_indices.add(index)
 
             except Exception as e:
-                logger.error(f"[SequentialStructured] Item {index} 处理失败: {e}")
                 error_item = {"index": index, "item": item, "error": str(e)}
                 errors.append(error_item)
 
@@ -226,7 +216,7 @@ class SequentialStructuredNode(BaseNode[SequentialStructuredInput, SequentialStr
             percent = ((index + 1) / total) * 100
             yield ProgressEvent(
                 percent=percent,
-                message=f"已处理 {index + 1}/{total} 个项目",
+                message=f"\u5df2\u5904\u7406 {index + 1}/{total} \u4e2a\u9879\u76ee",
                 data={
                     "current_index": index + 1,
                     "processed_indices": sorted(processed_indices),
@@ -284,8 +274,7 @@ class SequentialStructuredNode(BaseNode[SequentialStructuredInput, SequentialStr
                 with open(path, "r", encoding="utf-8") as file:
                     content = file.read()
             except Exception as e:
-                logger.error(f"[SequentialStructured] 读取文件失败: {path}, {e}")
-                content = f"[读取失败: {e}]"
+                content = f"[\u8bfb\u53d6\u5931\u8d25: {e}]"
 
         if not content and "content" in item:
             content = self._to_text(item.get("content"))
@@ -321,7 +310,7 @@ class SequentialStructuredNode(BaseNode[SequentialStructuredInput, SequentialStr
             return {}
 
         if not isinstance(next_carry, dict):
-            raise ValueError("carry_extract_expr 必须返回 dict 或 None")
+            raise ValueError("Invalid sequential structured input")
 
         return next_carry
 
@@ -360,7 +349,7 @@ class SequentialStructuredNode(BaseNode[SequentialStructuredInput, SequentialStr
             return str(value)
 
     def _get_schema(self, session, inputs: SequentialStructuredInput) -> Optional[Dict[str, Any]]:
-        """根据配置获取 JSON Schema"""
+
 
         ct = get_card_type_by_identifier(session, inputs.response_model_id)
         if ct and ct.json_schema:

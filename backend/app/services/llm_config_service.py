@@ -1,3 +1,4 @@
+from app.locales import localized_text
 from urllib.parse import urljoin
 
 from sqlmodel import Session, select
@@ -169,14 +170,14 @@ def can_consume(
 ) -> tuple[bool, str]:
     cfg = session.get(LLMConfig, config_id)
     if not cfg:
-        return False, "LLM 配置不存在"
+        return False, localized_text('hardcoded.services_llm_config_service_32d24242')
     total_need = max(0, need_input_tokens) + max(0, need_output_tokens)
     if cfg.token_limit is not None and cfg.token_limit >= 0:
         if (cfg.used_tokens_input + cfg.used_tokens_output + total_need) > cfg.token_limit:
-            return False, "已超出 Token 上限"
+            return False, localized_text('hardcoded.services_llm_config_service_92dd2abf')
     if cfg.call_limit is not None and cfg.call_limit >= 0:
         if (cfg.used_calls + need_calls) > cfg.call_limit:
-            return False, "已超出调用次数上限"
+            return False, localized_text('hardcoded.services_llm_config_service_a754a884')
     return True, "OK"
 
 
@@ -229,9 +230,9 @@ def copy_llm_config(session: Session, config_id: int) -> LLMConfig | None:
     new_config = LLMConfig(
         provider=source_config.provider,
         display_name=(
-            f"{source_config.display_name or source_config.model_name} (副本)"
+            localized_text('hardcoded.services_llm_config_service_61136513')
             if source_config.display_name
-            else f"{source_config.model_name} (副本)"
+            else localized_text('hardcoded.services_llm_config_service_6acda167', source_config_model_name=source_config.model_name)
         ),
         model_name=source_config.model_name,
         api_base=transport["api_base"],

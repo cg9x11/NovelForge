@@ -1,3 +1,4 @@
+from app.locales import localized_text
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from typing import List
@@ -9,13 +10,13 @@ from app.services.knowledge_service import KnowledgeService
 
 router = APIRouter()
 
-@router.get('/', response_model=ApiResponse[List[KnowledgeRead]], summary='获取知识库列表')
+@router.get('/', response_model=ApiResponse[List[KnowledgeRead]], summary=localized_text('hardcoded.api_endpoints_knowledge_242dde3f'))
 def list_knowledge(session: Session = Depends(get_session)):
     svc = KnowledgeService(session)
     items = svc.list()
     return ApiResponse(data=items)
 
-@router.post('/', response_model=ApiResponse[KnowledgeRead], summary='创建知识库')
+@router.post('/', response_model=ApiResponse[KnowledgeRead], summary=localized_text('hardcoded.api_endpoints_knowledge_02191960'))
 def create_knowledge(body: KnowledgeCreate, session: Session = Depends(get_session)):
     svc = KnowledgeService(session)
     if svc.get_by_name(body.name):
@@ -25,7 +26,7 @@ def create_knowledge(body: KnowledgeCreate, session: Session = Depends(get_sessi
     item = svc.create(key=body.key, name=body.name, description=body.description, content=body.content)
     return ApiResponse(data=item)
 
-@router.get('/{kid}', response_model=ApiResponse[KnowledgeRead], summary='获取单个知识库')
+@router.get('/{kid}', response_model=ApiResponse[KnowledgeRead], summary=localized_text('hardcoded.api_endpoints_knowledge_ccaee8ee'))
 def get_knowledge(kid: int, session: Session = Depends(get_session)):
     svc = KnowledgeService(session)
     item = svc.get_by_id(kid)
@@ -33,7 +34,7 @@ def get_knowledge(kid: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail='Knowledge not found')
     return ApiResponse(data=item)
 
-@router.put('/{kid}', response_model=ApiResponse[KnowledgeRead], summary='更新知识库')
+@router.put('/{kid}', response_model=ApiResponse[KnowledgeRead], summary=localized_text('hardcoded.api_endpoints_knowledge_c43c9f7f'))
 def update_knowledge(kid: int, body: KnowledgeUpdate, session: Session = Depends(get_session)):
     svc = KnowledgeService(session)
     if body.key:
@@ -45,7 +46,7 @@ def update_knowledge(kid: int, body: KnowledgeUpdate, session: Session = Depends
         raise HTTPException(status_code=404, detail='Knowledge not found')
     return ApiResponse(data=item)
 
-@router.delete('/{kid}', response_model=ApiResponse, summary='删除知识库')
+@router.delete('/{kid}', response_model=ApiResponse, summary=localized_text('hardcoded.api_endpoints_knowledge_e62a78b1'))
 def delete_knowledge(kid: int, session: Session = Depends(get_session)):
     svc = KnowledgeService(session)
     item = svc.get_by_id(kid)

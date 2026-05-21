@@ -1,7 +1,4 @@
-"""通用LLM服务
-
-提供ChatModel构建、结构化生成和续写功能。
-"""
+from app.locales import localized_text
 
 from typing import Any, Dict, Type, Optional, AsyncGenerator
 from pydantic import BaseModel
@@ -43,26 +40,6 @@ async def generate_structured(
     use_instruction_flow: bool = False,
     return_logs: bool = False,
 ) -> BaseModel | Dict[str, Any]:
-    """结构化输出生成
-    
-    使用LangChain ChatModel的structured output能力。
-    
-    Args:
-        session: 数据库会话
-        llm_config_id: LLM配置ID
-        user_prompt: 用户提示词
-        output_type: 输出Pydantic模型类型
-        system_prompt: 系统提示词
-        deps: 依赖项（预留）
-        max_tokens: 最大token数
-        max_retries: 最大重试次数
-        temperature: 温度参数
-        timeout: 超时时间
-        track_stats: 是否记录统计
-        
-    Returns:
-        结构化输出对象
-    """
     if use_instruction_flow:
         return await generate_structured_via_instruction_flow_model(
             session=session,
@@ -111,7 +88,6 @@ async def generate_review(
     timeout: Optional[float] = None,
     track_stats: bool = True,
 ) -> str:
-    """审核文本生成。"""
     if track_stats:
         ok, reason = precheck_quota(
             session, llm_config_id,
@@ -119,7 +95,7 @@ async def generate_review(
             need_calls=1
         )
         if not ok:
-            raise ValueError(f"LLM配额不足: {reason}")
+            raise ValueError(f"LLM\u914d\u989d\u4e0d\u8db3: {reason}")
 
     try:
         model = build_chat_model(
@@ -135,7 +111,6 @@ async def generate_review(
             messages.append(SystemMessage(content=system_prompt))
         messages.append(HumanMessage(content=user_prompt))
 
-        logger.info(f"开始审核，提示词: {system_prompt} \n\n {user_prompt}")
         response = await model.ainvoke(messages)
         content = getattr(response, "content", response)
         if isinstance(content, list):
@@ -147,7 +122,7 @@ async def generate_review(
             text = "" if content is None else str(content)
 
         if not text.strip():
-            raise ValueError("LLM返回了空响应")
+            raise ValueError(localized_text('hardcoded.backend_app_services_ai_core_llm_service_c03fe3ae'))
 
         if track_stats:
             in_tokens = calc_input_tokens(system_prompt, user_prompt)
@@ -160,7 +135,6 @@ async def generate_review(
 
         return text.strip()
     except asyncio.CancelledError:
-        logger.info("[LangChain-Text] LLM调用被取消（CancelledError），立即中止。")
         if track_stats:
             in_tokens = calc_input_tokens(system_prompt, user_prompt)
             record_usage(
@@ -184,9 +158,7 @@ async def _generate_structured_native(
     timeout: Optional[float],
     track_stats: bool,
 ) -> BaseModel:
-    """原生结构化输出实现（LangChain with_structured_output）。"""
 
-    # 配额预检
     if track_stats:
         ok, reason = precheck_quota(
             session, llm_config_id,
@@ -194,7 +166,7 @@ async def _generate_structured_native(
             need_calls=1
         )
         if not ok:
-            raise ValueError(f"LLM配额不足: {reason}")
+            raise ValueError(localized_text('hardcoded.backend_app_services_ai_core_llm_service_4e98227a'))
 
     last_exception = None
     for attempt in range(max_retries):
@@ -217,7 +189,7 @@ async def _generate_structured_native(
             response = await structured_llm.ainvoke(messages)
 
             if response is None:
-                raise ValueError("LLM返回了空响应")
+                raise ValueError(localized_text('hardcoded.backend_app_services_ai_core_llm_service_c03fe3ae'))
 
             logger.info(f"[LangChain-Structured] response: {response}")
 
@@ -241,7 +213,6 @@ async def _generate_structured_native(
             return response
 
         except asyncio.CancelledError:
-            logger.info("[LangChain-Structured] LLM调用被取消（CancelledError），立即中止，不再重试。")
             if track_stats:
                 in_tokens = calc_input_tokens(system_prompt, user_prompt)
                 record_usage(
@@ -253,19 +224,18 @@ async def _generate_structured_native(
         except Exception as e:
             last_exception = e
             logger.warning(
-                f"[LangChain-Structured] 调用失败，重试 {attempt + 1}/{max_retries}，llm_config_id={llm_config_id}: {e}"
+                localized_text('hardcoded.backend_app_services_ai_core_llm_service_2cc73331')
             )
 
             if attempt < max_retries - 1:
                 retry_delay = min(2 ** attempt, 4)
-                logger.info(f"[LangChain-Structured] 等待 {retry_delay} 秒后重试...")
                 await asyncio.sleep(retry_delay)
 
     logger.error(
-        f"[LangChain-Structured] 调用在重试 {max_retries} 次后仍失败，llm_config_id={llm_config_id}. Last error: {last_exception}"
+        localized_text('hardcoded.backend_app_services_ai_core_llm_service_9a45fc96')
     )
     raise ValueError(
-        f"调用LLM服务失败，已重试 {max_retries} 次: {str(last_exception)}"
+        localized_text('hardcoded.backend_app_services_ai_core_llm_service_c024d7f8')
     )
 
 
@@ -275,17 +245,6 @@ async def generate_continuation_streaming(
     system_prompt: str,
     track_stats: bool = True
 ) -> AsyncGenerator[str, None]:
-    """续写流式生成
-    
-    Args:
-        session: 数据库会话
-        request: 续写请求对象
-        system_prompt: 系统提示词（由外部传入）
-        track_stats: 是否记录统计
-        
-    Yields:
-        生成的文本片段
-    """
     current_word_count = getattr(request, "existing_word_count", None)
     if current_word_count is None:
         current_word_count = count_text_units(getattr(request, "previous_content", ""))
@@ -331,13 +290,11 @@ async def generate_continuation_streaming(
 
         round_text = "".join(round_chunks)
         if not round_text.strip():
-            logger.warning("续写预算运行时在第 {} 轮拿到空输出，提前结束。", round_index)
             break
 
         trim_result = trim_generated_text(round_text, round_plan)
         final_text = round_text if getattr(request, "stream", False) else trim_result.text
         if not final_text.strip():
-            logger.warning("续写预算运行时在第 {} 轮裁剪后为空，提前结束。", round_index)
             break
 
         current_content = f"{current_content}{final_text}"
@@ -349,7 +306,6 @@ async def generate_continuation_streaming(
 
         target_word_count = getattr(request, "target_word_count", None)
         if trim_result.trimmed and not getattr(request, "stream", False):
-            logger.info("续写预算运行时在第 {} 轮触发句边界收束。", round_index)
             break
         if target_word_count is not None and current_word_count >= target_word_count:
             break
@@ -361,40 +317,32 @@ def _build_continuation_user_prompt(
     request: ContinuationRequest,
     round_plan,
 ) -> str:
-    # 组装用户消息
     user_prompt_parts = []
-    
-    # 1. 添加上下文信息（引用上下文 + 事实子图）
+
     context_info = (getattr(request, 'context_info', None) or '').strip()
     if context_info:
-        # 检测context_info是否已包含结构化标记
         has_structured_marks = any(
-            mark in context_info 
-            for mark in ['【引用上下文】', '【上文】', '【需要润色', '【需要扩写']
+            mark in context_info
+            for mark in ["", "", "", ""]
         )
-        
+
         if has_structured_marks:
-            # 已经是结构化的上下文，直接使用
             user_prompt_parts.append(context_info)
         else:
-            # 未结构化的上下文（老格式），添加标记
-            user_prompt_parts.append(f"【参考上下文】\n{context_info}")
-    
-    # 2. 添加已有章节内容（仅当previous_content非空时）
+            user_prompt_parts.append(f"【\u53c2\u8003\u4e0a\u4e0b\u6587】\n{context_info}")
+
     previous_content = (request.previous_content or '').strip()
     if previous_content:
-        user_prompt_parts.append(f"【已有章节内容】\n{previous_content}")
-        
-        # 续写指令
+        user_prompt_parts.append(f"【\u5df2\u6709\u7ae0\u8282\u5185\u5bb9】\n{previous_content}")
+
         if getattr(request, 'append_continuous_novel_directive', True):
-            user_prompt_parts.append("【指令】请接着上述内容继续写作，保持文风和剧情连贯。直接输出小说正文。")
+            user_prompt_parts.append("[Instruction] Continue writing from the content above. Keep style and plot coherent. Output novel prose only.")
     else:
-        # 新写模式或润色/扩写模式（previous_content为空）
         if getattr(request, 'append_continuous_novel_directive', True):
-            if context_info and '【已有章节内容】' in context_info:
-                user_prompt_parts.append("【指令】请接着上述内容继续写作，保持文风和剧情连贯。直接输出小说正文。")
+            if context_info and "" in context_info:
+                user_prompt_parts.append("[Instruction] Continue writing from the content above. Keep style and plot coherent. Output novel prose only.")
             else:
-                user_prompt_parts.append("【指令】请开始创作新章节。直接输出小说正文。")
+                user_prompt_parts.append("[Instruction] Continue writing from the content above. Keep style and plot coherent. Output novel prose only.")
 
     budget_hint = build_budget_hint_text(round_plan, getattr(request, "continuation_guidance", None))
     if budget_hint:
@@ -412,7 +360,6 @@ async def _stream_continuation_single_round(
 ) -> AsyncGenerator[str, None]:
     user_prompt = _build_continuation_user_prompt(request, round_plan)
 
-    # 限额预检
     if track_stats:
         ok, reason = precheck_quota(
             session, request.llm_config_id,
@@ -420,9 +367,8 @@ async def _stream_continuation_single_round(
             need_calls=1
         )
         if not ok:
-            raise ValueError(f"LLM配额不足: {reason}")
+            raise ValueError(f"LLM\u914d\u989d\u4e0d\u8db3: {reason}")
 
-    # 使用LangChain ChatModel进行流式续写
     model = build_chat_model(
         session=session,
         llm_config_id=request.llm_config_id,
@@ -435,8 +381,7 @@ async def _stream_continuation_single_round(
         SystemMessage(content=system_prompt),
         HumanMessage(content=user_prompt),
     ]
-    
-    logger.info(f"开始续写，提示词: {system_prompt} \n\n {user_prompt}")
+
 
     accumulated: str = ""
     pending_buffer: str = ""
@@ -449,7 +394,6 @@ async def _stream_continuation_single_round(
     should_stop_current_round = False
 
     try:
-        logger.debug("正在以LangChain ChatModel流式生成续写内容")
         async for chunk in model.astream(messages):
             content = getattr(chunk, "content", None)
             if not content:
@@ -499,7 +443,6 @@ async def _stream_continuation_single_round(
                 yield emitted_tail
 
     except asyncio.CancelledError:
-        logger.info("流式LLM调用被取消（CancelledError），停止推送。")
         if track_stats:
             in_tokens = calc_input_tokens(system_prompt, user_prompt)
             out_tokens = estimate_tokens(accumulated)
@@ -510,10 +453,8 @@ async def _stream_continuation_single_round(
             )
         return
     except Exception as e:
-        logger.error(f"流式LLM调用失败: {e}")
         raise
 
-    # 正常结束后统计
     try:
         if track_stats:
             in_tokens = calc_input_tokens(system_prompt, user_prompt)
@@ -524,9 +465,12 @@ async def _stream_continuation_single_round(
                 calls=1, aborted=False
             )
     except Exception as stat_e:
-        logger.warning(f"记录LLM流式统计失败: {stat_e}")
 
 
+
+
+        pass
+pass
 async def _collect_continuation_single_round(
     session: Session,
     request: ContinuationRequest,
@@ -592,7 +536,7 @@ def _flush_streaming_buffer_with_limit(
 
 def _find_first_sentence_boundary(text: str) -> int | None:
     for idx, char in enumerate(text):
-        if char in "。！？!?…\n":
+        if char in "。！？!seconds…\n":
             return idx + 1
     return None
 

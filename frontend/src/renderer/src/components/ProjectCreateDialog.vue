@@ -39,7 +39,6 @@ import type { components } from '@renderer/types/generated'
 import { getProjectTemplates } from '@renderer/api/workflows'
 import { useI18n } from 'vue-i18n'
 import { useLocaleStore } from '@renderer/stores/useLocaleStore'
-import { translateText } from '@renderer/locales/runtimeTranslations'
 
 type Project = components['schemas']['ProjectRead']
 type ProjectCreate = components['schemas']['ProjectCreate']
@@ -54,7 +53,7 @@ interface ProjectTemplate {
 
 const { t } = useI18n()
 const localeStore = useLocaleStore()
-const tr = (value?: string | null) => translateText(String(value || ''), localeStore.locale)
+const tr = (value?: string | null) => String(value || '')
 
 const visible = ref(false)
 const formRef = ref<FormInstance>()

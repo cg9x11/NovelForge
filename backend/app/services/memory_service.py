@@ -61,7 +61,7 @@ _ALLOWED_PAIRS: Dict[str, List[Tuple[str, str]]] = {
     'æŽ§åˆ¶': [('organization','scene')],
     'ä½äºŽ': [('scene','organization')],
 
-    
+
     'å…³äºŽ': [('character','character'), ('organization','organization'), ('character','organization'), ('organization','character'),
         #    ('item','item'), ('concept','concept'), ('character','concept'), ('character','item')
            ],
@@ -89,7 +89,7 @@ def _guess_entity_type(session: Session, project_id: int, name: str) -> Optional
         ct = card.card_type
         if not ct:
             return None
-        
+
         # ä¿®æ­£ï¼šcard.content å·²ç»æ˜¯ dictï¼Œåº”ä½¿ç”¨ model_validate è€Œä¸æ˜¯ model_validate_json
         entity=Entity.model_validate(card.content)
         return str(entity.entity_type)
@@ -333,7 +333,7 @@ class MemoryService:
         # ä¼˜å…ˆä½¿ç”¨é»˜è®¤æç¤ºè¯ï¼Œå¦‚æžœä¸å­˜åœ¨åˆ™å›žé€€åˆ°ç¡¬ç¼–ç ç‰ˆæœ¬
         prompt = prompt_service.get_prompt_by_identifier(self.session, prompt_name)
         system_prompt = prompt.template
-        
+
         # å°†è¾“å‡ºæ¨¡åž‹çš„ JSON Schema é™„åŠ åˆ°ç³»ç»Ÿæç¤ºè¯ä¸­
         schema_json = RelationExtraction.model_json_schema()
         system_prompt += f"\n\nè¯·ä¸¥æ ¼æŒ‰ç…§ä»¥ä¸‹ JSON Schema æ ¼å¼è¿›è¡Œè¾“å‡º:\n{schema_json}"
@@ -385,9 +385,9 @@ class MemoryService:
                         continue
                     try:
                         from app.schemas.entity import CharacterCard
-                     
+
                         model = CharacterCard.model_validate(card.content or {})
-    
+
                         di = model.dynamic_info or {}
                         if not di:
                             continue
@@ -436,7 +436,7 @@ class MemoryService:
 
         if not isinstance(res, UpdateDynamicInfo):
             raise ValueError("LLM åŠ¨æ€ä¿¡æ¯æŠ½å–å¤±è´¥ï¼šè¾“å‡ºæ ¼å¼ä¸ç¬¦åˆ UpdateDynamicInfo")
-        
+
         return res
 
     def query_subgraph(
@@ -531,7 +531,7 @@ class MemoryService:
             pred = CN_TO_EN_KIND.get(r.kind or '', '')
             if not pred:
                 continue
-            
+
             # ä½¿ç”¨ä¼ å…¥çš„ç±»åž‹ä¿¡æ¯ï¼Œå¦‚æžœç¼ºå¤±åˆ™å›žé€€åˆ°çŒœæµ‹
             type_a = participant_type_map.get(r.a) or _guess_entity_type(self.session, project_id, r.a)
             type_b = participant_type_map.get(r.b) or _guess_entity_type(self.session, project_id, r.b)
@@ -539,7 +539,7 @@ class MemoryService:
             # çº¦æŸï¼šä¾æ®å®žä½“ç±»åž‹çŸ«æ­£å…³ç³» kindï¼ˆä¸­æ–‡ï¼‰
             kind_cn_fixed = _coerce_kind_by_types(r.kind, type_a, type_b)
             pred = CN_TO_EN_KIND.get(kind_cn_fixed, pred)
-            
+
             # å‡†å¤‡å±žæ€§å­—å…¸
             attributes = r.model_dump(exclude={"a", "b", "kind"}, exclude_none=True)
 
@@ -617,9 +617,9 @@ class MemoryService:
                 attributes.pop("recent_dialogues", None)
             if not attributes.get("recent_event_summaries") and "recent_event_summaries" in attributes:
                 attributes.pop("recent_event_summaries", None)
-            
+
             triples_with_attrs.append((r.a, pred, r.b, attributes))
-            
+
             # è¿”å›žå€¼ï¼ˆä»…æ‘˜è¦ï¼‰
             merged_evidence_map[key] = {
                 "recent_dialogues": attributes.get("recent_dialogues", []),
@@ -631,8 +631,8 @@ class MemoryService:
                 self.graph.ingest_triples_with_attributes(project_id, triples_with_attrs)
             except Exception as e:
                 raise ValueError(f"çŸ¥è¯†å›¾è°±å†™å…¥å¤±è´¥: {e}")
-        
-        return {"written": len(triples_with_attrs), "merged_evidence": merged_evidence_map} 
+
+        return {"written": len(triples_with_attrs), "merged_evidence": merged_evidence_map}
 
     def update_dynamic_character_info(self, project_id: int, data: UpdateDynamicInfo, queue_size: int = 3) -> Dict[str, Any]:
         """
@@ -651,7 +651,7 @@ class MemoryService:
                 card = self.session.exec(st).first()
                 if not card or _card_type_key(card.card_type) != 'character_card':
                     continue
-                
+
                 try:
                     model = CharacterCard.model_validate(card.content or {})
                     if model.dynamic_info and del_item.dynamic_type in model.dynamic_info:
@@ -692,19 +692,19 @@ class MemoryService:
                 for cat, items in info_group.dynamic_info.items():
                     if not items:
                         continue
-                    
+
                     if cat not in model.dynamic_info:
                         model.dynamic_info[cat] = []
-                    
+
                     existing_items = model.dynamic_info[cat]
-                    
+
                     # åˆå¹¶ï¼ˆæ–°é¡¹è¿½åŠ åœ¨é˜Ÿå°¾ï¼Œä¾¿äºŽ FIFOï¼‰
                     for new_item in items:
                         # å°†å ä½æˆ–ç¼ºå¤±IDæš‚è®°ä¸º 0ï¼Œç¨åŽç»Ÿä¸€åˆ†é…æ­£æ•°ID
                         if not isinstance(new_item.id, int) or new_item.id <= 0:
                             new_item.id = 0
                         existing_items.append(new_item)
-                    
+
                     # ç»Ÿä¸€IDè§„èŒƒåŒ–ï¼šä¸ºæ‰€æœ‰ <=0 çš„æ¡ç›®åˆ†é…è¿žç»­æ­£æ•°IDï¼ˆä¸æ”¹å˜å·²æœ‰æ­£æ•°IDï¼‰
                     existing_positive = [it.id for it in existing_items if isinstance(it.id, int) and it.id > 0]
                     next_id = (max(existing_positive) + 1) if existing_positive else 1
@@ -712,7 +712,7 @@ class MemoryService:
                         if not isinstance(it.id, int) or it.id <= 0:
                             it.id = next_id
                             next_id += 1
-                    
+
                     # æŒ‰é…ç½®ä¸Šé™è£å‰ª
                     limit = DYNAMIC_INFO_LIMITS.get(cat, queue_size)
                     if str(cat) == 'å¿ƒç†æƒ³æ³•/ç›®æ ‡å¿«ç…§':
@@ -731,7 +731,7 @@ class MemoryService:
         # ç»Ÿä¸€æäº¤
         for card in updated_cards.values():
             self.session.add(card)
-        
+
         if updated_cards:
             self.session.commit()
             for card in updated_cards.values():

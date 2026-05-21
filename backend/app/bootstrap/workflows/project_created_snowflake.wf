@@ -1,0 +1,61 @@
+# Workflow:projectCreate-snowflake method
+# Function:projectCreate,Createcard,start writing quickly
+# Trigger:projectCreateauto trigger
+
+#@node(description="Trigger:WatchprojectCreate")
+trigger = Trigger.ProjectCreated(template="snowflake")
+#</node>
+
+
+#@node(description="Createcard")
+tags = Card.Create(
+    project_id=trigger.project_id,
+    card_type="work_tags",
+    title="work_tags"
+  )
+#</node>
+
+
+#@node()
+power = Card.Create(
+    project_id=trigger.project_id,
+    card_type="special_ability",
+    title="special_ability"
+  )
+#</node>
+
+
+#@node()
+one_sentence = Card.Create(
+    project_id=trigger.project_id,
+    card_type="one_sentence",
+    title="one_sentence"
+  )
+#</node>
+
+
+#@node()
+outline = Card.Create(
+    project_id=trigger.project_id,
+    card_type="story_outline",
+    title="story_outline"
+  )
+#</node>
+
+
+#@node()
+world = Card.Create(
+    project_id=trigger.project_id,
+    card_type="world_building",
+    title="world_building"
+  )
+#</node>
+
+
+#@node()
+blueprint = Card.Create(
+    project_id=trigger.project_id,
+    card_type="blueprint",
+    title="blueprint"
+  )
+#</node>

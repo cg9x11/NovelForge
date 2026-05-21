@@ -97,7 +97,6 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance } from 'element-plus'
 import { listKnowledge, type Knowledge, listPrompts, createPrompt, updatePrompt, deletePrompt } from '@renderer/api/setting'
 import { useLocaleStore } from '@renderer/stores/useLocaleStore'
-import { translateText } from '@renderer/locales/runtimeTranslations'
 
 interface Prompt {
   id: number
@@ -110,7 +109,7 @@ interface Prompt {
 
 const { t } = useI18n()
 const localeStore = useLocaleStore()
-const tr = (value?: string | null) => translateText(String(value || ''), localeStore.locale)
+const tr = (value?: string | null) => String(value || '')
 const DEFAULT_OUTPUT_FORMAT = t('prompt_workshop.default_output_format')
 
 const prompts = ref<Prompt[]>([])

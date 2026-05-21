@@ -1,0 +1,86 @@
+# ============================================================
+# AI debateWorkflow
+# ============================================================
+# Function: AI.Debate 
+# :Whether money is omnipotent
+# 
+# Node notes:
+# 1. Logic.SelectProject - Selectproject(Createproject)
+# 2. AI.Debate - asyncdebate(3round,roundspeech)
+# 3. Logic.Wait - waitdebatecomplete
+# 4. Card.Create - Createcardsaveddebateresult
+# ============================================================
+
+#@node(description="1. Selectproject( project_id projectID)")
+project = Logic.SelectProject(project_id=11)
+#</node>
+
+
+#@node(async=true, description="2. AI debate:Whether money is omnipotent(async)")
+debate = AI.Debate(
+    topic="Whether money is omnipotent",
+    context="debate.analysis,,,.",
+    max_rounds=3,
+    agent_1_name="()",
+    agent_1_system_prompt=",.:1.  2.  3. .,.",
+    agent_1_llm_config=5,
+    agent_2_name="()",
+    agent_2_system_prompt=",.:1. (,,)2.  3. .,.",
+    agent_2_llm_config=5,
+    temperature=0.8,
+    max_tokens=3000
+  )
+#</node>
+
+
+#@node(description="3. waitdebatecomplete(waitasync)")
+wait_debate = Logic.Wait(tasks=debate)
+#</node>
+
+
+#@node(description="4. debate")
+format_full_log = Logic.Expression(
+    expression="'\\n\\n'.join([f\"=== No. {log['round']} round - {log['role']} ===\\n\\n[thinking]\\n{log['thought']}\\n\\n[speech]\\n{log['content']}\" for log in debate.full_log]) if wait_debate.count > 0 else 'debatecomplete'"
+  )
+#</node>
+
+
+#@node(description="5. debate")
+format_summary = Logic.Expression(
+    expression="f\"debate:Whether money is omnipotent\\n\\n:\\n{debate.summary}\\n\\n:\\n\\n\" + '\\n\\n'.join([f\"{msg['role']}:\\n{msg['content']}\" for msg in debate.history]) if wait_debate.count > 0 else 'debatecomplete'"
+  )
+#</node>
+
+
+#@node(description="6. Createcard1:debate(thinking)")
+card_full_log = Card.Create(
+    project_id=project.project_id,
+    card_type="chapter_body",
+    title="AIdebate - ",
+    content={
+      "volume_number": 0,
+      "stage_number": 1,
+      "title": "AIdebate - ",
+      "chapter_number": 1,
+      "entity_list": [],
+      "content": format_full_log.result
+    }
+  )
+#</node>
+
+
+#@node(description="7. Createcard2:debate(speech)")
+card_summary = Card.Create(
+    project_id=project.project_id,
+    card_type="chapter_body",
+    title="AIdebate - ",
+    content={
+      "volume_number": 0,
+      "stage_number": 1,
+      "title": "AIdebate - ",
+      "chapter_number": 2,
+      "entity_list": [],
+      "content": format_summary.result
+    }
+  )
+#</node>

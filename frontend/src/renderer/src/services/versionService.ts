@@ -33,7 +33,6 @@ export function addVersion(projectId: number, snapshot: Omit<CardVersionSnapshot
     createdAt: new Date().toISOString(),
   }
   list.unshift(item)
-  // 限制每卡片最多20条
   db[snapshot.cardId] = list.slice(0, 20)
   save(projectId, db)
 }
@@ -59,4 +58,4 @@ export function deleteVersion(projectId: number, cardId: number, versionId: stri
   const list = db[cardId] || []
   db[cardId] = list.filter(v => v.id !== versionId)
   save(projectId, db)
-} 
+}

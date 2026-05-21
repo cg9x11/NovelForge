@@ -19,7 +19,6 @@
       @open-versions="showVersions = true"
     />
 
-    <!-- 自定义内容编辑器（如 CodeMirrorEditor）-->
     <template v-if="activeContentEditor">
       <component
         :is="activeContentEditor"
@@ -36,9 +35,7 @@
       />
     </template>
 
-    <!-- 默认表单编辑器 -->
     <template v-else>
-      <!-- 参数配置：显示当前模型ID，点击弹出就地配置面板 -->
       <div class="toolbar-row param-toolbar">
         <div class="param-inline">
           <el-dropdown
@@ -121,7 +118,6 @@
 
     <SchemaStudio v-model:visible="schemaStudioVisible" :mode="'card'" :target-id="props.card.id" :context-title="props.card.title" @saved="onSchemaSaved" />
 
-    <!-- 初始提示对话框 -->
     <InitialPromptDialog
       v-model:visible="showInitialPromptDialog"
       :card-type-name="(props.card.card_type as any)?.key || props.card.card_type?.name"
@@ -129,7 +125,6 @@
       @cancel="showInitialPromptDialog = false"
     />
 
-    <!-- 生成面板（悬浮窗）-->
     <GenerationPanel
       ref="generationPanelRef"
       :visible="showGenerationPanel"
@@ -212,7 +207,6 @@ import { useAppStore } from '@renderer/stores/useAppStore'
 import { useAIStore as useAIStoreForOptions } from '@renderer/stores/useAIStore'
 import SchemaStudio from '../shared/SchemaStudio.vue'
 import AIPerCardParams from '../common/AIPerCardParams.vue'
-// 移除 AssistantSidebar 相关导入与逻辑
 import { resolveTemplate } from '@renderer/services/contextResolver'
 import {
   buildContextTemplateUpdatePayload,
@@ -230,7 +224,6 @@ import {
   type ReviewRunRequest,
   upsertReviewCard,
 } from '@renderer/api/chapterReviews'
-// 指令流生成相关导入
 import GenerationPanel from '../generation/GenerationPanel.vue'
 import InitialPromptDialog from '../generation/InitialPromptDialog.vue'
 import { InstructionExecutor } from '@renderer/services/instructionExecutor'
@@ -269,7 +262,6 @@ const assistantResolvedContext = ref<string>('')
 const assistantEffectiveSchema = ref<any>(null)
 const prefetchedContext = ref<any>(null)
 
-// 指令流生成相关状态
 const showInitialPromptDialog = ref(false)
 const showGenerationPanel = ref(false)
 const generationPanelRef = ref<InstanceType<typeof GenerationPanel>>()
@@ -277,28 +269,23 @@ const instructionExecutor = ref<InstructionExecutor | null>(null)
 const currentAbortController = ref<AbortController | null>(null)
 const conversationHistory = ref<ConversationMessage[]>([])
 
-// --- 内容编辑器动态映射 ---
-// 类似 CardEditorHost 的 editorMap，但这里是内容编辑器（共享外壳）
 const contentEditorMap: Record<string, any> = {
   CodeMirrorEditor: defineAsyncComponent(() => import('../editors/CodeMirrorEditor.vue')),
   MarkdownTextEditor: defineAsyncComponent(() => import('../editors/MarkdownTextEditor.vue')),
-  // 未来可以添加更多内容编辑器，例如：
   // RichTextEditor: defineAsyncComponent(() => import('../editors/RichTextEditor.vue')),
   // MarkdownEditor: defineAsyncComponent(() => import('../editors/MarkdownEditor.vue')),
 }
 
-// 根据 card_type.editor_component 选择内容编辑器
 const activeContentEditor = computed(() => {
   const editorName = props.card?.card_type?.editor_component
   if (editorName && contentEditorMap[editorName]) {
     return contentEditorMap[editorName]
   }
-  return null // null 表示使用默认的表单编辑器
+  return null
 })
 
 const isStageOutlineCard = computed(() => isCardType(props.card.card_type, 'stage_outline'))
 
-// 通用的内容编辑器引用（可以是 CodeMirrorEditor 或其他）
 const contentEditorRef = ref<any>(null)
 const contentEditorDirty = ref(false)
 
@@ -332,7 +319,6 @@ function handleActiveContextTemplateKindChange(kind: ContextTemplateKind | strin
 
 function openAssistant() {
   assistantResolvedContext.value = getResolvedContextByKind(generationContextKind.value)
-  // 读取有效 Schema 作为对话指导
   import('@renderer/api/setting').then(async ({ getCardSchema }) => {
     try {
       const resp = await getCardSchema(props.card.id)
@@ -367,15 +353,12 @@ const innerData = computed({
   }
 })
 
-// AI 可选项（模型/提示词/输出模型）
 const aiOptions = ref<AIConfigOptions | null>(null)
 async function loadAIOptions() { try { aiOptions.value = await getAIConfigOptions() } catch {} }
 
 const projectName = t('genericCardEditor.currentProject')
 const lastSavedAt = ref<string | undefined>(undefined)
 
-// 顶部标题与表单 Title 字段保持同步
-// 1) 初始化为 card.title，切换卡片时重置
 const titleProxy = ref(props.card.title)
 watch(
   () => props.card.title,
@@ -384,7 +367,6 @@ watch(
   }
 )
 
-// 2) 顶部标题变更 -> 写回表单数据中的 title（若存在）
 watch(
   titleProxy,
   (v) => {
@@ -397,7 +379,6 @@ watch(
   }
 )
 
-// 3) 表单中的 title 字段变更 -> 回写到标题栏
 watch(
   () => (localData.value && (localData.value as any).title),
   (v) => {
@@ -411,13 +392,10 @@ const isDirty = computed(() => {
   const ctxDirty = !isEqual(localAiContextTemplates.value, originalAiContextTemplates.value)
   const titleDirty = titleProxy.value !== props.card.title
 
-  // 使用自定义内容编辑器（如章节正文）：
-  // 只要正文内容、上下文模板或标题有任一改动，都视为未保存
   if (activeContentEditor.value) {
     return contentEditorDirty.value || ctxDirty || titleDirty
   }
 
-  // 默认表单编辑器：比较内容 + 上下文模板 + 标题
   return !isEqual(localData.value, originalData.value) || ctxDirty || titleDirty
 })
 
@@ -434,9 +412,7 @@ watch(
       reviewContextKind.value = 'review'
       titleProxy.value = newCard.title
       await loadSchemaForCard(newCard)
-      // 载入每卡片参数
       await loadAIOptions()
-      // 优先从后端读取有效参数
       try {
         const resp = await getCardAIParams(newCard.id)
         const eff = resp?.effective_params
@@ -451,7 +427,6 @@ watch(
         if (first) editingParams.value.llm_config_id = first.id
       }
       syncReviewPrompt(true)
-      // 本地兼容保存
       perCardStore.setForCard(newCard.id, editingParams.value)
     }
   },
@@ -660,13 +635,9 @@ async function restoreParamsFollowType() {
 
 async function applyParamsToType() {
   try {
-    // 1) 先把当前编辑值保存到该卡片（作为来源）
     await updateCardAIParams(props.card.id, { ...editingParams.value })
-    // 2) 应用到类型
     await applyCardAIParamsToType(props.card.id)
-    // 通知设置页刷新
     window.dispatchEvent(new Event('card-types-updated'))
-    // 3) 应用到类型后，默认让当前卡片恢复跟随类型，以便参数与顶部显示立即一致
     await updateCardAIParams(props.card.id, null)
     const resp = await getCardAIParams(props.card.id)
     const eff = resp?.effective_params
@@ -707,7 +678,6 @@ function getPresetForType(typeName?: string) : PerCardAIParams | undefined {
 async function loadSchemaForCard(card: CardRead) {
   schemaIsLoading.value = true
   try {
-    // 优先从后端按类型/实例读取 schema
     try {
       const { getCardSchema } = await import('@renderer/api/setting')
       const resp = await getCardSchema(card.id)
@@ -717,7 +687,6 @@ async function loadSchemaForCard(card: CardRead) {
       }
     } catch {}
     if (!schema.value) {
-      // 回退：仍走原有 schemaService 以避免首轮迁移空值导致空白
       const typeName = (card.card_type as any)?.name as string | undefined
       await schemaService.loadSchemas()
       if (!typeName) {
@@ -762,7 +731,6 @@ function handleReferenceConfirm(reference: string) {
   const kind = activeContextTemplateKind.value
   const currentText = localAiContextTemplates.value[kind]
   if (atIndexForInsertion < 0) {
-    // 若未通过 @ 触发，则直接在末尾追加
     localAiContextTemplates.value = {
       ...localAiContextTemplates.value,
       [kind]: `${currentText}${reference}`,
@@ -796,7 +764,6 @@ async function applyContextTemplateAndSave(payload: { kind: ContextTemplateKind;
   await handleSave()
 }
 
-// Alt+K 打开抽屉
 function keyHandler(e: KeyboardEvent) {
   if ((e.altKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
     e.preventDefault()
@@ -814,7 +781,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', keyHandler)
 })
 
-// 在抽屉中输入 @ 时弹出选择器
 let drawerTextarea: HTMLTextAreaElement | null = null
 watch(() => openDrawer.value, (v) => {
   if (v) {
@@ -831,7 +797,6 @@ watch(() => openDrawer.value, (v) => {
 
 function handleDrawerInput(ev: Event) {
   const textarea = ev.target as HTMLTextAreaElement
-  // 同步抽屉内文本到本地模板，避免选择器插入时丢失前缀
   localAiContextTemplates.value = {
     ...localAiContextTemplates.value,
     [activeContextTemplateKind.value]: textarea.value,
@@ -852,7 +817,6 @@ function openSelectorFromDrawer(payload?: { kind?: ContextTemplateKind; text?: s
       ...localAiContextTemplates.value,
       [activeContextTemplateKind.value]: textarea.value,
     }
-    // 在光标当前位置插入，不回退一位
     atIndexForInsertion = textarea.selectionStart
   }
   isSelectorVisible.value = true
@@ -863,11 +827,9 @@ const previewText = computed(() => localAiContextTemplates.value[activeContextTe
 async function handleSave() {
   const templatesBeforeSave = cloneContextTemplates(localAiContextTemplates.value)
   const previousTemplatesOnCard = getCardContextTemplates(props.card)
-  // 自定义内容编辑器的保存逻辑（如 CodeMirrorEditor）
   if (activeContentEditor.value && contentEditorRef.value) {
     try {
       isSaving.value = true
-      // 将当前标题传递给内容编辑器，由内容编辑器统一负责保存 title 与正文内容
       const savedContent = await contentEditorRef.value.handleSave(titleProxy.value)
 
       if (!isEqual(templatesBeforeSave, previousTemplatesOnCard)) {
@@ -878,7 +840,6 @@ async function handleSave() {
         } catch {}
       }
 
-      // 保存历史版本
       try {
         if (projectStore.currentProject?.id && savedContent) {
           await addVersion(projectStore.currentProject.id, {
@@ -905,14 +866,13 @@ async function handleSave() {
     return
   }
 
-  // 默认表单编辑器的保存逻辑
   try {
     isSaving.value = true
     const updatePayload: CardUpdate = {
       title: titleProxy.value,
       content: cloneDeep(localData.value),
       ...buildContextTemplateUpdatePayload(templatesBeforeSave),
-      needs_confirmation: false,  // 清除 AI 修改标记，触发工作流
+      needs_confirmation: false,
     }
     await cardStore.modifyCard(props.card.id, updatePayload)
     try {
@@ -1040,19 +1000,11 @@ async function handleDelete() {
   }
 }
 
-// ==================== 指令流生成相关方法 ====================
 
-/**
- * 点击生成按钮时触发
- */
 function handleGenerateClick() {
-  // 显示初始提示对话框
   showInitialPromptDialog.value = true
 }
 
-/**
- * 开始生成（用户确认初始提示后）
- */
 async function handleStartGeneration(userPrompt: string, useExistingContent: boolean) {
   const p = perCardStore.getByCardId(props.card.id) || editingParams.value
   if (!p?.llm_config_id) {
@@ -1061,7 +1013,6 @@ async function handleStartGeneration(userPrompt: string, useExistingContent: boo
   }
 
   try {
-    // 1. 获取有效 Schema
     const { getCardSchema } = await import('@renderer/api/setting')
     const resp = await getCardSchema(props.card.id)
     const effective = resp?.effective_schema || resp?.json_schema
@@ -1070,42 +1021,32 @@ async function handleStartGeneration(userPrompt: string, useExistingContent: boo
       return
     }
 
-    // 2. 解析上下文
     const editingContent = wrapperName.value ? innerData.value : localData.value
     const resolvedContext = getResolvedContextByKind(generationContextKind.value)
 
-    // 3. 初始化指令执行器（根据选项决定是否使用现有内容）
     const initialData = useExistingContent ? (editingContent || {}) : {}
     instructionExecutor.value = new InstructionExecutor(initialData)
 
-    // 4. 重置对话历史
     conversationHistory.value = []
 
-    // 5. 显示生成面板并重置状态
     showGenerationPanel.value = true
     await nextTick()
 
-    // 重置面板状态（清空消息）
     if (generationPanelRef.value) {
       generationPanelRef.value.reset()
     }
 
-    // 6. 显示用户要求（如果有）
-    // 必须要要在 reset 之后添加，否则会被 reset 清空
     if (userPrompt && generationPanelRef.value) {
       console.log('Adding user prompt to panel:', userPrompt)
-      // 使用 setTimeout 确保在 reset 的 DOM 更新后执行
       setTimeout(() => {
         generationPanelRef.value?.addMessage('user', userPrompt)
       }, 0)
     }
 
-    // 7. 开始生成
     if (generationPanelRef.value) {
       generationPanelRef.value.startGeneration()
     }
 
-    // 8. 调用生成 API
     await performGeneration(userPrompt, effective, resolvedContext, p, useExistingContent)
   } catch (e) {
     console.error('Start generation failed:', e)
@@ -1113,9 +1054,6 @@ async function handleStartGeneration(userPrompt: string, useExistingContent: boo
   }
 }
 
-/**
- * 执行生成
- */
 async function performGeneration(
   userPrompt: string,
   schema: any,
@@ -1123,7 +1061,6 @@ async function performGeneration(
   params: PerCardAIParams,
   useExistingContent: boolean
 ) {
-  // 创建 AbortController
   currentAbortController.value = new AbortController()
 
   try {
@@ -1132,7 +1069,6 @@ async function performGeneration(
         llm_config_id: params.llm_config_id!,
         user_prompt: userPrompt,
         response_model_schema: schema,
-        // 根据选项决定是否传递现有内容
         current_data: useExistingContent ? (instructionExecutor.value?.getData() || {}) : {},
         conversation_context: conversationHistory.value,
         context_info: contextInfo,
@@ -1146,10 +1082,8 @@ async function performGeneration(
           generationPanelRef.value?.addMessage('thinking', text)
         },
         onInstruction: (instruction: Instruction) => {
-          // 执行指令
           instructionExecutor.value?.execute(instruction)
 
-          // 更新 UI
           const data = instructionExecutor.value?.getData()
           if (data) {
             import('lodash-es').then(({ cloneDeep }) => {
@@ -1162,7 +1096,6 @@ async function performGeneration(
             })
           }
 
-          // 显示指令执行消息
           const actionText = formatInstructionAction(instruction)
           generationPanelRef.value?.addMessage('action', actionText)
           generationPanelRef.value?.incrementCompletedFields()
@@ -1176,7 +1109,6 @@ async function performGeneration(
         },
         onDone: async (success, message, finalData) => {
           if (success) {
-            // 如果后端回传了最终完整数据（包含默认值注入），则合并更新
             if (finalData) {
               console.log('Received final data from backend:', finalData)
               const { mergeWith, isArray } = await import('lodash-es')
@@ -1212,9 +1144,6 @@ async function performGeneration(
   }
 }
 
-/**
- * 格式化指令为可读文本
- */
 function formatInstructionAction(instruction: Instruction): string {
   if (instruction.op === 'set') {
     const path = instruction.path.replace(/^\//, '').replace(/\//g, ' > ')
@@ -1228,11 +1157,7 @@ function formatInstructionAction(instruction: Instruction): string {
   return t('generic_card.instruction_labels.execute')
 }
 
-/**
- * 关闭生成面板
- */
 function handleCloseGenerationPanel() {
-  // 中断当前生成
   if (currentAbortController.value) {
     currentAbortController.value.abort()
     currentAbortController.value = null
@@ -1243,9 +1168,6 @@ function handleCloseGenerationPanel() {
   conversationHistory.value = []
 }
 
-/**
- * 暂停生成
- */
 function handlePauseGeneration() {
   if (currentAbortController.value) {
     currentAbortController.value.abort()
@@ -1253,17 +1175,12 @@ function handlePauseGeneration() {
   }
 }
 
-/**
- * 继续生成
- */
 async function handleContinueGeneration(userMessage: string) {
-  // 将用户消息添加到对话历史
   conversationHistory.value.push({
     role: 'user',
     content: userMessage
   })
 
-  // 获取参数
   const p = perCardStore.getByCardId(props.card.id) || editingParams.value
   if (!p?.llm_config_id) {
     ElMessage.error(t('genericCardEditor.validModelRequired'))
@@ -1271,7 +1188,6 @@ async function handleContinueGeneration(userMessage: string) {
   }
 
   try {
-    // 获取 Schema 和上下文
     const { getCardSchema } = await import('@renderer/api/setting')
     const resp = await getCardSchema(props.card.id)
     const effective = resp?.effective_schema || resp?.json_schema
@@ -1282,7 +1198,6 @@ async function handleContinueGeneration(userMessage: string) {
 
     const resolvedContext = getResolvedContextByKind(generationContextKind.value)
 
-    // 继续生成（总是基于现有内容）
     await performGeneration(userMessage, effective, resolvedContext, p, true)
   } catch (e) {
     console.error('Continue generation failed:', e)
@@ -1290,37 +1205,26 @@ async function handleContinueGeneration(userMessage: string) {
   }
 }
 
-/**
- * 停止生成
- */
 function handleStopGeneration() {
   handleCloseGenerationPanel()
 }
 
-/**
- * 重新开始生成
- */
 function handleRestartGeneration() {
-  // 重置执行器
   const editingContent = wrapperName.value ? innerData.value : localData.value
   instructionExecutor.value = new InstructionExecutor(editingContent || {})
 
-  // 重置对话历史
   conversationHistory.value = []
 
-  // 显示初始提示对话框
   showGenerationPanel.value = false
   showInitialPromptDialog.value = true
 }
 
-// ==================== 原有的生成方法（保留作为备用）====================
 
 async function handleGenerate() {
   const p = perCardStore.getByCardId(props.card.id) || editingParams.value
   if (!p?.llm_config_id) { ElMessage.error(t('genericCardEditor.validModelRequired')); return }
   const resolvedContext = getResolvedContextByKind(generationContextKind.value)
   try {
-    // 直接读取有效 Schema 并作为 response_model_schema 发送
     const { getCardSchema } = await import('@renderer/api/setting')
     const resp = await getCardSchema(props.card.id)
     const effective = resp?.effective_schema || resp?.json_schema
@@ -1350,26 +1254,21 @@ async function handleGenerate() {
 async function handleRestoreVersion(v: any) {
   showVersions.value = false
 
-  // 自定义内容编辑器的恢复逻辑（如 CodeMirrorEditor）
   if (activeContentEditor.value && contentEditorRef.value) {
     try {
       ElMessage.success(t('genericCardEditor.restoredSaving'))
 
-      // 通知内容编辑器恢复内容（需要编辑器实现 restoreContent 方法）
       if (typeof contentEditorRef.value.restoreContent === 'function') {
         await contentEditorRef.value.restoreContent(v.content)
       }
 
-      // 恢复上下文模板
       localAiContextTemplates.value = cloneContextTemplates({
         generation: v.ai_context_template ?? localAiContextTemplates.value.generation,
         review: v.ai_context_template_review ?? localAiContextTemplates.value.review,
       })
 
-      // 保存恢复的内容
       await handleSave()
 
-      // 刷新卡片数据
       await cardStore.fetchCards(projectStore.currentProject!.id!)
 
       ElMessage.success(t('genericCardEditor.restoredSaved'))
@@ -1380,7 +1279,6 @@ async function handleRestoreVersion(v: any) {
     return
   }
 
-  // 默认表单编辑器的恢复逻辑
   if (wrapperName.value) innerData.value = v.content
   else localData.value = v.content
   localAiContextTemplates.value = cloneContextTemplates({
@@ -1392,7 +1290,6 @@ async function handleRestoreVersion(v: any) {
 }
 
 async function onSchemaSaved() {
-  // 保存结构后刷新 schema 并重算分区
   await loadSchemaForCard(props.card)
 }
 
@@ -1400,10 +1297,8 @@ async function handleAssistantFinalize(summary: string) {
   try {
     const p = perCardStore.getByCardId(props.card.id) || editingParams.value
     if (!p?.llm_config_id) { ElMessage.error(t('genericCardEditor.validModelRequired')); return }
-    // 将对话要点与上下文合并，作为输入文本（不再附加卡片提示词模板）
     const resolvedContextText = getResolvedContextByKind(generationContextKind.value)
     const inputText = `${resolvedContextText}\n\n[${t('genericCardEditor.dialogSummary')}]\n${summary}`
-    // 读取有效 Schema
     const { getCardSchema } = await import('@renderer/api/setting')
     const resp = await getCardSchema(props.card.id)
     const effective = resp?.effective_schema || resp?.json_schema
@@ -1437,10 +1332,9 @@ async function handleAssistantFinalize(summary: string) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden; /* 防止整体滚动 */
+  overflow: hidden;
 }
 
-/* 确保自定义内容编辑器（如 CodeMirrorEditor）占据剩余空间 */
 .generic-card-editor > :deep(.chapter-studio),
 .generic-card-editor > :deep([class*="-editor"]) {
   flex: 1;
@@ -1455,7 +1349,6 @@ async function handleAssistantFinalize(summary: string) {
 .param-toolbar { padding: 6px 12px; border-bottom: 1px solid var(--el-border-color-light); justify-content: flex-end; }
 .param-inline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .ai-config-form { padding: 4px 2px; }
-/* 固定按钮宽度并对模型名称省略显示 */
 :deep(.model-trigger) { width: 230px; min-width: 220px; max-width: 260px; box-sizing: border-box; }
 :deep(.model-trigger .el-button__content) { width: 100%; display: inline-flex; align-items: center; gap: 4px; overflow: hidden; }
 .model-label { flex: 0 0 auto; }

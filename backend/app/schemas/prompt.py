@@ -21,7 +21,6 @@ class PromptUpdate(SQLModel):
     description: Optional[str] = None
     template: Optional[str] = None
 
-# 知识库Schema
 class KnowledgeBase(SQLModel):
     key: Optional[str] = None
     name: str
@@ -42,4 +41,4 @@ class KnowledgeUpdate(SQLModel):
     key: Optional[str] = None
     name: Optional[str] = None
     description: Optional[str] = None
-    content: Optional[str] = None 
+    content: Optional[str] = None

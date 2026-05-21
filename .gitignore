@@ -1,29 +1,29 @@
-# 数据库相关
+# Internal note.
 backend/*.db
 backend/**/*.db
 
-# Python缓存
+# Internal note.
 **/__pycache__/
 *.py[cod]
 *$py.class
 
-# Python虚拟环境
+# Internal note.
 venv/
 env/
 .venv/
 .env/
 
-# Alembic相关
+# Internal note.
 backend/alembic/versions/*.py
 !backend/alembic/versions/__init__.py
 
-# 忽略所有md文档，除了README
+# Internal note.
 *.md
 !README.md
 !README.MD
 !CLA.md
-!贡献指南.md
-!后续规划.md
+!CONTRIBUTING.md
+!ROADMAP.md
 !rules/**/*.md
 !rules/**/*.mdc
 
@@ -37,26 +37,26 @@ docs/
 .agent/
 .kiro/
 
-# IDE配置
+# Internal note.
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# 系统文件
+# Internal note.
 .DS_Store
 Thumbs.db
 desktop.ini
 .env
 
-# 日志文件
+# Internal note.
 *.log
 *.log.*
 
-# 临时文件
+# Internal note.
 *.tmp
-*.temp 
+*.temp
 
 backend/migrate_db.py
 backend/dist
@@ -69,3 +69,5 @@ backend/build
 node_modules/
 # E2E artifacts
 artifacts/e2e/
+
+.agents/

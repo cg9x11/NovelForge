@@ -2,7 +2,6 @@
 	<div class="chapter-studio">
 	<div class="toolbar">
 		<div class="toolbar-row">
-			<!-- 编辑功能组 -->
 			<div class="toolbar-group">
 				<span class="group-label">{{ t('codemirror.toolbar.edit') }}</span>
 				<el-dropdown @command="(c:any) => fontSize = c" size="small">
@@ -38,7 +37,6 @@
 
 			<div class="toolbar-divider"></div>
 
-			<!-- AI功能组 -->
 			<div class="toolbar-group toolbar-group-ai">
 				<span class="group-label">AI</span>
 				<div class="ai-action-bar">
@@ -144,7 +142,6 @@
 	</div>
 
 	<div class="editor-content-wrapper">
-		<!-- 标题区域 -->
 	<div class="chapter-header">
 		<div class="title-section">
 			<h1
@@ -161,7 +158,6 @@
 		</div>
 	</div>
 
-		<!-- CodeMirror 容器 -->
 		<div ref="cmRoot" class="editor-content"></div>
 		<div v-if="pendingAiEdit && !pendingAiEdit.generating" class="ai-replace-review-bar">
 			<span class="review-hint">{{ t('codemirror.review.hint') }}</span>
@@ -172,7 +168,6 @@
 		</div>
 	</div>
 
-		<!-- 右键快速编辑菜单 -->
 		<Teleport to="body">
 			<div
 				v-if="contextMenu.visible"
@@ -298,7 +293,7 @@
 						<div v-for="item in dynamicMissingCards" :key="item.key" class="missing-card-item">
 							<span>{{ item.title }}</span>
 							<el-button size="small" type="primary" plain @click="openCreateCardFromPreview(item)">
-								{{ t('codemirror.preview.add_card_type', { type: item.cardTypeName }) }}
+								{{ t('codemirror.preview.add_card_type', { type: getManagedCardTypeLabel(item.cardTypeName) }) }}
 							</el-button>
 						</div>
 					</div>
@@ -406,7 +401,7 @@
 						<div v-for="item in relationMissingCards" :key="item.key" class="missing-card-item">
 							<span>{{ item.title }} · {{ item.cardTypeName }}</span>
 							<el-button size="small" type="primary" plain @click="openCreateCardFromPreview(item)">
-								{{ t('codemirror.preview.add_card_type', { type: item.cardTypeName }) }}
+								{{ t('codemirror.preview.add_card_type', { type: getManagedCardTypeLabel(item.cardTypeName) }) }}
 							</el-button>
 						</div>
 					</div>
@@ -445,7 +440,7 @@
 									@change="deactivatePreviewEdit(buildPreviewEditKey('relation', $index, 'kind'))"
 									@blur="deactivatePreviewEdit(buildPreviewEditKey('relation', $index, 'kind'))"
 								>
-									<el-option v-for="kind in RELATION_KIND_OPTIONS" :key="kind" :label="kind" :value="kind" />
+									<el-option v-for="kind in RELATION_KIND_OPTIONS" :key="kind.value" :label="kind.label" :value="kind.value" />
 								</el-select>
 								<div
 									v-else
@@ -591,7 +586,7 @@
 						<div v-for="item in memoryMissingCards" :key="item.key" class="missing-card-item">
 							<span>{{ item.title }} · {{ item.cardTypeName }}</span>
 							<el-button size="small" type="primary" plain @click="openCreateCardFromPreview(item)">
-								{{ t('codemirror.preview.add_card_type', { type: item.cardTypeName }) }}
+								{{ t('codemirror.preview.add_card_type', { type: getManagedCardTypeLabel(item.cardTypeName) }) }}
 							</el-button>
 						</div>
 					</div>
@@ -1207,7 +1202,6 @@ const cmRoot = ref<HTMLElement | null>(null)
 const titleElement = ref<HTMLElement | null>(null)
 let view: EditorView | null = null
 
-// 自定义高亮系统
 type HighlightEffectPayload =
 	| { mode: 'single'; from: number; to: number }
 	| { mode: 'compare'; originalFrom: number; originalTo: number; previewFrom: number; previewTo: number }
@@ -1295,7 +1289,6 @@ function handleReviewContextKindChange(value: ContextTemplateKind | string) {
 	emit('update:review-context-kind', normalizeContextTemplateKind(value, 'review'))
 }
 
-// 每卡片参数
 const editingParams = ref<PerCardAIParams>({})
 const aiOptions = ref<AIConfigOptions | null>(null)
 async function loadAIOptions() { try { aiOptions.value = await getAIConfigOptions() } catch {} }
@@ -1320,7 +1313,6 @@ const paramSummary = computed(() => {
 watch(() => props.card, async (newCard) => {
 	if (!newCard) return
 	await loadAIOptions()
-	// 优先读取后端"有效参数"（类型默认或实例覆盖）
 	try {
 		const resp = await getCardAIParams(newCard.id)
 		const eff = (resp as any)?.effective_params
@@ -1330,7 +1322,6 @@ watch(() => props.card, async (newCard) => {
 			return
 		}
 	} catch {}
-	// 回退：使用本地存储或预设
 	const saved = perCardStore.getByCardId(newCard.id)
 	if (saved) editingParams.value = { ...saved }
 	else {
@@ -1341,7 +1332,6 @@ watch(() => props.card, async (newCard) => {
 	}
 }, { immediate: true })
 
-// 监听卡片内容变化（如灵感助手修改后），同步到编辑器
 watch(() => props.card?.content, (newContent) => {
 	if (!newContent || !view) return
 
@@ -1360,37 +1350,27 @@ watch(() => props.card?.content, (newContent) => {
 				: currentText.length,
 		}
 
-		// 只有当内容真的不同，且不是由当前编辑器触发的保存时，才更新
-		// （通过比较 originalContent 判断：如果相同说明是外部修改）
 		if (newText !== currentText && newText !== originalContent.value) {
-			console.log('🔄 [CodeMirror] 检测到外部内容更新，同步到编辑器')
 
-			// 更新编辑器内容
 			setText(newText)
 
-			// 更新 localCard
 			localCard.content = {
 				...syncedContent,
 				content: newText,
 				word_count: newText.length
 			}
 
-			// 更新原始内容引用（避免触发 dirty）
 			originalContent.value = newText
 			isDirty.value = false
 			emit('update:dirty', false)
 
-			// 更新字数
 			wordCount.value = computeWordCount(newText)
 
-			console.log('✅ [CodeMirror] 编辑器内容已同步')
 			return
 		}
 
-		// 即使正文文本未变化，也要同步 entity_list 等字段，保证预览始终读取最新章节挂载实体。
 		localCard.content = syncedContent
 	} catch (e) {
-		console.error('❌ [CodeMirror] 同步内容失败:', e)
 	}
 }, { deep: true })
 
@@ -1440,7 +1420,6 @@ let streamHandle: { cancel: () => void } | null = null
 const reviewAbortController = ref<AbortController | null>(null)
 const canInterruptAiTask = computed(() => aiLoading.value || reviewLoading.value || Boolean(reviewAbortController.value))
 
-// 右键菜单状态
 const contextMenu = reactive({
 	visible: false,
 	expanded: false,
@@ -1487,38 +1466,29 @@ function ensureNoPendingAiEdit(): boolean {
 	return true
 }
 
-// 高亮管理
 const currentHighlight = ref<{ from: number; to: number } | { mode: 'compare' } | null>(null)
 
-// 设置高亮
 function setHighlight(from: number, to: number) {
 	if (!view) return
-	// CodeMirror 不允许空范围的 decoration
 	if (from >= to) {
-		console.log('⚠️ [Highlight] 跳过空范围高亮:', { from, to })
 		return
 	}
 	currentHighlight.value = { from, to }
 	view.dispatch({
 		effects: setHighlightEffect.of({ mode: 'single', from, to })
 	})
-	console.log('✨ [Highlight] 设置高亮:', { from, to })
 }
 
-// 清除高亮
 function clearHighlight() {
 	if (!view) return
 	currentHighlight.value = null
 	view.dispatch({
 		effects: setHighlightEffect.of(null)
 	})
-	console.log('🧹 [Highlight] 清除高亮')
 }
 
-// 更新高亮范围（用于 AI 输出时）
 function updateHighlight(from: number, to: number) {
 	if (!view) return
-	// CodeMirror 不允许空范围的 decoration
 	if (from >= to) {
 		return
 	}
@@ -1543,7 +1513,6 @@ function setCompareHighlight(originalFrom: number, originalTo: number, previewFr
 	})
 }
 
-// 跟踪原始内容以检测dirty状态
 const originalContent = ref<string>('')
 const isDirty = ref(false)
 const reviewLoading = ref(false)
@@ -1561,7 +1530,7 @@ watch([previewDialogVisible, relationsPreviewVisible, memoryPreviewVisible], ([d
 		deactivatePreviewEdit()
 	}
 })
-type ManagedCardTypeName = '角色卡' | '场景卡' | '组织卡' | '物品卡' | '概念卡'
+type ManagedCardTypeName = 'character_card' | 'scene_card' | 'organization_card' | 'item_card' | 'concept_card'
 type ManagedEntityType = 'character' | 'scene' | 'organization' | 'item' | 'concept'
 interface MissingCardNotice {
 	key: string
@@ -1576,26 +1545,48 @@ interface ParticipantReviewNotice {
 	entityType: ManagedEntityType
 }
 function getManagedCardTypeKey(cardTypeName: ManagedCardTypeName): string {
-	if (cardTypeName.includes('??')) return 'character_card'
-	if (cardTypeName.includes('??')) return 'scene_card'
-	if (cardTypeName.includes('??')) return 'organization_card'
-	if (cardTypeName.includes('??')) return 'item_card'
-	if (cardTypeName.includes('??')) return 'concept_card'
 	return cardTypeName
 }
 
 
 const ENTITY_TYPE_TO_CARD_TYPE_NAME: Record<ManagedEntityType, ManagedCardTypeName> = {
-	character: '角色卡',
-	scene: '场景卡',
-	organization: '组织卡',
-	item: '物品卡',
-	concept: '概念卡',
+	character: 'character_card',
+	scene: 'scene_card',
+	organization: 'organization_card',
+	item: 'item_card',
+	concept: 'concept_card',
+}
+function getManagedCardTypeLabel(cardTypeName: ManagedCardTypeName): string {
+	return String(t(`codemirror.managed_card_types.${cardTypeName}`))
 }
 const RELATION_KIND_OPTIONS = [
-	'同盟', '队友', '同门', '敌对', '亲属', '师徒', '对手', '伙伴', '上级', '下属', '指导',
-	'隶属', '成员', '领导', '创立', '拥有', '使用', '修炼', '领悟', '承载', '映射',
-	'控制', '位于', '影响', '克制', '关于', '其他',
+	{ value: 'alliance', label: String(t('codemirror.relation_kinds.alliance')) },
+	{ value: 'teammate', label: String(t('codemirror.relation_kinds.teammate')) },
+	{ value: 'same_sect', label: String(t('codemirror.relation_kinds.same_sect')) },
+	{ value: 'hostile', label: String(t('codemirror.relation_kinds.hostile')) },
+	{ value: 'relative', label: String(t('codemirror.relation_kinds.relative')) },
+	{ value: 'mentor_disciple', label: String(t('codemirror.relation_kinds.mentor_disciple')) },
+	{ value: 'rival', label: String(t('codemirror.relation_kinds.rival')) },
+	{ value: 'companion', label: String(t('codemirror.relation_kinds.companion')) },
+	{ value: 'superior', label: String(t('codemirror.relation_kinds.superior')) },
+	{ value: 'subordinate', label: String(t('codemirror.relation_kinds.subordinate')) },
+	{ value: 'guidance', label: String(t('codemirror.relation_kinds.guidance')) },
+	{ value: 'affiliation', label: String(t('codemirror.relation_kinds.affiliation')) },
+	{ value: 'member', label: String(t('codemirror.relation_kinds.member')) },
+	{ value: 'leader', label: String(t('codemirror.relation_kinds.leader')) },
+	{ value: 'founded', label: String(t('codemirror.relation_kinds.founded')) },
+	{ value: 'owns', label: String(t('codemirror.relation_kinds.owns')) },
+	{ value: 'uses', label: String(t('codemirror.relation_kinds.uses')) },
+	{ value: 'cultivates', label: String(t('codemirror.relation_kinds.cultivates')) },
+	{ value: 'comprehends', label: String(t('codemirror.relation_kinds.comprehends')) },
+	{ value: 'carries', label: String(t('codemirror.relation_kinds.carries')) },
+	{ value: 'maps', label: String(t('codemirror.relation_kinds.maps')) },
+	{ value: 'controls', label: String(t('codemirror.relation_kinds.controls')) },
+	{ value: 'located_at', label: String(t('codemirror.relation_kinds.located_at')) },
+	{ value: 'influences', label: String(t('codemirror.relation_kinds.influences')) },
+	{ value: 'counters', label: String(t('codemirror.relation_kinds.counters')) },
+	{ value: 'about', label: String(t('codemirror.relation_kinds.about')) },
+	{ value: 'other', label: String(t('codemirror.relation_kinds.other')) },
 ]
 const reviewText = ref('')
 const reviewDraft = ref<ReviewDraftResult | null>(null)
@@ -1860,11 +1851,9 @@ function isCanceledRequest(error: unknown): boolean {
 		|| candidate?.message === 'CanceledError'
 }
 
-// 字号/行距（默认 16px / 1.8）
 const fontSize = ref<number>(16)
 const lineHeight = ref<number>(1.8)
 
-// 润色和扩写的提示词列表
 const polishPrompts = ref<string[]>([])
 const expandPrompts = ref<string[]>([])
 const currentPolishPrompt = ref(t('codemirror.ai.polish'))
@@ -2021,7 +2010,7 @@ function getText(): string {
 function getSelectedText(): { text: string; from: number; to: number } | null {
 	if (!view) return null
 	const { from, to } = view.state.selection.main
-	if (from === to) return null // 没有选中内容
+	if (from === to) return null
 	return {
 		text: view.state.doc.sliceString(from, to),
 		from,
@@ -2043,10 +2032,8 @@ function appendAtEnd(delta: string) {
 	const end = view.state.doc.length
 	view.dispatch({
 		changes: { from: end, to: end, insert: delta },
-		// 滚动到文档末尾
 		effects: EditorView.scrollIntoView(end, { y: "end" })
 	})
-	// 滚动到底
 	try {
 		const scroller = (cmRoot.value?.querySelector('.cm-scroller') as HTMLElement) || cmRoot.value
 		if (scroller) requestAnimationFrame(() => { scroller.scrollTop = scroller.scrollHeight })
@@ -2058,7 +2045,6 @@ function initEditor() {
 	if (!cmRoot.value) return
 	const initialText = String((localCard.content as any)?.content || '')
 
-	// 保存原始内容
 	originalContent.value = initialText
 	isDirty.value = false
 	emit('update:dirty', false)
@@ -2067,7 +2053,6 @@ function initEditor() {
 		{
 			key: 'Enter',
 			run: (v: EditorView) => {
-				// 执行默认的换行
 				insertNewline(v)
 				return true
 			}
@@ -2092,7 +2077,6 @@ function initEditor() {
 				lineNumbers(),
 				EditorView.lineWrapping,
 				highlightField,
-				// 关键：限制编辑器高度由父容器决定，而不是根据内容自动扩展
 				EditorView.theme({
 					"&": { height: "100%" },
 					".cm-scroller": { overflow: "auto" }
@@ -2107,7 +2091,6 @@ function initEditor() {
 					}
 					return []
 				}),
-				// 点击编辑器时清除高亮
 				EditorView.domEventHandlers({
 					mousedown: (e, view) => {
 						if (pendingAiEdit.value) return false
@@ -2123,7 +2106,6 @@ function initEditor() {
 					const txt = update.state.doc.toString()
 					wordCount.value = computeWordCount(txt)
 
-					// 检测dirty状态
 					const newDirty = txt !== originalContent.value
 					if (newDirty !== isDirty.value) {
 						isDirty.value = newDirty
@@ -2151,38 +2133,30 @@ function initEditor() {
 			]
 		})
 	})
-	// 初始化字数
 	wordCount.value = computeWordCount(getText())
 	ready.value = true
 
-	// 添加右键菜单监听器到 CodeMirror 的 DOM 元素
 	if (view && cmRoot.value) {
 		const editorDom = cmRoot.value.querySelector('.cm-editor') as HTMLElement
 		if (editorDom) {
 			editorDom.addEventListener('contextmenu', handleEditorContextMenu)
-			console.log('✅ [ContextMenu] 右键菜单监听器已添加')
 		} else {
-			console.warn('⚠️ [ContextMenu] 未找到 .cm-editor 元素')
 		}
 	}
 }
 
 
-// 加载可用提示词列表
 async function loadPrompts() {
 	try {
 		const options = await getAIConfigOptions()
 		const allPrompts = options?.prompts || []
 
-		// 获取所有提示词名称
 		const allPromptNames = allPrompts.map(p => p.name)
 		reviewPrompts.value = allPromptNames.length > 0 ? allPromptNames : [t('codemirror.ai.review_default_prompt')]
 
-		// 润色和扩写都使用所有可用提示词
 		polishPrompts.value = allPromptNames.length > 0 ? allPromptNames : [t('codemirror.ai.polish')]
 		expandPrompts.value = allPromptNames.length > 0 ? allPromptNames : [t('codemirror.ai.expand')]
 
-		// 设置默认选中的提示词
 		if (allPromptNames.includes(t('codemirror.ai.polish'))) {
 			currentPolishPrompt.value = t('codemirror.ai.polish')
 		} else if (allPromptNames.length > 0) {
@@ -2209,24 +2183,21 @@ async function loadPrompts() {
 }
 
 
-// 处理标题编辑（正文页大标题）
 async function handleTitleBlur() {
 	if (!titleElement.value) return
 	const newTitle = titleElement.value.textContent?.trim() || ''
 	if (newTitle && newTitle !== localCard.title) {
 		await saveTitle(newTitle)
 	} else {
-		// 恢复原标题
 		if (titleElement.value) titleElement.value.textContent = localCard.title
 	}
 }
 
 async function handleTitleEnter() {
 	if (!titleElement.value) return
-	titleElement.value.blur() // 触发 blur 事件统一保存
+	titleElement.value.blur()
 }
 
-// 保存标题：同时更新 card.title 与 content.title，保证上下文使用的 @self.content.title 为最新
 async function saveTitle(newTitle: string) {
 	try {
 		const trimmed = newTitle.trim()
@@ -2234,7 +2205,6 @@ async function saveTitle(newTitle: string) {
 		localCard.title = trimmed
 		localCard.content = {
 			...(localCard.content || {}),
-			// 仅更新 title 字段，正文内容等保持不变
 			...(localCard.content as any),
 			title: trimmed,
 		}
@@ -2246,12 +2216,10 @@ async function saveTitle(newTitle: string) {
 		ElMessage.success(t('codemirror.messages.title_updated'))
 	} catch (e) {
 		ElMessage.error(t('codemirror.messages.title_update_failed'))
-		// 恢复原标题
 		if (titleElement.value) titleElement.value.textContent = localCard.title
 	}
 }
 
-// 保存正文：可选接收来自父级的最新标题，一次性写入 card.title 与 content.title
 async function handleSave(newTitle?: string) {
 	if (props.chapter) { emit('save'); return }
 	const effectiveTitle = (typeof newTitle === 'string' && newTitle.trim()) ? newTitle.trim() : localCard.title
@@ -2264,23 +2232,20 @@ async function handleSave(newTitle?: string) {
 		word_count: wordCount.value,
 		volume_number: (props.contextParams as any)?.volume_number ?? (localCard.content as any)?.volume_number,
 		chapter_number: (props.contextParams as any)?.chapter_number ?? (localCard.content as any)?.chapter_number,
-		// 始终把最新标题写入 content.title，供上下文模板和筛选使用
 		title: effectiveTitle || (localCard.content as any)?.title || localCard.title,
 	}
 	const updatePayload: CardUpdate = {
 		title: effectiveTitle,
 		content: nextContent as any,
-		needs_confirmation: false,  // 清除 AI 修改标记，触发工作流
+		needs_confirmation: false,
 	}
 	localCard.content = nextContent as any
 	await cardStore.modifyCard(localCard.id, updatePayload)
 
-	// 保存成功后重置dirty状态
 	originalContent.value = getText()
 	isDirty.value = false
 	emit('update:dirty', false)
 
-	// 返回保存的内容供历史版本使用
 	return updatePayload.content
 }
 
@@ -2319,52 +2284,52 @@ function formatFactsFromContext(ctx: any | null | undefined): string {
 		const factsStruct: any = (ctx as any)?.facts_structured || {}
 		const lines: string[] = []
 		if (Array.isArray(factsStruct.fact_summaries) && factsStruct.fact_summaries.length) {
-			lines.push('关键事实:')
+			lines.push(String(t('codemirror.facts_summary.key_facts')))
 			for (const s of factsStruct.fact_summaries) lines.push(`- ${s}`)
 		}
 		if (Array.isArray(factsStruct.relation_summaries) && factsStruct.relation_summaries.length) {
-			lines.push('关系摘要:')
+			lines.push(String(t('codemirror.facts_summary.relation_summaries')))
 			for (const r of factsStruct.relation_summaries) {
 				lines.push(`- ${r.a} ↔ ${r.b}（${r.kind}）`)
 				if (r.a_to_b_addressing || r.b_to_a_addressing) {
-					const a1 = r.a_to_b_addressing ? `A称B：${r.a_to_b_addressing}` : ''
-					const b1 = r.b_to_a_addressing ? `B称A：${r.b_to_a_addressing}` : ''
+					const a1 = r.a_to_b_addressing ? String(t('codemirror.facts_summary.address_a_to_b', { value: r.a_to_b_addressing })) : ''
+					const b1 = r.b_to_a_addressing ? String(t('codemirror.facts_summary.address_b_to_a', { value: r.b_to_a_addressing })) : ''
 					if (a1 || b1) lines.push(`  · ${[a1, b1].filter(Boolean).join(' ｜ ')}`)
 				}
 				if (Array.isArray(r.recent_dialogues) && r.recent_dialogues.length) {
-					lines.push('  · 对话样例:')
+					lines.push(String(t('codemirror.facts_summary.dialogue_examples')))
 					for (const d of r.recent_dialogues) lines.push(`    - ${d}`)
 				}
 				if (Array.isArray(r.recent_event_summaries) && r.recent_event_summaries.length) {
-					lines.push('  · 近期事件:')
+					lines.push(String(t('codemirror.facts_summary.recent_events')))
 					for (const ev of r.recent_event_summaries) {
-						const tag = [ev?.volume_number != null ? `卷${ev.volume_number}` : null, ev?.chapter_number != null ? `章${ev.chapter_number}` : null].filter(Boolean).join(' ')
+						const tag = [ev?.volume_number != null ? String(t('codemirror.facts_summary.volume_tag', { number: ev.volume_number })) : null, ev?.chapter_number != null ? String(t('codemirror.facts_summary.chapter_tag', { number: ev.chapter_number })) : null].filter(Boolean).join(' ')
 						lines.push(`    - ${ev.summary}${tag ? `（${tag}）` : ''}`)
 					}
 				}
 			}
 		}
 		if (Array.isArray(factsStruct.item_summaries) && factsStruct.item_summaries.length) {
-			lines.push('物品摘要:')
+			lines.push(String(t('codemirror.facts_summary.item_summaries')))
 			for (const item of factsStruct.item_summaries) {
 				lines.push(`- ${item.name}${item.category ? `（${item.category}）` : ''}`)
-				if (item.description) lines.push(`  · 描述: ${item.description}`)
-				if (item.current_state) lines.push(`  · 当前状态: ${item.current_state}`)
-				if (item.owner_hint) lines.push(`  · 归属提示: ${item.owner_hint}`)
-				if (item.power_or_effect) lines.push(`  · 作用/效果: ${item.power_or_effect}`)
-				if (item.constraints) lines.push(`  · 限制条件: ${item.constraints}`)
+				if (item.description) lines.push(String(t('codemirror.facts_summary.description_line', { value: item.description })))
+				if (item.current_state) lines.push(String(t('codemirror.facts_summary.current_state_line', { value: item.current_state })))
+				if (item.owner_hint) lines.push(String(t('codemirror.facts_summary.owner_hint_line', { value: item.owner_hint })))
+				if (item.power_or_effect) lines.push(String(t('codemirror.facts_summary.power_effect_line', { value: item.power_or_effect })))
+				if (item.constraints) lines.push(String(t('codemirror.facts_summary.constraints_line', { value: item.constraints })))
 			}
 		}
 		if (Array.isArray(factsStruct.concept_summaries) && factsStruct.concept_summaries.length) {
-			lines.push('概念摘要:')
+			lines.push(String(t('codemirror.facts_summary.concept_summaries')))
 			for (const concept of factsStruct.concept_summaries) {
 				lines.push(`- ${concept.name}${concept.category ? `（${concept.category}）` : ''}`)
-				if (concept.description) lines.push(`  · 描述: ${concept.description}`)
-				if (concept.rule_definition) lines.push(`  · 规则定义: ${concept.rule_definition}`)
-				if (concept.mastery_hint) lines.push(`  · 掌握提示: ${concept.mastery_hint}`)
-				if (concept.cost) lines.push(`  · 代价: ${concept.cost}`)
-				if (Array.isArray(concept.known_by) && concept.known_by.length) lines.push(`  · 已知掌握者: ${concept.known_by.join('、')}`)
-				if (Array.isArray(concept.counter_relations) && concept.counter_relations.length) lines.push(`  · 克制/对立: ${concept.counter_relations.join('、')}`)
+				if (concept.description) lines.push(String(t('codemirror.facts_summary.description_line', { value: concept.description })))
+				if (concept.rule_definition) lines.push(String(t('codemirror.facts_summary.rule_definition_line', { value: concept.rule_definition })))
+				if (concept.mastery_hint) lines.push(String(t('codemirror.facts_summary.mastery_hint_line', { value: concept.mastery_hint })))
+				if (concept.cost) lines.push(String(t('codemirror.facts_summary.cost_line', { value: concept.cost })))
+				if (Array.isArray(concept.known_by) && concept.known_by.length) lines.push(String(t('codemirror.facts_summary.known_by_line', { value: concept.known_by.join(', ') })))
+				if (Array.isArray(concept.counter_relations) && concept.counter_relations.length) lines.push(String(t('codemirror.facts_summary.counter_relations_line', { value: concept.counter_relations.join(', ') })))
 			}
 		}
 		const text = lines.join('\n')
@@ -2544,7 +2509,6 @@ async function runContinuationWithConfig(payload: {
 
 	aiLoading.value = true
 
-	// 1. 解析卡片的上下文槽位（上下文注入的引用内容）
 	let resolvedContextTemplate = ''
 	try {
 		resolvedContextTemplate = getResolvedContext(generationContextKindValue.value, 'generation')
@@ -2552,15 +2516,12 @@ async function runContinuationWithConfig(payload: {
 		console.error('Failed to resolve context template:', e)
 	}
 
-	// 2. 格式化事实子图（参与实体）
-	// 3. 组合完整的上下文信息
 	const contextParts: string[] = []
 	if (resolvedContextTemplate) {
 		contextParts.push(`${t('codemirror.context.reference_header')}\n${resolvedContextTemplate}`)
 	}
 	const contextInfoBlock = contextParts.join('\n\n')
 
-	// 4. 计算已有内容字数
 	const existingText = getText()
 	const existingWordCount = computeWordCount(existingText)
 
@@ -2638,31 +2599,24 @@ async function executeExpand() {
 	await executeAIEdit(currentExpandPrompt.value)
 }
 
-// 右键菜单处理函数
 function handleEditorContextMenu(e: MouseEvent) {
-	console.log(' [ContextMenu] 右键事件触发')
 
-	// 检查是否有选中文本
 	const selection = getSelectionWithLineInfo()
 	if (!selection || !selection.text.trim()) {
-		console.log('⚠️ [ContextMenu] 没有选中文本，使用默认菜单')
-		return // 没有选中文本，使用默认右键菜单
+		return
 	}
 
 
 	e.preventDefault()
 	e.stopPropagation()
 
-	// 保存选中的文本信息
 	contextMenu.selectedText = selection
 	contextMenu.visible = true
 	contextMenu.expanded = false
 	contextMenu.userRequirement = ''
 
-	// 设置自定义高亮，替代默认选中效果
 	setHighlight(selection.from, selection.to)
 
-	// 计算菜单位置（避免超出屏幕）
 	const menuWidth = 280
 	const menuHeight = 200
 	let x = e.clientX
@@ -2679,7 +2633,6 @@ function handleEditorContextMenu(e: MouseEvent) {
 	contextMenu.y = y
 
 
-	// 延迟注册点击外部关闭的监听器，避免立即触发
 	setTimeout(() => {
 		if (!contextMenuClickListenerAdded) {
 			window.addEventListener('click', handleClickOutside, { capture: true })
@@ -2692,13 +2645,11 @@ let contextMenuClickListenerAdded = false
 
 function expandContextMenu() {
 	contextMenu.expanded = true
-	// 自动聚焦输入框
 	nextTick(() => {
 		const input = document.querySelector('.context-menu-popup textarea') as HTMLTextAreaElement
 		if (input) {
 			input.focus()
 		} else {
-			console.warn('⚠️ [ContextMenu] 未找到输入框')
 		}
 	})
 }
@@ -2709,7 +2660,6 @@ function closeContextMenu() {
 	contextMenu.userRequirement = ''
 	contextMenu.selectedText = null
 
-	// 移除点击外部关闭的监听器
 	if (contextMenuClickListenerAdded) {
 		window.removeEventListener('click', handleClickOutside, { capture: true })
 		contextMenuClickListenerAdded = false
@@ -2764,7 +2714,6 @@ async function handleContextMenuReference() {
 		numberedText: selectedText.numberedText,
 		snapshotHash: selectedText.snapshotHash,
 		source: 'manual',
-		// 兼容旧协议：若助手侧尚未升级，会按整卡引用字段读取 content
 		content: {
 			text: selectedText.text,
 			startLine: selectedText.startLine,
@@ -2799,10 +2748,8 @@ async function executeAIEdit(
 
 	aiLoading.value = true
 
-	// 获取完整文本
 	const fullText = getText()
 
-	// 1. 解析上下文槽位（引用上下文）
 	let resolvedContextTemplate = ''
 	try {
 		resolvedContextTemplate = getResolvedContext(generationContextKindValue.value, 'generation')
@@ -2810,9 +2757,7 @@ async function executeAIEdit(
 		console.error('Failed to resolve context template:', e)
 	}
 
-	// 2. 格式化事实子图（参与实体）
 
-	// 3. 组合上下文信息：引用上下文 + 事实子图 + 用户要求 + 上文 + 选中内容 + 下文
 	const contextParts: string[] = []
 	if (resolvedContextTemplate) {
 		contextParts.push(`${t('codemirror.context.reference_header')}\n${resolvedContextTemplate}`)
@@ -2821,33 +2766,28 @@ async function executeAIEdit(
 		contextParts.push(`${t('codemirror.context.user_requirement_header')}\n${userRequirement}`)
 	}
 
-	// 提取上文（选中内容之前）
 	const beforeText = fullText.substring(0, selectedText.from)
 	if (beforeText.trim()) {
-		// 截取最后1000字作为上文
 		const truncatedBefore = beforeText.length > 1000 ? '...' + beforeText.slice(-1000) : beforeText
 		contextParts.push(`${t('codemirror.context.previous_text_header')}\n${truncatedBefore}`)
 	}
 
-	// 选中的内容
 	contextParts.push(`${t('codemirror.context.selected_content_header', { action: promptName })}\n${selectedText.text}`)
 
-	// 提取下文（选中内容之后）
 	const afterText = fullText.substring(selectedText.to)
 	if (afterText.trim()) {
-		// 截取前500字作为下文
 		const truncatedAfter = afterText.length > 500 ? afterText.slice(0, 500) + '...' : afterText
-		contextParts.push(`【下文】\n${truncatedAfter}`)
+		contextParts.push(`${t('codemirror.context.next_text_header')}\n${truncatedAfter}`)
 	}
 	const contextInfoBlock = contextParts.join('\n\n')
 
 	const requestData: ContinuationRequest = {
-		previous_content: '', // 润色/扩写时为空，所有上下文都在 context_info 中
+		previous_content: '',
 		context_info: contextInfoBlock,
 		llm_config_id: llmConfigId,
 		stream: true,
 		prompt_name: promptName,
-		append_continuous_novel_directive: false, // 润色/扩写不需要"连续输出"指令
+		append_continuous_novel_directive: false,
 		...(props.contextParams || {}) as any,
 	} as any
 
@@ -2919,7 +2859,6 @@ function executeAIGeneration(
 	if (view) {
 		view.focus()
 		if (!replaceMode) {
-			// 续写模式：光标移到末尾
 			const end = view.state.doc.length
 			view.dispatch({ selection: { anchor: end } })
 			outputStartPos = end
@@ -2951,7 +2890,6 @@ function executeAIGeneration(
 					.replace(/\n+/g, m => (m.length === 2 ? '\n' : m))
 
 				if (replaceMode) {
-					// 替换模式：保留原文，在其后追加预览内容
 					if (view) {
 						const pending = pendingAiEdit.value
 						const pos = pending ? pending.previewTo : view.state.selection.main.head
@@ -2975,10 +2913,8 @@ function executeAIGeneration(
 						}
 					}
 				} else {
-					// 续写模式：追加到末尾
 					appendAtEnd(normalized)
 					currentOutputLength += normalized.length
-					// 动态更新高亮范围
 					updateHighlight(outputStartPos, outputStartPos + currentOutputLength)
 				}
 			}
@@ -2993,12 +2929,10 @@ function executeAIGeneration(
 			try {
 				if (!replaceMode) {
 					let text = getText() || ''
-					// 压缩恰好两个换行为一个，>=3 不动
 					text = text.replace(/\n+/g, m => (m.length === 2 ? '\n' : m))
 					setText(text)
 				}
 			} catch {}
-			console.log('✅ [AI] 生成完成，高亮已保留（点击编辑器任意位置可清除）')
 			if (replaceMode) {
 				ElMessage.success(t('codemirror.messages.task_completed_with_replacement', { task: taskName }))
 			} else {
@@ -3022,7 +2956,6 @@ function executeAIGeneration(
 				pendingAiEdit.value = null
 			}
 			clearHighlight()
-			console.error(`${taskName}失败:`, error)
 			ElMessage.error(t('codemirror.messages.task_failed', { task: taskName }))
 		}
 	)
@@ -3083,20 +3016,19 @@ function extractParticipantsWithTypeForCurrentChapter(): { name: string, type: s
 				type = item.entity_type
 			} else if (cardMap.has(name)) {
 				const card = cardMap.get(name)
-				// 简单的从卡片类型名推断实体类型
-				const cardTypeName = card?.card_type?.name || ''
-				if (cardTypeName.includes('角色')) type = 'character'
-				else if (cardTypeName.includes('组织')) type = 'organization'
-				else if (cardTypeName.includes('场景')) type = 'scene'
-				else if (cardTypeName.includes('物品')) type = 'item'
-				else if (cardTypeName.includes('概念')) type = 'concept'
+				const cardTypeKey = getCardTypeKey(card?.card_type)
+				if (cardTypeKey === 'character_card') type = 'character'
+				else if (cardTypeKey === 'organization_card') type = 'organization'
+				else if (cardTypeKey === 'scene_card') type = 'scene'
+				else if (cardTypeKey === 'item_card') type = 'item'
+				else if (cardTypeKey === 'concept_card') type = 'concept'
 			}
 			result.push({ name, type })
 		}
 	} catch (e) {
 		console.error("Failed to extract participants with type:", e)
 	}
-	return result.slice(0, 10) // 适当放宽数量限制
+	return result.slice(0, 10)
 }
 
 function getExistingCardTitleSet(cardTypeName: ManagedCardTypeName): Set<string> {
@@ -3188,7 +3120,7 @@ function collectStaleParticipantNotices(
 const dynamicMissingCards = computed(() => collectMissingCardNotices(
 	validDynamicPreviewRoles.value.map(role => ({
 		title: role.name,
-		cardTypeName: '角色卡' as ManagedCardTypeName,
+		cardTypeName: 'character_card' as ManagedCardTypeName,
 		entityType: 'character' as ManagedEntityType,
 	})),
 ))
@@ -3206,7 +3138,7 @@ const memoryPrimaryMissingCards = computed(() => {
 		return collectMissingCardNotices(
 			validScenePreviewItems.value.map(item => ({
 				title: item.name,
-				cardTypeName: '场景卡' as ManagedCardTypeName,
+				cardTypeName: 'scene_card' as ManagedCardTypeName,
 				entityType: 'scene' as ManagedEntityType,
 			})),
 		)
@@ -3215,7 +3147,7 @@ const memoryPrimaryMissingCards = computed(() => {
 		return collectMissingCardNotices(
 			validOrganizationPreviewItems.value.map(item => ({
 				title: item.name,
-				cardTypeName: '组织卡' as ManagedCardTypeName,
+				cardTypeName: 'organization_card' as ManagedCardTypeName,
 				entityType: 'organization' as ManagedEntityType,
 			})),
 		)
@@ -3224,7 +3156,7 @@ const memoryPrimaryMissingCards = computed(() => {
 		return collectMissingCardNotices(
 			validItemPreviewItems.value.map(item => ({
 				title: item.name,
-				cardTypeName: '物品卡' as ManagedCardTypeName,
+				cardTypeName: 'item_card' as ManagedCardTypeName,
 				entityType: 'item' as ManagedEntityType,
 			})),
 		)
@@ -3233,7 +3165,7 @@ const memoryPrimaryMissingCards = computed(() => {
 		return collectMissingCardNotices(
 			validConceptPreviewItems.value.map(item => ({
 				title: item.name,
-				cardTypeName: '概念卡' as ManagedCardTypeName,
+				cardTypeName: 'concept_card' as ManagedCardTypeName,
 				entityType: 'concept' as ManagedEntityType,
 			})),
 		)
@@ -3298,7 +3230,6 @@ function extractCharacterParticipantsForCurrentChapter(): string[] {
 }
 
 
-// 触发“动态信息提取”（右栏调用）
 editorStore.setTriggerExtractDynamicInfo(async (opts) => {
 	if (typeof opts?.llm_config_id === 'number') {
 		await extractDynamicInfoWithLlm(opts.llm_config_id, opts)
@@ -3307,7 +3238,6 @@ editorStore.setTriggerExtractDynamicInfo(async (opts) => {
 	}
 })
 
-// 触发“关系提取入图”（右栏调用）
 editorStore.setTriggerExtractRelations(async (opts) => {
 	if (typeof opts?.llm_config_id === 'number') {
 		await extractRelationsWithLlm(opts.llm_config_id, opts)
@@ -3340,7 +3270,6 @@ editorStore.setTriggerExtractConceptState(async (opts) => {
 	}
 })
 
-// 跨组件替换
 editorStore.setApplyChapterReplacements(async (pairs) => {
 	if (!view) return
 	let original = getText() || ''
@@ -3372,8 +3301,6 @@ editorStore.setApplyChapterReplacements(async (pairs) => {
 	setText(replaced)
 })
 
-// 灵感助手引用正文片段时，需要先确认保存当前正文，
-// 这样后端按行替换工具才能看到最新文本与行号。
 editorStore.setPersistActiveChapterDraft(async () => {
 	if (!view) return false
 	if (!isDirty.value) return true
@@ -3544,7 +3471,7 @@ async function extractRelationsWithLlm(llmConfigId: number, opts?: ChapterExtrac
 		let mergedText = text
 		try {
 			const factsText = formatFactsFromContext(props.prefetched)
-			if (factsText) mergedText = `【已知事实子图】\n${factsText}\n\n正文如下：\n${text}`
+			if (factsText) mergedText = String(t('codemirror.context.known_facts_prefix', { facts: factsText, text }))
 		} catch {}
 
 		const data = await extractRelationsOnly({
@@ -3580,7 +3507,7 @@ async function extractMemoryByCode(extractorCode: MemoryExtractorCode, llmConfig
 		let mergedText = text
 		try {
 			const factsText = formatFactsFromContext(props.prefetched)
-			if (factsText) mergedText = `【已知事实子图】\n${factsText}\n\n正文如下：\n${text}`
+			if (factsText) mergedText = String(t('codemirror.context.known_facts_prefix', { facts: factsText, text }))
 		} catch {}
 
 		const data = await extractMemoryPreview({
@@ -3842,20 +3769,17 @@ onMounted(() => {
 		editorStore.setCurrentContextInfo({ title, volume: Number.isNaN(vol) ? null : vol, chapter: Number.isNaN(ch) ? null : ch })
 	} catch {}
 
-	// ESC 键关闭右键菜单
 	window.addEventListener('keydown', handleKeyDown)
 })
 
 function handleClickOutside(e: MouseEvent) {
 	if (!contextMenu.visible) return
 	const target = e.target as HTMLElement
-	// 点击菜单外部时关闭
 	if (!target.closest('.context-menu-popup')) {
 		closeContextMenu()
 	}
 }
 
-// 按 ESC 键关闭菜单
 function handleKeyDown(e: KeyboardEvent) {
 	if (contextMenu.visible && e.key === 'Escape') {
 		closeContextMenu()
@@ -3863,7 +3787,6 @@ function handleKeyDown(e: KeyboardEvent) {
 }
 
 onUnmounted(() => {
-	// 移除右键菜单监听器
 	if (cmRoot.value) {
 		const editorDom = cmRoot.value.querySelector('.cm-editor') as HTMLElement
 		if (editorDom) {
@@ -3883,40 +3806,31 @@ onUnmounted(() => {
 	try { reviewAbortController.value?.abort(); } catch {}
 	try { streamHandle?.cancel(); } catch {}
 
-	// 移除事件监听
 	window.removeEventListener('keydown', handleKeyDown)
 
-	// 清理右键菜单的点击监听器（如果还在）
 	if (contextMenuClickListenerAdded) {
 		window.removeEventListener('click', handleClickOutside, { capture: true })
 		contextMenuClickListenerAdded = false
 	}
 })
 
-// 恢复历史版本内容
 async function restoreContent(versionContent: any) {
 	try {
-		// 提取章节正文内容
 		const textContent = typeof versionContent === 'string'
 			? versionContent
 			: (versionContent?.content || '')
 
-		// 更新编辑器内容
 		setText(textContent)
 
-		// 更新 localCard.content 的各个字段（保持响应式）
 		if (typeof versionContent === 'object') {
 			Object.assign(localCard.content, versionContent)
 		}
-		// 确保 content 字段是正确的文本
 		localCard.content.content = textContent
 
-		// 更新原始内容（避免触发dirty）
 		originalContent.value = textContent
 		isDirty.value = false
 		emit('update:dirty', false)
 
-		// 更新字数
 		wordCount.value = computeWordCount(textContent)
 
 	} catch (e) {
@@ -3925,7 +3839,6 @@ async function restoreContent(versionContent: any) {
 	}
 }
 
-// 暴露方法供父组件调用
 defineExpose({
 	handleSave,
 	restoreContent
@@ -3933,7 +3846,6 @@ defineExpose({
 </script>
 
 <style scoped>
-/* 提示词下拉菜单项 */
 .prompt-item {
 	display: flex;
 	justify-content: space-between;
@@ -3947,24 +3859,22 @@ defineExpose({
 	margin-left: 8px;
 }
 
-/* 高亮选中的提示词 */
 :deep(.is-selected) {
 	background-color: var(--el-color-primary-light-9);
 	color: var(--el-color-primary);
 	font-weight: 600;
 }
 
-/* 最外层容器：固定高度，防止整体滚动 */
 .chapter-studio {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 	min-height: 0;
-	overflow: hidden; /* 关键：防止整体滚动 */
+	overflow: hidden;
 }
 
 .toolbar {
-	padding: 8px 8px; /* 灰色区域与内部白框上下左右间距保持一致 */
+	padding: 8px 8px;
 	border-bottom: 1px solid var(--el-border-color-light);
 	background: var(--el-fill-color-lighter);
 	display: flex;
@@ -4110,8 +4020,8 @@ defineExpose({
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	min-height: 0; /* 允许flex子元素正确收缩 */
-	overflow: hidden; /* 防止wrapper本身滚动 */
+	min-height: 0;
+	overflow: hidden;
 }
 
 .chapter-header {
@@ -4172,8 +4082,8 @@ defineExpose({
 }
 
 .editor-content {
-	flex: 1 1 0; /* flex-basis为0，避免被内容撑开 */
-	min-height: 0; /* 允许flex子元素正确收缩和滚动 */
+	flex: 1 1 0;
+	min-height: 0;
 	overflow: hidden;
 	background-color: var(--el-bg-color);
 	position: relative;
@@ -4205,20 +4115,18 @@ defineExpose({
 	gap: 8px;
 }
 
-/* CodeMirror 内部样式 */
 .editor-content :deep(.cm-editor) {
-	height: 100% !important; /* 强制占满容器高度，不自动扩展 */
+	height: 100% !important;
 	outline: none;
 	line-height: 1.8;
 	color: var(--el-text-color-primary);
 	background-color: transparent;
 }
 
-/* 确保 CodeMirror 的滚动容器正确工作 */
 .editor-content :deep(.cm-scroller) {
-	overflow-y: auto !important; /* 强制垂直滚动 */
+	overflow-y: auto !important;
 	overflow-x: auto !important;
-	max-height: 100% !important; /* 防止超出父容器 */
+	max-height: 100% !important;
 }
 .editor-content :deep(.cm-content) {
 	padding: 20px;
@@ -4257,7 +4165,6 @@ defineExpose({
 	background: color-mix(in srgb, var(--el-color-primary) 20%, transparent) !important;
 }
 
-/* 取消高亮行背景，保证纯文本阅读观感 */
 .editor-content :deep(.cm-activeLine) {
 	background-color: transparent;
 }
@@ -4490,7 +4397,6 @@ defineExpose({
 	color: var(--el-text-color-primary);
 }
 
-/* 右键快速编辑菜单 */
 .context-menu-popup {
 	position: fixed;
 	z-index: 9999;
@@ -4599,7 +4505,6 @@ defineExpose({
 	to { transform: rotate(360deg); }
 }
 
-/* 自定义 AI 高亮效果 */
 .editor-content :deep(.cm-ai-highlight) {
 	background: linear-gradient(120deg,
 		rgba(96, 165, 250, 0.2) 0%,
@@ -4637,7 +4542,6 @@ defineExpose({
 	}
 }
 
-/* 暗色模式下的高亮 */
 .dark .editor-content :deep(.cm-ai-highlight) {
 	background: linear-gradient(120deg,
 		rgba(59, 130, 246, 0.25) 0%,

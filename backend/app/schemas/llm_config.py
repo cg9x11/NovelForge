@@ -15,7 +15,6 @@ class LLMConfigBase(SQLModel):
     custom_request_path: Optional[str] = None
     models_path: Optional[str] = None
     user_agent: Optional[str] = None
-    # 配额（-1 表示不限）与统计（只读场景外部可见）
     token_limit: Optional[int] = -1
     call_limit: Optional[int] = -1
     rpm_limit: Optional[int] = -1

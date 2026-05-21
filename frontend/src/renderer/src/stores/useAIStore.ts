@@ -110,4 +110,4 @@ export const useAIStore = defineStore('ai', () => {
   }
 
   return { isGenerating, lastResult, generateContent, generateContentWithSchema, cancelGeneration }
-}) 
+})

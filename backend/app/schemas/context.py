@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.locales import schema_field_description
 
 from typing import Any, Dict, List, Optional
 
@@ -8,48 +9,48 @@ from app.schemas.relation_extract import RelationItem
 
 
 class AssembleContextRequest(BaseModel):
-	project_id: Optional[int] = Field(default=None, description="项目ID")
-	volume_number: Optional[int] = Field(default=None, description="卷号")
-	chapter_number: Optional[int] = Field(default=None, description="章节号")
-	chapter_id: Optional[int] = Field(default=None, description="章节卡片ID（可选）")
-	participants: Optional[List[str]] = Field(default=None, description="参与实体名称列表")
-	current_draft_tail: Optional[str] = Field(default=None, description="上下文模板（草稿尾部）")
-	recent_chapters_window: Optional[int] = Field(default=None, description="最近窗口（保留，将来扩展）")
+	project_id: Optional[int] = Field(default=None, description=schema_field_description("project_id"))
+	volume_number: Optional[int] = Field(default=None, description=schema_field_description("volume_number"))
+	chapter_number: Optional[int] = Field(default=None, description=schema_field_description("chapter_number"))
+	chapter_id: Optional[int] = Field(default=None, description=schema_field_description("chapter_id"))
+	participants: Optional[List[str]] = Field(default=None, description=schema_field_description("participants"))
+	current_draft_tail: Optional[str] = Field(default=None, description=schema_field_description("current_draft_tail"))
+	recent_chapters_window: Optional[int] = Field(default=None, description=schema_field_description("recent_chapters_window"))
 
 
 class ItemSummary(BaseModel):
-	name: str = Field(..., description="物品名称")
-	category: str = Field(default="", description="物品类别")
-	description: str = Field(default="", description="物品简介")
-	owner_hint: Optional[str] = Field(default=None, description="持有者提示")
-	current_state: Optional[str] = Field(default=None, description="当前状态")
-	power_or_effect: Optional[str] = Field(default=None, description="能力或用途")
-	constraints: Optional[str] = Field(default=None, description="限制条件")
-	important_events: List[str] = Field(default_factory=list, description="重要事件")
+	name: str = Field(..., description=schema_field_description("name"))
+	category: str = Field(default="", description=schema_field_description("category"))
+	description: str = Field(default="", description=schema_field_description("description"))
+	owner_hint: Optional[str] = Field(default=None, description=schema_field_description("owner_hint"))
+	current_state: Optional[str] = Field(default=None, description=schema_field_description("current_state"))
+	power_or_effect: Optional[str] = Field(default=None, description=schema_field_description("power_or_effect"))
+	constraints: Optional[str] = Field(default=None, description=schema_field_description("constraints"))
+	important_events: List[str] = Field(default_factory=list, description=schema_field_description("important_events"))
 
 
 class ConceptSummary(BaseModel):
-	name: str = Field(..., description="概念名称")
-	category: str = Field(default="", description="概念类别")
-	description: str = Field(default="", description="概念简介")
-	rule_definition: str = Field(default="", description="规则定义")
-	cost: Optional[str] = Field(default=None, description="代价或成本")
-	mastery_hint: Optional[str] = Field(default=None, description="掌握提示")
-	known_by: List[str] = Field(default_factory=list, description="已知掌握者")
-	counter_relations: List[str] = Field(default_factory=list, description="对立或克制关系")
+	name: str = Field(..., description=schema_field_description("name"))
+	category: str = Field(default="", description=schema_field_description("category"))
+	description: str = Field(default="", description=schema_field_description("description"))
+	rule_definition: str = Field(default="", description=schema_field_description("rule_definition"))
+	cost: Optional[str] = Field(default=None, description=schema_field_description("cost"))
+	mastery_hint: Optional[str] = Field(default=None, description=schema_field_description("mastery_hint"))
+	known_by: List[str] = Field(default_factory=list, description=schema_field_description("known_by"))
+	counter_relations: List[str] = Field(default_factory=list, description=schema_field_description("counter_relations"))
 
 
 class FactsStructured(BaseModel):
-	fact_summaries: List[str] = Field(default_factory=list, description="关键事实摘要")
-	relation_summaries: List[RelationItem] = Field(default_factory=list, description="关系摘要（含近期对话/事件）")
-	item_summaries: List[ItemSummary] = Field(default_factory=list, description="物品摘要")
-	concept_summaries: List[ConceptSummary] = Field(default_factory=list, description="概念摘要")
+	fact_summaries: List[str] = Field(default_factory=list, description=schema_field_description("fact_summaries"))
+	relation_summaries: List[RelationItem] = Field(default_factory=list, description=schema_field_description("relation_summaries"))
+	item_summaries: List[ItemSummary] = Field(default_factory=list, description=schema_field_description("item_summaries"))
+	concept_summaries: List[ConceptSummary] = Field(default_factory=list, description=schema_field_description("concept_summaries"))
 
 
 class AssembleContextResponse(BaseModel):
-	facts_subgraph: str = Field(default="", description="事实子图的文本回显（可选，仅回显）")
-	budget_stats: Dict[str, Any] = Field(default_factory=dict, description="上下文字数预算统计（可能包含嵌套 parts dict）")
-	facts_structured: Optional[FactsStructured] = Field(default=None, description="结构化事实子图")
+	facts_subgraph: str = Field(default="", description=schema_field_description("facts_subgraph"))
+	budget_stats: Dict[str, Any] = Field(default_factory=dict, description=schema_field_description("budget_stats"))
+	facts_structured: Optional[FactsStructured] = Field(default=None, description=schema_field_description("facts_structured"))
 
 
 class ContextSettingsModel(BaseModel):

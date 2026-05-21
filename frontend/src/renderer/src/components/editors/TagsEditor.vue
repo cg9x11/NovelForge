@@ -95,8 +95,7 @@ import { ElCard, ElButton } from 'element-plus'
 import type { components } from '@renderer/types/generated'
 import { useCardStore } from '@renderer/stores/useCardStore'
 import { ElMessage } from 'element-plus'
-// 引入原子组件
-import { 
+import {
   ElCheckbox,
   ElRadio,
   ElRadioGroup,
@@ -111,9 +110,17 @@ import { listKnowledge } from '@renderer/api/setting'
 type CardRead = components['schemas']['CardRead']
 type Tags = components['schemas']['Tags']
 type WeightLevel = string
-// 权重档位常量，统一来源
-const WEIGHT_LEVELS: WeightLevel[] = ['低权重', '中权重', '高权重']
-const DEFAULT_WEIGHT: WeightLevel = '中权重'
+const legacyText = (...codes: number[]) => String.fromCharCode(...codes)
+const LEGACY_WEIGHT_LOW = legacyText(20302, 26435, 37325)
+const LEGACY_WEIGHT_MEDIUM = legacyText(20013, 26435, 37325)
+const LEGACY_WEIGHT_HIGH = legacyText(39640, 26435, 37325)
+const LEGACY_SECTION_THEME = legacyText(20027, 39064, 26631, 31614)
+const LEGACY_SECTION_AUDIENCE = legacyText(30446, 26631, 32676, 20307)
+const LEGACY_SECTION_PERSON = legacyText(20889, 20316, 20154, 31216)
+const LEGACY_SECTION_CATEGORY = legacyText(31867, 21035, 26631, 31614)
+const LEGACY_SECTION_AFFECTION = legacyText(24773, 24863, 20851, 31995)
+const WEIGHT_LEVELS: WeightLevel[] = [LEGACY_WEIGHT_LOW, LEGACY_WEIGHT_MEDIUM, LEGACY_WEIGHT_HIGH]
+const DEFAULT_WEIGHT: WeightLevel = LEGACY_WEIGHT_MEDIUM
 
 const { t } = useI18n()
 
@@ -124,7 +131,6 @@ const props = defineProps<{
 const cardStore = useCardStore()
 const isSaving = ref(false)
 
-// 本地可编辑数据
 const localData = reactive<Tags>({
   theme: '',
   audience: t('tags_editor.defaults.audience') as any,
@@ -132,7 +138,6 @@ const localData = reactive<Tags>({
   story_tags: [],
   affection: ''
 })
-// 选项数据（运行时从知识库解析填充）
 const themeOptions = ref<any[]>([])
 const categoryOptions = ref<string[]>([])
 const relationshipOptions = ref<string[]>([])
@@ -142,7 +147,6 @@ const personOptions = ref<string[]>([])
 watch(
   () => props.card,
   (newCard) => {
-    // 确保 content 是对象后再赋值
     if (newCard && newCard.content && typeof newCard.content === 'object') {
       Object.assign(localData, newCard.content as unknown as Partial<Tags>)
     }
@@ -150,25 +154,21 @@ watch(
   { deep: true, immediate: true }
 )
 
-// 随机化入口
 const handleRandomize = () => {
   randomizeAll()
 }
 
-// 保存
 const saveTags = async () => {
   isSaving.value = true
   try {
     await cardStore.modifyCard(props.card.id, { content: localData });
     ElMessage.success(t('tags_editor.messages.saved'))
   } catch (error) {
-    // 错误消息已在 store 处理
   } finally {
     isSaving.value = false
   }
 }
 
-// 主题联动
 const themeArray = computed(() => {
   return localData.theme ? localData.theme.split('-') : []
 })
@@ -179,16 +179,15 @@ function handleThemeChange(value: any) {
   }
 }
 
-// 类别标签逻辑
 function isStoryTagSelected(tagName: string) {
   return localData.story_tags.some(([name]) => name === tagName)
 }
 
 
 function getWeightLabel(weight: WeightLevel): string {
-  if (weight === '低权重') return String(t('tags_editor.weights.low'))
-  if (weight === '中权重') return String(t('tags_editor.weights.medium'))
-  if (weight === '高权重') return String(t('tags_editor.weights.high'))
+  if (weight === LEGACY_WEIGHT_LOW) return String(t('tags_editor.weights.low'))
+  if (weight === LEGACY_WEIGHT_MEDIUM) return String(t('tags_editor.weights.medium'))
+  if (weight === LEGACY_WEIGHT_HIGH) return String(t('tags_editor.weights.high'))
   return weight
 }
 
@@ -217,7 +216,6 @@ function updateStoryTagWeight(tagName: string, weight: WeightLevel | undefined) 
   }
 }
 
-// 随机化
 function randomizeAll() {
   randomizeTheme()
   randomizeAudience()
@@ -234,7 +232,7 @@ function randomizeTheme() {
 }
 
 function randomizeStoryTags() {
-  const count = Math.floor(Math.random() * 3) + 3 // 3 到 5 个
+  const count = Math.floor(Math.random() * 3) + 3
   const shuffled = [...categoryOptions.value].sort(() => 0.5 - Math.random())
   localData.story_tags = shuffled.slice(0, count).map(tag => {
     const weight = WEIGHT_LEVELS[Math.floor(Math.random() * WEIGHT_LEVELS.length)]
@@ -257,14 +255,11 @@ function randomizePerson() {
   localData.narrative_person = personOptions.value[Math.floor(Math.random() * personOptions.value.length)] as any
 }
 
-// 知识库解析：仅渲染名称；story_tags 存储完整项
 function stripAnnotation(label: string): string {
-  // 去除括号中的注解（中文/英文括号）
   return label.replace(/\s*[（(].*[）)]\s*$/, '')
 }
 
 function parseKnowledge(text: string) {
-  // 去除围栏与空白行
   const rawLines = (text || '').split(/\r?\n/)
   const lines: string[] = []
   for (const l of rawLines) {
@@ -288,13 +283,12 @@ function parseKnowledge(text: string) {
     const indent = m[1].length
     const content = m[2].trim()
 
-    // 切换段落
     if (indent <= 2) {
-      if (content.startsWith('主题标签')) { section = 'theme'; currentTheme = null; continue }
-      if (content.startsWith('目标群体')) { section = 'audience'; continue }
-      if (content.startsWith('写作人称')) { section = 'person'; continue }
-      if (content.startsWith('类别标签')) { section = 'category'; continue }
-      if (content.startsWith('情感关系')) { section = 'affection'; continue }
+      if (content.startsWith(LEGACY_SECTION_THEME)) { section = 'theme'; currentTheme = null; continue }
+      if (content.startsWith(LEGACY_SECTION_AUDIENCE)) { section = 'audience'; continue }
+      if (content.startsWith(LEGACY_SECTION_PERSON)) { section = 'person'; continue }
+      if (content.startsWith(LEGACY_SECTION_CATEGORY)) { section = 'category'; continue }
+      if (content.startsWith(LEGACY_SECTION_AFFECTION)) { section = 'affection'; continue }
     }
 
     if (section === 'theme') {
@@ -327,7 +321,6 @@ function parseKnowledge(text: string) {
       continue
     }
     if (section === 'category') {
-      // 类别：保留完整字符串（含注解）
       categories.push(content)
       continue
     }
@@ -352,7 +345,6 @@ onMounted(async () => {
     if (kb && kb.content) parseKnowledge(kb.content)
   } catch {}
 })
-// ----------------- 合并逻辑结束 -----------------
 </script>
 
 <style scoped>
@@ -362,7 +354,6 @@ onMounted(async () => {
   align-items: center;
 }
 
-/* 原 Step0TagSelection 样式 */
 .tag-selection-container {
   height: 100%;
   display: flex;
@@ -410,4 +401,4 @@ onMounted(async () => {
 .el-radio.is-bordered {
   margin: 0;
 }
-</style> 
+</style>

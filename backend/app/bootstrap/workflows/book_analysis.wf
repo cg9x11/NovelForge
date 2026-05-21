@@ -1,0 +1,309 @@
+# Workflow:Workflow refactor
+# Target:
+# 1) extractchapter_outline"general_text"card
+# 2) 80 chapterstage
+# 3) mergefull bookfinalstage,stagecard(general_text)
+# 4) stage_outlineanalysiscard(general_text)
+
+#@node(description="SelectTargetproject")
+project = Logic.SelectProject(project_id=10)
+#</node>
+
+
+#@node(description="Select()")
+llm = Logic.SelectLLM(llm_config_id=5)
+#</node>
+
+
+#@node(description="Scan novel directory")
+novel = Novel.Load(
+    root_path="E:\\LLMProjects\\\\",
+    file_pattern=".*\\.(txt|md)$",
+    volume_pattern="No.[0-9]+[ volume]",
+    chapter_pattern="No.([0-9]+) chapter"
+  )
+#</node>
+
+
+#@node(description="(,stage)")
+settings = Logic.Expression(
+    expression="{'llm_config_id': llm.llm_config_id, 'chapter_chunk_size': 80, 'max_stage_count': 20, 'outline_concurrency': 30}"
+  )
+#</node>
+
+
+#@node(description=""chapter_outline"")
+chapter_outline_prompt = Prompt.Load(prompt_id="_chapter_outline")
+#</node>
+
+
+#@node(async=true, description="asyncbatchextractchapter_outline")
+outline_results = AI.BatchStructured(
+    llm_config_id=settings.result.llm_config_id,
+    response_model_id="general_text",
+    prompt_template=chapter_outline_prompt.text,
+    use_instruction_flow=True,
+    concurrency=settings.result.outline_concurrency,
+    max_retries=3,
+    items=novel.chapter_list
+  )
+#</node>
+
+
+#@node(description="waitchapter_outlineextractcomplete")
+wait_outline = Logic.Wait(tasks=outline_results)
+#</node>
+
+
+#@node(description="chapter(full book chapter_no)")
+chapter_outline_items = Logic.Expression(
+    expression="[{'chapter_no': idx + 1, 'title': item.meta.title if item.meta and 'title' in item.meta else f'No.{idx + 1} chapter', 'volume': item.meta.volume if item.meta and 'volume' in item.meta else ' volume', 'path': item.meta.path if item.meta and 'path' in item.meta else '', 'outline': item.ai_result.content if item.ai_result and 'content' in item.ai_result else (json_stringify(item.ai_result) if item.ai_result else '')} for idx, item in enumerate(outline_results.results) if item and 'ai_result' in item and item.ai_result] if wait_outline.count > 0 else []"
+  )
+#</node>
+
+
+#@node(description="chapter chunk_size (80 chapter/)")
+chapter_chunks = Logic.Expression(
+    expression="[{'chunk_index': idx + 1, 'total_chunks': (len(chapter_outline_items.result) + settings.result.chapter_chunk_size - 1) // settings.result.chapter_chunk_size, 'start_chapter': chunk[0].chapter_no, 'end_chapter': chunk[-1].chapter_no, 'chapter_count': len(chunk), 'max_stage_count_for_chunk': max(1, (settings.result.max_stage_count * len(chunk) + max(1, len(chapter_outline_items.result)) - 1) // max(1, len(chapter_outline_items.result))), 'content': '\\n\\n'.join([f\"{row.title}\\n volume:{row.volume}\\nchapter_outline:{row.outline}\" for row in chunk])} for idx, chunk in enumerate([chapter_outline_items.result[i:i + settings.result.chapter_chunk_size] for i in range(0, len(chapter_outline_items.result), settings.result.chapter_chunk_size)])] if chapter_outline_items.result else []"
+  )
+#</node>
+
+
+#@node(description=""stage"")
+stage_split_prompt = Prompt.Load(
+    prompt_id="_stage",
+    variables={
+      "total_chapters": "${len(chapter_outline_items.result)}",
+      "max_stage_count": "${settings.result.max_stage_count}"
+    }
+  )
+#</node>
+
+
+#@node(async=true, description="stage( chunk  1~N stage)")
+stage_chunk_results = AI.SequentialStructured(
+    llm_config_id=settings.result.llm_config_id,
+    response_model_id="BookStageChunkPlan",
+    prompt_template=stage_split_prompt.text,
+    temperature=0.6,
+    max_tokens=12000,
+    timeout=240,
+    max_retries=3,
+    use_instruction_flow=True,
+    fail_soft=True,
+    items=chapter_chunks.result
+  )
+#</node>
+
+
+#@node(description="waitstagecomplete")
+wait_stage_chunks = Logic.Wait(tasks=stage_chunk_results)
+#</node>
+
+
+#@node(description="full bookstage")
+stage_candidates = Logic.Expression(
+    expression="[{'stage_name': stage.stage_name, 'chapter_start': stage.chapter_start, 'chapter_end': stage.chapter_end, 'stage_outline': stage.stage_outline, 'stage_summary': (stage.stage_summary if stage and 'stage_summary' in stage else None)} for chunk in stage_chunk_results.results if chunk and 'ai_result' in chunk and chunk.ai_result and 'stages' in chunk.ai_result for stage in chunk.ai_result.stages if stage and stage.chapter_start and stage.chapter_end] if wait_stage_chunks.count > 0 else []"
+  )
+#</node>
+
+
+#@node(description="stagefinalstage(extract,)")
+final_stages = Logic.Expression(
+    expression="stage_candidates.result or []"
+  )
+#</node>
+
+
+#@node(description="stage:mergestage, chapter")
+final_stages_squashed = Logic.Expression(
+    expression="squash_adjacent_stages(final_stages.result)"
+  )
+#</node>
+
+
+#@node(description="stage: 1..full bookchapter( chapterstage)")
+final_stages_normalized = Logic.Expression(
+    expression="normalize_ranges(final_stages_squashed.result, start=1, end=len(chapter_outline_items.result))"
+  )
+#</node>
+
+
+#@node(description="stagecard(stage_outline,chapter)")
+stage_card_items = Logic.Expression(
+    expression="[{'stage_number': idx + 1, 'stage_name': stage.stage_name, 'chapter_start': stage.chapter_start, 'chapter_end': stage.chapter_end, 'stage_title': f\"stage{idx + 1}:{stage.stage_name}\", 'content': f\"[stage]\\n{stage.stage_name}\\n\\n[chapter]\\nNo.{stage.chapter_start} chapter - No.{stage.chapter_end} chapter\\n\\n[stage]\\n{(stage.stage_summary or '')}\\n\\n[stage_outline]\\n{stage.stage_outline}\"} for idx, stage in enumerate(final_stages_normalized.result)] if final_stages_normalized.result else []"
+  )
+#</node>
+
+
+#@node(description="Createstagecard(general_text)")
+stage_cards = Card.BatchUpsert(
+    project_id=project.project_id,
+    card_type="general_text",
+    title_template="{item.stage_title}",
+    content_template={"content": "{item.content}"},
+    items=stage_card_items.result
+  )
+#</node>
+
+
+#@node(description="stage -> stageID")
+stage_title_to_id = Logic.Expression(
+    expression="{card.title: card.id for card in stage_cards.cards or []}"
+  )
+#</node>
+
+
+#@node(description=""stage -> ID"")
+stage_ranges_with_parent = Logic.Expression(
+    expression="[{'chapter_start': stage.chapter_start, 'chapter_end': stage.chapter_end, 'parent_id': stage_title_to_id.result[stage.stage_title] if stage.stage_title in stage_title_to_id.result else None} for stage in stage_card_items.result if stage and stage.chapter_start and stage.chapter_end]"
+  )
+#</node>
+
+
+#@node(description="chapterstageID")
+chapter_items_with_parent = Logic.Expression(
+    expression="[{'chapter_no': chapter.chapter_no, 'title': chapter.title, 'outline': chapter.outline, 'parent_id': ([range_item.parent_id for range_item in stage_ranges_with_parent.result if range_item.parent_id and chapter.chapter_no >= range_item.chapter_start and chapter.chapter_no <= range_item.chapter_end] or [None])[0]} for chapter in chapter_outline_items.result] if chapter_outline_items.result else []"
+  )
+#</node>
+
+
+#@node(description="chapter_outlinecard(general_text,stage)")
+chapter_outline_cards = Card.BatchUpsert(
+    project_id=project.project_id,
+    card_type="general_text",
+    title_template="{item.title}",
+    content_template={"content": "{item.outline}"},
+    parent_id="{item.parent_id}",
+    items=chapter_items_with_parent.result
+  )
+#</node>
+
+
+#@node(description="stage,analysis")
+stage_digest = Logic.Expression(
+    expression="'\\n\\n'.join([f\"stage{idx + 1}:{stage.stage_name}\\nchapter:No.{stage.chapter_start} chapter-No.{stage.chapter_end} chapter\\n\\n[stage]\\n{(stage.stage_summary or '')}\\n\\n[stage_outline]\\n{stage.stage_outline}\" for idx, stage in enumerate(final_stages_normalized.result)]) if final_stages_normalized.result else '(stage)'"
+  )
+#</node>
+
+
+#@node(description="(//)")
+global_profile_prompt = Prompt.Load(
+    prompt_id="__",
+    variables={
+      "stage_digest": "$stage_digest.result"
+    }
+  )
+#</node>
+
+
+#@node(description="()")
+global_character_prompt = Prompt.Load(
+    prompt_id="__",
+    variables={
+      "stage_digest": "$stage_digest.result"
+    }
+  )
+#</node>
+
+
+#@node(description="(/)")
+global_action_prompt = Prompt.Load(
+    prompt_id="__",
+    variables={
+      "stage_digest": "$stage_digest.result"
+    }
+  )
+#</node>
+
+
+#@node(async=true, description="analysis(//)")
+global_profile_analysis = AI.LLM(
+    llm_config_id=settings.result.llm_config_id,
+    user_prompt=global_profile_prompt.text,
+    temperature=0.6,
+    max_tokens=12000,
+    timeout=240,
+    max_retry=3
+  )
+#</node>
+
+
+#@node(async=true, description="analysis()")
+global_character_analysis = AI.LLM(
+    llm_config_id=settings.result.llm_config_id,
+    user_prompt=global_character_prompt.text,
+    temperature=0.6,
+    max_tokens=12000,
+    timeout=240,
+    max_retry=3
+  )
+#</node>
+
+
+#@node(async=true, description="analysis(/)")
+global_action_analysis = AI.LLM(
+    llm_config_id=settings.result.llm_config_id,
+    user_prompt=global_action_prompt.text,
+    temperature=0.6,
+    max_tokens=12000,
+    timeout=240,
+    max_retry=3
+  )
+#</node>
+
+
+#@node(description="waitanalysiscomplete")
+wait_global_analyses = Logic.Wait(tasks=[global_profile_analysis, global_character_analysis, global_action_analysis])
+#</node>
+
+
+#@node(description="analysis(//)")
+global_profile_text = Logic.Expression(
+    expression="global_profile_analysis.response if wait_global_analyses.count >= 0 else ''"
+  )
+#</node>
+
+
+#@node(description="analysis()")
+global_character_text = Logic.Expression(
+    expression="global_character_analysis.response if wait_global_analyses.count >= 0 else ''"
+  )
+#</node>
+
+
+#@node(description="analysis(/)")
+global_action_text = Logic.Expression(
+    expression="global_action_analysis.response if wait_global_analyses.count >= 0 else ''"
+  )
+#</node>
+
+
+#@node(description="savedcard(//)")
+global_profile_card = Card.Create(
+    project_id=project.project_id,
+    card_type="general_text",
+    title=":",
+    content={"content": global_profile_text.result}
+  )
+#</node>
+
+
+#@node(description="savedcard()")
+global_character_card = Card.Create(
+    project_id=project.project_id,
+    card_type="general_text",
+    title=":",
+    content={"content": global_character_text.result}
+  )
+#</node>
+
+
+#@node(description="savedcard(/)")
+global_action_card = Card.Create(
+    project_id=project.project_id,
+    card_type="general_text",
+    title=":",
+    content={"content": global_action_text.result}
+  )
+#</node>

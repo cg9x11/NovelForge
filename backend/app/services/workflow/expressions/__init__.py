@@ -1,4 +1,3 @@
-"""表达式系统（单引擎受控 eval）"""
 
 from .evaluator import (
     ExpressionEvaluator,

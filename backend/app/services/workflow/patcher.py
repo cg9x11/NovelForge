@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.locales import localized_text
 
 import difflib
 import hashlib
@@ -12,9 +13,9 @@ from app.schemas.workflow_agent import WorkflowPatchOp
 from app.services.workflow.parser.marker_renamer import rename_variable
 
 
-_RE_NODE_OPEN = re.compile(r"^\s*#@node(?:\((.*)\))?\s*$")
+_RE_NODE_OPEN = re.compile(r"^\s*#@node(seconds:\((.*)\))seconds\s*$")
 _RE_NODE_CLOSE = re.compile(r"^\s*#</node>\s*$")
-_RE_ASSIGNMENT = re.compile(r"^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+?)\s*$")
+_RE_ASSIGNMENT = re.compile(r"^\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+seconds)\s*$")
 
 
 def compute_code_revision(code: str) -> str:
@@ -277,7 +278,7 @@ def apply_patch_ops(code: str, patch_ops: Sequence[WorkflowPatchOp]) -> Tuple[st
                 full_code = op.new_block
 
             if not full_code:
-                raise ValueError("replace_code 缺少 new_code")
+                raise ValueError(localized_text('hardcoded.services_workflow_patcher_b65f118e'))
 
             lines = _rebuild_lines_from_code(full_code)
             changed_nodes.append("__all__")
@@ -288,10 +289,10 @@ def apply_patch_ops(code: str, patch_ops: Sequence[WorkflowPatchOp]) -> Tuple[st
 
         if op_name in ("insert_node_before", "insert_node_after"):
             if not op.target_node or not op.new_block:
-                raise ValueError(f"{op_name} 缺少 target_node 或 new_block")
+                raise ValueError(localized_text('hardcoded.services_workflow_patcher_c1ee878b', op_name=op_name))
             target = next((b for b in blocks if b.variable == op.target_node), None)
             if not target:
-                raise ValueError(f"未找到目标节点: {op.target_node}")
+                raise ValueError(localized_text('hardcoded.services_workflow_patcher_ca19da9c', op_target_node=op.target_node))
             lines = _insert_block(lines, target, op.new_block, before=(op_name == "insert_node_before"))
             new_blocks = _find_blocks(_rebuild_lines_from_code("".join(lines)))
             inserted = [b.variable for b in new_blocks if b.variable not in {x.variable for x in blocks}]
@@ -301,10 +302,10 @@ def apply_patch_ops(code: str, patch_ops: Sequence[WorkflowPatchOp]) -> Tuple[st
 
         if op_name == "delete_node":
             if not op.target_node:
-                raise ValueError("delete_node 缺少 target_node")
+                raise ValueError(localized_text('hardcoded.services_workflow_patcher_36da10bf'))
             target = next((b for b in blocks if b.variable == op.target_node), None)
             if not target:
-                raise ValueError(f"未找到目标节点: {op.target_node}")
+                raise ValueError(localized_text('hardcoded.services_workflow_patcher_ca19da9c', op_target_node=op.target_node))
             lines = [*lines[:target.start_line], *lines[target.end_line + 1 :]]
             changed_nodes.append(op.target_node)
             applied_ops += 1
@@ -312,10 +313,10 @@ def apply_patch_ops(code: str, patch_ops: Sequence[WorkflowPatchOp]) -> Tuple[st
 
         if op_name == "update_node_meta":
             if not op.target_node:
-                raise ValueError("update_node_meta 缺少 target_node")
+                raise ValueError(localized_text('hardcoded.services_workflow_patcher_d885f205'))
             target = next((b for b in blocks if b.variable == op.target_node), None)
             if not target:
-                raise ValueError(f"未找到目标节点: {op.target_node}")
+                raise ValueError(localized_text('hardcoded.services_workflow_patcher_ca19da9c', op_target_node=op.target_node))
             current_meta = _parse_node_meta(target.meta_raw)
             merged = {**current_meta, **(op.new_meta or {})}
             rendered = _render_node_meta(merged)
@@ -327,12 +328,12 @@ def apply_patch_ops(code: str, patch_ops: Sequence[WorkflowPatchOp]) -> Tuple[st
 
         if op_name == "update_node_call":
             if not op.target_node or not op.new_call:
-                raise ValueError("update_node_call 缺少 target_node 或 new_call")
+                raise ValueError(localized_text('hardcoded.services_workflow_patcher_62a70114'))
             target = next((b for b in blocks if b.variable == op.target_node), None)
             if not target:
-                raise ValueError(f"未找到目标节点: {op.target_node}")
+                raise ValueError(localized_text('hardcoded.services_workflow_patcher_ca19da9c', op_target_node=op.target_node))
             if target.assignment_line < 0:
-                raise ValueError(f"节点缺少赋值语句: {op.target_node}")
+                raise ValueError(localized_text('hardcoded.services_workflow_patcher_3aebc4a4', op_target_node=op.target_node))
 
             current_meta = _parse_node_meta(target.meta_raw)
             rendered_meta = _render_node_meta(current_meta)
@@ -341,7 +342,7 @@ def apply_patch_ops(code: str, patch_ops: Sequence[WorkflowPatchOp]) -> Tuple[st
             while call_lines and not call_lines[-1].strip():
                 call_lines.pop()
             if not call_lines:
-                raise ValueError("update_node_call 的 new_call 为空")
+                raise ValueError(localized_text('hardcoded.services_workflow_patcher_9fffa7e7'))
 
             rebuilt_block: List[str] = [rendered_meta + "\n"]
             rebuilt_block.append(f"{target.variable} = {call_lines[0]}\n")
@@ -356,7 +357,7 @@ def apply_patch_ops(code: str, patch_ops: Sequence[WorkflowPatchOp]) -> Tuple[st
 
         if op_name == "rename_variable":
             if not op.old_name or not op.new_name:
-                raise ValueError("rename_variable 缺少 old_name 或 new_name")
+                raise ValueError(localized_text('hardcoded.services_workflow_patcher_74a94ad6'))
             current_code = "".join(lines)
             renamed = rename_variable(current_code, op.old_name, op.new_name)
             lines = _rebuild_lines_from_code(renamed)
@@ -364,7 +365,7 @@ def apply_patch_ops(code: str, patch_ops: Sequence[WorkflowPatchOp]) -> Tuple[st
             applied_ops += 1
             continue
 
-        raise ValueError(f"不支持的 patch op: {op_name}")
+        raise ValueError(localized_text('hardcoded.services_workflow_patcher_edec05bc', op_name=op_name))
 
     dedup_changed_nodes: List[str] = []
     seen = set()

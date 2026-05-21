@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.locales import localized_text
 
 from typing import Any
 
@@ -29,7 +30,7 @@ def _load_existing_scene_card(card: Card) -> SceneCard:
     payload = dict(card.content or {})
     payload.setdefault("name", card.title)
     payload.setdefault("entity_type", "scene")
-    payload.setdefault("life_span", "长期")
+    payload.setdefault("life_span", localized_text('hardcoded.services_memory_extractors_scene_state_527a5685'))
     payload["description"] = payload.get("description") or ""
     payload["function_in_story"] = payload.get("function_in_story") or ""
     if not isinstance(payload.get("dynamic_state"), list):
@@ -48,7 +49,7 @@ _SPEC = StructuredCardExtractorSpec(
     related_participant_types=("organization", "character", "item", "concept"),
     target_participant_key="scene_names",
     related_participant_key="related_entities",
-    reference_title="已有场景卡参考",
+    reference_title="Field",
 )
 
 
@@ -65,7 +66,7 @@ class SceneStateExtractor(StructuredCardMemoryExtractor):
     def build_reference_lines(self, model: SceneCard) -> list[str]:
         return [
             f"- {model.name}",
-            f"  简介: {model.description or '未填写'}",
-            f"  剧情作用: {model.function_in_story or '未填写'}",
-            f"  当前状态: {'；'.join(model.dynamic_state or []) or '暂无'}",
+            localized_text('hardcoded.services_memory_extractors_scene_state_c948ca4f'),
+            localized_text('hardcoded.services_memory_extractors_scene_state_4a60afa1'),
+            localized_text('hardcoded.services_memory_extractors_scene_state_ef9af212'),
         ]

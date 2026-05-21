@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import asyncio
 import json
@@ -54,8 +54,8 @@ def _append_node_briefs_to_prompt(base_prompt: str) -> str:
     node_map = "\n".join(lines)
     return (
         f"{base_prompt}\n\n"
-        "【系统内置节点简表（启动已注入）】\n"
-        "你已具备所有节点的简要信息。优先直接根据该简表选节点，仅在需要字段级细节时再调用 wf_get_node_metadata。\n"
+        "Workflow agent instruction"
+        "Workflow agent instruction"
         f"{node_map}"
     )
 
@@ -89,14 +89,12 @@ def get_workflow_agent_system_prompt(session: Session, react_enabled: bool = Fal
             )
             return _append_node_briefs_to_prompt(prompt.template.strip())
         raise RuntimeError(
-            f"未找到提示词: {WORKFLOW_AGENT_PROMPT_NAME}。"
-            "请先执行 bootstrap 初始化，或在提示词管理中创建该提示词。"
+            localized_text('hardcoded.workflow_agent_prompt_missing', name=WORKFLOW_AGENT_PROMPT_NAME)
         )
     except Exception as exc:
         logger.error("[WorkflowAgent] load prompt from DB failed: {}", exc)
         raise RuntimeError(
-            f"加载提示词失败: {WORKFLOW_AGENT_PROMPT_NAME}。"
-            "请检查数据库与 bootstrap 状态。"
+            localized_text('hardcoded.workflow_agent_prompt_load_failed', name=WORKFLOW_AGENT_PROMPT_NAME)
         ) from exc
 
 
@@ -111,13 +109,13 @@ def _build_user_prompt(request: WorkflowAgentChatRequest) -> str:
     pending_code_section = ""
     if pending_code_text:
         pending_code_section = (
-            "\n\n未应用补丁候选代码（优先基于此继续修改，不要先回退到数据库当前代码）:\n"
+            "Workflow agent instruction"
             f"```python\n{pending_code_text}\n```"
         )
 
     if user_prompt:
-        return f"{header}\n\n用户请求:\n{user_prompt}{pending_code_section}"
-    return f"{header}\n\n用户请求为空，请先确认需求并读取当前代码。"
+        return localized_text('hardcoded.workflow_agent_user_request', header=header, user_prompt=user_prompt, pending_code_section=pending_code_section)
+    return localized_text('hardcoded.workflow_agent_empty_user_request', header=header)
 
 
 async def stream_workflow_agent_chat(
@@ -233,7 +231,7 @@ async def stream_workflow_agent_chat(
                     if validation_errors:
                         retry_hint = "；".join(validation_errors)
                     else:
-                        retry_hint = "校验未通过"
+                        retry_hint = "Validation failed"
                 else:
                     retry_hint = ""
 
@@ -256,10 +254,7 @@ async def stream_workflow_agent_chat(
             )
             break
 
-        latest_prompt = (
-            "上一次补丁未通过校验，请继续修复并再次调用工具生成可通过校验的补丁。\n"
-            f"失败原因：{retry_hint}"
-        )
+        latest_prompt = localized_text('hardcoded.workflow_agent_failure_reason', reason=retry_hint)
 
 
 async def generate_workflow_agent_chat_streaming(

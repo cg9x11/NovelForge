@@ -1,29 +1,25 @@
 <template>
   <div class="node-block-editor">
-    <!-- 节点块列表 -->
     <div class="node-blocks">
       <div
         v-for="(node, index) in nodes"
         :key="index"
         class="node-block"
-        :class="{ 
+        :class="{
           'is-selected': selectedIndex === index,
           'is-disabled': node.disabled
         }"
         @click="selectNode(index)"
         @dblclick="editNodeCode(index)"
       >
-        <!-- 节点头部 -->
         <div class="node-block-header">
           <div class="node-info">
             <el-tag :type="getNodeCategoryColor(node.category)" size="small">
               {{ node.category }}
             </el-tag>
-            <!-- 异步标识 -->
             <el-tag v-if="node.isAsync" type="warning" size="small" effect="dark">
               ? {{ t('node_block.async') }}
             </el-tag>
-            <!-- 变量名编辑 -->
             <el-input
               v-if="editingVariable?.nodeIndex === index"
               v-model="editingVariable.value"
@@ -86,7 +82,6 @@
           {{ node.description }}
         </div>
 
-        <!-- 节点参数编辑器 -->
         <div class="node-params" v-if="node.fields && node.fields.length > 0">
           <div class="params-header">
             <div class="params-title">{{ t('node_block.params') }}</div>
@@ -100,7 +95,6 @@
           <div v-if="!node.collapsed" v-for="(field, fieldIndex) in node.fields" :key="field.name" class="param-item">
             <span class="param-key">{{ field.label }}:</span>
             <div class="param-value-wrapper">
-              <!-- 编辑模式 -->
               <div
                 v-if="editingParam?.nodeIndex === index && editingParam?.fieldIndex === fieldIndex"
                 class="smart-selector"
@@ -257,7 +251,7 @@
                   size="small"
                   @change="saveParamEdit"
                 />
-                
+
                 <!-- Case 6: Array Input (dynamic list) -->
                 <div v-else-if="field.type === 'array'" style="flex: 1; display: flex; flex-direction: column; gap: 4px;">
                   <div
@@ -294,7 +288,7 @@
                     {{ t('common.save') }}
                   </el-button>
                 </div>
-                
+
                 <!-- Case 7: Default Text Input -->
                 <el-input
                   v-else
@@ -310,7 +304,6 @@
                 </el-input>
               </div>
 
-              <!-- 显示模式 -->
               <el-input
                 v-else-if="field.rawSchema?.['x-component'] === 'CodeEditor'"
                 :model-value="formatDisplayValue(field)"
@@ -328,7 +321,6 @@
               >
                 {{ formatDisplayValue(field) }}
                 <el-tag v-if="field.required" size="small" type="danger" style="margin-left: 4px">{{ t('node_block.required') }}</el-tag>
-                <!-- 智能选择器提示图标 -->
                 <el-icon v-if="isSmartSelectorField(field)" class="selector-icon">
                   <ArrowDown />
                 </el-icon>
@@ -343,7 +335,6 @@
           </div>
         </div>
 
-        <!-- 节点输出字段 -->
         <div class="node-outputs" v-if="node.outputs && node.outputs.length > 0">
           <div class="outputs-title">{{ t('node_block.output_fields') }}</div>
           <div class="output-items">
@@ -359,7 +350,6 @@
           </div>
         </div>
 
-        <!-- 执行状态（如果有） -->
         <div v-if="node.status" class="node-status" :class="`status-${node.status}`">
           <el-icon v-if="node.status === 'running'"><Loading /></el-icon>
           <el-icon v-else-if="node.status === 'completed'"><CircleCheck /></el-icon>
@@ -371,14 +361,12 @@
         </div>
       </div>
 
-      <!-- 添加节点按钮 -->
       <div class="add-node-block" @click="showAddNodeDialog">
         <el-icon><Plus /></el-icon>
         <span>{{ t('node_block.add_node') }}</span>
       </div>
     </div>
 
-    <!-- 添加节点对话框 -->
     <el-dialog
       v-model="addNodeDialogVisible"
       :title="t('node_block.add_node')"
@@ -398,12 +386,12 @@
           <el-option
             v-for="nodeType in nodeList"
             :key="nodeType.type"
-            :label="`${nodeType.label} (${nodeType.type})`"
+            :label="`${getLocalizedNodeLabel(nodeType)} (${nodeType.type})`"
             :value="nodeType.type"
           >
             <div style="display: flex; flex-direction: column">
-              <span>{{ nodeType.label }}</span>
-              <span style="font-size: 12px; color: #909399">{{ nodeType.description }}</span>
+              <span>{{ getLocalizedNodeLabel(nodeType) }}</span>
+              <span style="font-size: 12px; color: #909399">{{ getLocalizedNodeDescription(nodeType) }}</span>
             </div>
           </el-option>
         </el-option-group>
@@ -435,7 +423,6 @@ import { useProjectListStore } from '@/stores/useProjectListStore'
 import { useLLMConfigStore } from '@/stores/useLLMConfigStore'
 import { usePromptStore } from '@/stores/usePromptStore'
 import { useCardStore } from '@/stores/useCardStore'
-import { useLocaleStore } from '@/stores/useLocaleStore'
 import { ParameterFormatter } from '@/utils/parameterFormatter'
 import { applyWorkflowPatch } from '@/api/workflowAgent'
 
@@ -461,37 +448,29 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'node-selected', 'revision-changed'])
 const { t } = useI18n()
 
-// 使用 stores
 const projectListStore = useProjectListStore()
 const llmConfigStore = useLLMConfigStore()
 const promptStore = usePromptStore()
 const cardStore = useCardStore()
-const localeStore = useLocaleStore()
 
-// 从 stores 获取响应式数据
 const { projects: projectList } = storeToRefs(projectListStore)
 const { llmConfigs: llmConfigList } = storeToRefs(llmConfigStore)
 const { prompts: promptList } = storeToRefs(promptStore)
 const { cardTypes: cardTypeList } = storeToRefs(cardStore)
 
-// 状态
 const nodes = ref([])
 const selectedIndex = ref(-1)
 const addNodeDialogVisible = ref(false)
 const selectedNodeType = ref('')
 const newNodeVariable = ref('')
 const nodeTypes = ref([])
-// 参数编辑状态
 const editingParam = ref(null)
 const paramInputRef = ref(null)
-// 变量名编辑状态
 const editingVariable = ref(null)
 const variableInputRef = ref(null)
-// 智能选择器数据
-const variableList = ref([]) // 所有的变量列表
+const variableList = ref([])
 const fileDialogVisible = ref(false)
 const builtinResponseModels = ref([])
-// 内部更新标记
 const isInternalUpdate = ref(false)
 const parseWatchSeq = ref(0)
 const revisionRef = ref(props.revision || '')
@@ -500,7 +479,6 @@ watch(() => props.revision, value => {
   revisionRef.value = value || ''
 })
 
-// 按分类组织的节点类型
 const nodeTypesByCategory = computed(() => {
   const grouped = {}
   nodeTypes.value.forEach(nodeType => {
@@ -512,60 +490,30 @@ const nodeTypesByCategory = computed(() => {
   return grouped
 })
 
-const FIELD_LABELS = {
-  'en-US': {
-    input: 'Input data', seconds: 'Delay seconds', tasks: 'Async tasks', condition: 'Condition expression', message: 'Error message', expression: 'Python expression',
-    project_id: 'Project ID', project_name: 'Project name', llm_config_id: 'LLM config ID', llm_name: 'LLM name',
-    root_path: 'Novel root path', file_pattern: 'File name pattern', volume_pattern: 'Volume folder pattern', chapter_pattern: 'Chapter name pattern',
-    target: 'Card reference', card_id: 'Card ID', type_name: 'Card type name', card_type: 'Card type', title: 'Card title', content: 'Card content', parent: 'Parent card', parent_id: 'Parent card ID',
-    content_merge: 'Content to merge', card: 'Card to delete', limit: 'Limit', items: 'Data list', title_template: 'Title template', content_template: 'Content template', match_by: 'Match by',
-    field_path: 'Field path', old_text: 'Old text', new_text: 'New text', template: 'Template name', on_create: 'Trigger on create', on_update: 'Trigger on update',
-    user_prompt: 'User prompt', system_prompt: 'System prompt', prompt_id: 'Prompt ID or name', variables: 'Template variables', response_model_id: 'Response model', context: 'Context data',
-    schema_extra: 'Extra schema', max_retry: 'Max retries', max_retries: 'Max retries', prompt_template: 'Prompt template', temperature: 'Temperature', max_tokens: 'Max tokens', timeout: 'Timeout seconds',
-    fail_soft: 'Soft fail', use_instruction_flow: 'Use instruction flow', instruction: 'Instruction', history: 'Conversation history', participants: 'Participants',
-    role_name: 'Agent role name', tools: 'Tools', max_steps: 'Max reasoning steps', topic: 'Debate topic', max_rounds: 'Max debate rounds', agent_1_name: 'Agent 1 name',
-    agent_1_system_prompt: 'Agent 1 system prompt', agent_1_llm_config: 'Agent 1 LLM config', agent_2_name: 'Agent 2 name', agent_2_system_prompt: 'Agent 2 system prompt',
-    agent_2_llm_config: 'Agent 2 LLM config', concurrency: 'Concurrency', cache_key: 'Cache key', overlap_size: 'Overlap size', initial_carry: 'Initial carry state',
-    carry_extract_expr: 'Carry extract expression', delay: 'Delay seconds', enable_progress: 'Enable progress', data: 'Data list', batch_size: 'Batch size', parallel: 'Parallel processing'
-  },
-  'vi-VN': {
-    input: 'D\u1eef li\u1ec7u \u0111\u1ea7u v\u00e0o', seconds: 'S\u1ed1 gi\u00e2y tr\u1ec5', tasks: 'T\u00e1c v\u1ee5 b\u1ea5t \u0111\u1ed3ng b\u1ed9', condition: 'Bi\u1ec3u th\u1ee9c \u0111i\u1ec1u ki\u1ec7n', message: 'Th\u00f4ng b\u00e1o l\u1ed7i', expression: 'Bi\u1ec3u th\u1ee9c Python',
-    project_id: 'ID d\u1ef1 \u00e1n', project_name: 'T\u00ean d\u1ef1 \u00e1n', llm_config_id: 'ID c\u1ea5u h\u00ecnh LLM', llm_name: 'T\u00ean LLM',
-    root_path: '\u0110\u01b0\u1eddng d\u1eabn g\u1ed1c ti\u1ec3u thuy\u1ebft', file_pattern: 'M\u1eabu t\u00ean file', volume_pattern: 'M\u1eabu th\u01b0 m\u1ee5c t\u1eadp', chapter_pattern: 'M\u1eabu t\u00ean ch\u01b0\u01a1ng',
-    target: 'Tham chi\u1ebfu th\u1ebb', card_id: 'ID th\u1ebb', type_name: 'T\u00ean lo\u1ea1i th\u1ebb', card_type: 'Lo\u1ea1i th\u1ebb', title: 'Ti\u00eau \u0111\u1ec1 th\u1ebb', content: 'N\u1ed9i dung th\u1ebb', parent: 'Th\u1ebb cha', parent_id: 'ID th\u1ebb cha',
-    content_merge: 'N\u1ed9i dung c\u1ea7n g\u1ed9p', card: 'Th\u1ebb c\u1ea7n x\u00f3a', limit: 'Gi\u1edbi h\u1ea1n', items: 'Danh s\u00e1ch d\u1eef li\u1ec7u', title_template: 'M\u1eabu ti\u00eau \u0111\u1ec1', content_template: 'M\u1eabu n\u1ed9i dung', match_by: 'Gh\u00e9p theo',
-    field_path: '\u0110\u01b0\u1eddng d\u1eabn tr\u01b0\u1eddng', old_text: 'V\u0103n b\u1ea3n c\u0169', new_text: 'V\u0103n b\u1ea3n m\u1edbi', template: 'T\u00ean m\u1eabu', on_create: 'K\u00edch ho\u1ea1t khi t\u1ea1o', on_update: 'K\u00edch ho\u1ea1t khi c\u1eadp nh\u1eadt',
-    user_prompt: 'Prompt ng\u01b0\u1eddi d\u00f9ng', system_prompt: 'Prompt h\u1ec7 th\u1ed1ng', prompt_id: 'ID ho\u1eb7c t\u00ean prompt', variables: 'Bi\u1ebfn m\u1eabu', response_model_id: 'M\u00f4 h\u00ecnh ph\u1ea3n h\u1ed3i', context: 'D\u1eef li\u1ec7u ng\u1eef c\u1ea3nh',
-    schema_extra: 'Schema b\u1ed5 sung', max_retry: 'S\u1ed1 l\u1ea7n th\u1eed l\u1ea1i t\u1ed1i \u0111a', max_retries: 'S\u1ed1 l\u1ea7n th\u1eed l\u1ea1i t\u1ed1i \u0111a', prompt_template: 'M\u1eabu prompt', temperature: 'Nhi\u1ec7t \u0111\u1ed9', max_tokens: 'S\u1ed1 token t\u1ed1i \u0111a', timeout: 'Th\u1eddi gian ch\u1edd (gi\u00e2y)',
-    fail_soft: 'L\u1ed7i m\u1ec1m', use_instruction_flow: 'D\u00f9ng lu\u1ed3ng h\u01b0\u1edbng d\u1eabn', instruction: 'H\u01b0\u1edbng d\u1eabn', history: 'L\u1ecbch s\u1eed h\u1ed9i tho\u1ea1i', participants: 'Nh\u00e2n v\u1eadt tham gia',
-    role_name: 'T\u00ean vai tr\u00f2 agent', tools: 'C\u00f4ng c\u1ee5', max_steps: 'S\u1ed1 b\u01b0\u1edbc suy lu\u1eadn t\u1ed1i \u0111a', topic: 'Ch\u1ee7 \u0111\u1ec1 tranh lu\u1eadn', max_rounds: 'S\u1ed1 v\u00f2ng tranh lu\u1eadn t\u1ed1i \u0111a', agent_1_name: 'T\u00ean agent 1',
-    agent_1_system_prompt: 'Prompt h\u1ec7 th\u1ed1ng agent 1', agent_1_llm_config: 'C\u1ea5u h\u00ecnh LLM agent 1', agent_2_name: 'T\u00ean agent 2', agent_2_system_prompt: 'Prompt h\u1ec7 th\u1ed1ng agent 2',
-    agent_2_llm_config: 'C\u1ea5u h\u00ecnh LLM agent 2', concurrency: 'S\u1ed1 lu\u1ed3ng \u0111\u1ed3ng th\u1eddi', cache_key: 'Kh\u00f3a cache', overlap_size: 'K\u00edch th\u01b0\u1edbc ch\u1ed3ng l\u1ea5p', initial_carry: 'Tr\u1ea1ng th\u00e1i carry ban \u0111\u1ea7u',
-    carry_extract_expr: 'Bi\u1ec3u th\u1ee9c tr\u00edch xu\u1ea5t carry', delay: 'S\u1ed1 gi\u00e2y tr\u1ec5', enable_progress: 'B\u1eadt ti\u1ebfn \u0111\u1ed9', data: 'Danh s\u00e1ch d\u1eef li\u1ec7u', batch_size: 'K\u00edch th\u01b0\u1edbc batch', parallel: 'X\u1eed l\u00fd song song'
-  }
+
+function nodeLocaleKey(nodeType, field) {
+  return `workflow_nodes.${String(nodeType || '').replace(/\./g, '_')}.${field}`
 }
 
+function getLocalizedNodeLabel(nodeType) {
+  const key = nodeLocaleKey(nodeType.type, 'label')
+  const value = String(t(key))
+  return value && value !== key ? value : (nodeType.label || nodeType.type)
+}
 
-const VALUE_LABELS = {
-  'en-US': {
-    '\u65ad\u8a00\u5931\u8d25': 'Assertion failed',
-    '\u7b2c[\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u53410-9]+[\u5377\u90e8\u7eaa]': 'Volume [number]',
-    '\u7b2c([\u96f6\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341\u767e\u53430-9]+)\u7ae0': 'Chapter [number]'
-  },
-  'vi-VN': {
-    '\u65ad\u8a00\u5931\u8d25': 'Ki\u1ec3m tra \u0111i\u1ec1u ki\u1ec7n th\u1ea5t b\u1ea1i',
-    '\u7b2c[\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u53410-9]+[\u5377\u90e8\u7eaa]': 'T\u1eadp [s\u1ed1]',
-    '\u7b2c([\u96f6\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341\u767e\u53430-9]+)\u7ae0': 'Ch\u01b0\u01a1ng [s\u1ed1]'
-  }
+function getLocalizedNodeDescription(nodeType) {
+  const key = nodeLocaleKey(nodeType.type, 'description')
+  const value = String(t(key))
+  return value && value !== key ? value : (nodeType.description || '')
 }
 
 function getLocalizedValueLabel(value) {
   const raw = String(value || '')
   if (!raw) return raw
   const normalized = raw.replace(/^['"]|['"]$/g, '')
-  const labels = VALUE_LABELS[localeStore.locale] || VALUE_LABELS['en-US']
-  const translated = labels[normalized]
-  if (!translated) return raw
+  const key = `node_block.value_labels.${normalized}`
+  const translated = String(t(key))
+  if (!translated || translated === key) return raw
   return raw === normalized ? translated : raw.replace(normalized, translated)
 }
 
@@ -576,42 +524,39 @@ function humanizeFieldName(fieldName) {
 }
 
 function getLocalizedFieldLabel(fieldName, fallback) {
-  const locale = localeStore.locale
-  if (locale === 'zh-CN') return fallback || humanizeFieldName(fieldName)
-  const labels = FIELD_LABELS[locale] || FIELD_LABELS['en-US']
-  return labels[fieldName] || humanizeFieldName(fieldName)
+  const translated = String(t(`node_block.field_labels.${fieldName}`))
+  return translated && translated !== `node_block.field_labels.${fieldName}` ? translated : (fallback || humanizeFieldName(fieldName))
 }
 
-// 解析代码为节点块
 async function parseCodeToNodes(code) {
   if (!code || !code.trim()) return []
 
   try {
-    // 直接发送代码给后端解析（后端会处理元数据注释）
     const response = await request.post('/workflows/parse', { code }, '/api')
-    
+
     if (!response.success || !response.statements) {
-      const errorMsg = response.errors?.join('; ') || t('common.unknown_error')
-      console.error('代码解析失败:', response.errors)
+      const errorMsg = response.errors?.join('; ') || response.error || t('common.unknown_error')
+      console.error('[NodeBlockEditor] workflow parse failed', {
+        error: errorMsg,
+        errors: response.errors,
+        debug: response.debug,
+        codePreview: String(code || '').split('\n').slice(0, 12).join('\n'),
+      })
       throw new Error(errorMsg)
     }
-    
-    console.log(`[parseCodeToNodes] 解析了 ${response.statements.length} 个语句`)
-    
+
+
     const parsedNodes = []
-    
-    // 构建节点
+
     for (let i = 0; i < response.statements.length; i++) {
       const stmt = response.statements[i]
-      
-      console.log(`[parseCodeToNodes] 语句 ${i}: ${stmt.variable} (行${stmt.line}), disabled=${stmt.disabled}, async=${stmt.is_async}`)
-        
-      // 处理节点调用
+
+
       if (stmt.node_type && stmt.node_type !== 'expression' && stmt.node_type !== '_wait') {
         const parts = stmt.node_type.split('.')
         const category = parts[0]
         const method = parts.slice(1).join('.')
-        
+
         const node = {
           variable: stmt.variable,
           category: category,
@@ -622,14 +567,13 @@ async function parseCodeToNodes(code) {
           code: stmt.code,
           outputs: [],
           collapsed: false,
-          disabled: stmt.disabled || false,  // 从后端获取
-          isAsync: stmt.is_async || false    // 从后端获取
+          disabled: stmt.disabled || false,
+          isAsync: stmt.is_async || false
         }
-        
+
         await fetchNodeOutputs(node)
         parsedNodes.push(node)
       } else {
-        // 处理纯表达式、wait语句或其他非标准节点
         parsedNodes.push({
           variable: stmt.variable,
           category: 'Raw',
@@ -647,13 +591,10 @@ async function parseCodeToNodes(code) {
     }
     return parsedNodes
   } catch (error) {
-    console.error('解析请求失败:', error)
-    // 重新抛出异常，让调用者处理
     throw error
   }
 }
 
-// 获取节点的输入输出字段
 async function fetchNodeOutputs(node) {
   try {
     const response = await request.get(`/nodes/${node.nodeType}/metadata`, undefined, '/api', {
@@ -661,77 +602,65 @@ async function fetchNodeOutputs(node) {
     })
     node.outputs = response.outputs || []
 
-    // 合并字段定义和参数值，构建统一的字段列表
     const schema = response.input_schema?.properties || {}
     const hiddenFields = ['debug', 'debug_mode', 'verbose', 'log_level']
-    
-    // 首先从 schema 创建字段
+
     const schemaFields = Object.entries(schema)
       .filter(([fieldName]) => !hiddenFields.includes(fieldName))
       .map(([fieldName, fieldDef]) => {
-        // 从 params 中获取原始值
         let rawValue = node.params?.[fieldName]
-        
-        // 格式化为字符串（用于显示和代码生成）
+
         let formattedValue = ''
-        
+
         if (rawValue !== undefined && rawValue !== null && rawValue !== '') {
           const fieldType = resolveFieldType(fieldDef)
-          
-          console.log(`[fetchNodeOutputs] 处理字段 ${fieldName}:`, {
+
+          console.log(`[fetchNodeOutputs] processing field ${fieldName}:`, {
             fieldType,
             rawValue,
             rawValueType: typeof rawValue,
             isObject: typeof rawValue === 'object',
             isArray: Array.isArray(rawValue)
           })
-          
-          // 始终使用 ParameterFormatter 格式化
+
           try {
             formattedValue = ParameterFormatter.format({
               type: fieldType,
               value: rawValue
             })
-            
-            console.log(`[fetchNodeOutputs] 格式化成功 ${fieldName}:`, {
+
+            console.log(`[fetchNodeOutputs] format succeeded ${fieldName}:`, {
               formattedValue,
               formattedType: typeof formattedValue
             })
-            
-            // 确保返回的是字符串
+
             if (typeof formattedValue !== 'string') {
-              console.warn(`[fetchNodeOutputs] 格式化结果不是字符串，强制转换: ${fieldName}`)
               formattedValue = JSON.stringify(formattedValue)
             }
           } catch (e) {
-            console.error(`[fetchNodeOutputs] 格式化字段 ${fieldName} 失败:`, e, 'rawValue:', rawValue)
-            // 降级处理：确保返回字符串
             if (typeof rawValue === 'object' && rawValue !== null) {
               formattedValue = JSON.stringify(rawValue)
             } else {
               formattedValue = String(rawValue)
             }
-            console.log(`[fetchNodeOutputs] 降级处理后 ${fieldName}:`, formattedValue)
           }
         }
-        
+
         return {
           name: fieldName,
           label: getLocalizedFieldLabel(fieldName, fieldDef.description),
           type: resolveFieldType(fieldDef),
           required: fieldDef.required || false,
           default: fieldDef.default,
-          value: formattedValue,  // 确保是字符串
-          rawSchema: fieldDef  // 保存原始 schema，用于获取 x-component
+          value: formattedValue,
+          rawSchema: fieldDef
         }
       })
-    
-    // 然后添加不在 schema 中但存在于 params 的字段
+
     const schemaFieldNames = new Set(Object.keys(schema))
     const extraFields = Object.entries(node.params || {})
       .filter(([fieldName]) => !schemaFieldNames.has(fieldName) && !hiddenFields.includes(fieldName))
       .map(([fieldName, rawValue]) => {
-        // 推断类型
         let fieldType = 'string'
         if (typeof rawValue === 'number') {
           fieldType = Number.isInteger(rawValue) ? 'integer' : 'number'
@@ -742,70 +671,59 @@ async function fetchNodeOutputs(node) {
         } else if (typeof rawValue === 'object' && rawValue !== null) {
           fieldType = 'object'
         }
-        
-        console.log(`[fetchNodeOutputs] 处理额外字段 ${fieldName}:`, {
+
+        console.log(`[fetchNodeOutputs] processing extra field ${fieldName}:`, {
           fieldType,
           rawValue,
           rawValueType: typeof rawValue
         })
-        
-        // 格式化值（确保返回字符串）
+
         let formattedValue = ''
         try {
           formattedValue = ParameterFormatter.format({
             type: fieldType,
             value: rawValue
           })
-          
-          console.log(`[fetchNodeOutputs] 额外字段格式化成功 ${fieldName}:`, {
+
+          console.log(`[fetchNodeOutputs] extra field format succeeded ${fieldName}:`, {
             formattedValue,
             formattedType: typeof formattedValue
           })
-          
-          // 确保返回的是字符串
+
           if (typeof formattedValue !== 'string') {
-            console.warn(`[fetchNodeOutputs] 额外字段格式化结果不是字符串，强制转换: ${fieldName}`)
             formattedValue = JSON.stringify(formattedValue)
           }
         } catch (e) {
-          console.error(`[fetchNodeOutputs] 格式化额外字段 ${fieldName} 失败:`, e, 'rawValue:', rawValue)
-          // 降级处理：确保返回字符串
           if (typeof rawValue === 'object' && rawValue !== null) {
             formattedValue = JSON.stringify(rawValue)
           } else {
             formattedValue = String(rawValue)
           }
-          console.log(`[fetchNodeOutputs] 额外字段降级处理后 ${fieldName}:`, formattedValue)
         }
-        
+
         return {
           name: fieldName,
           label: getLocalizedFieldLabel(fieldName, fieldName),
           type: fieldType,
           required: false,
           default: undefined,
-          value: formattedValue,  // 确保是字符串
-          rawSchema: null  // 额外字段没有 schema
+          value: formattedValue,
+          rawSchema: null
         }
       })
-    
-    // 合并字段列表
+
     node.fields = [...schemaFields, ...extraFields]
 
-    console.log('[fetchNodeOutputs] 节点字段:', node.nodeType, node.fields)
   } catch (error) {
-    console.error('获取节点元数据失败:', error)
     node.outputs = []
     node.fields = []
   }
 }
 
-// 解析参数字符串
 function parseParams(paramsStr) {
   const params = {}
   if (!paramsStr.trim()) return params
 
-  // 简单的参数解析
   const paramRegex = /(\w+)\s*=\s*([^,]+)/g
   let match
 
@@ -817,10 +735,8 @@ function parseParams(paramsStr) {
   return params
 }
 
-// 将节点块转换为注释标记 DSL 代码
 function buildNodeBlockCode(node, idx = -1) {
   if (!node?.variable || !node?.nodeType) {
-    console.warn(`[buildNodeBlockCode] 节点 ${idx} 缺少必要信息`)
     return ''
   }
 
@@ -935,7 +851,6 @@ function updateSingleNodeCode(node) {
   const { lines, blocks } = parseNodeBlocksFromCode(currentCode)
   const target = blocks.find(block => block.variable === node.variable)
   if (!target) {
-    console.warn(`[updateSingleNodeCode] 未找到节点块，跳过整文件重排: ${node.variable}`)
     return currentCode
   }
 
@@ -962,7 +877,6 @@ function removeSingleNodeCode(nodeVariable) {
   const { lines, blocks } = parseNodeBlocksFromCode(currentCode)
   const target = blocks.find(block => block.variable === nodeVariable)
   if (!target) {
-    console.warn(`[removeSingleNodeCode] 未找到节点块，跳过整文件重排: ${nodeVariable}`)
     return currentCode
   }
 
@@ -989,10 +903,8 @@ function appendSingleNodeCode(node) {
 
 function nodesToCode() {
   const nodeBlocks = nodes.value.map((node, idx) => buildNodeBlockCode(node, idx)).filter(code => code.trim() !== '')
-  
+
   const result = nodeBlocks.join('\n\n')
-  console.log('[nodesToCode] 生成节点代码，节点数:', nodes.value.length)
-  console.log('[nodesToCode] 最终代码:\n', result)
   return result
 }
 
@@ -1036,9 +948,6 @@ async function applyCodeUpdateSafely(newCode, options = {}) {
         ? result.new_code
         : normalized
 
-      // 不强制每一次 UI 操作都生成“可校验通过”的代码。
-      // 否则像“先把节点设为 async，再补 wait 节点”的正常编辑流程会被后端拒绝写回。
-      // 处理策略：若后端校验失败，则仅暂存到前端本地（不更新 revision），直到下一次校验通过再写回。
       if (!result?.success) {
         if (result?.error === 'validate_failed') {
           const parsedNodes = await parseCodeToNodes(finalCode)
@@ -1066,7 +975,6 @@ async function applyCodeUpdateSafely(newCode, options = {}) {
     emitCodeUpdate(normalized)
     return true
   } catch (error) {
-    console.error('[applyCodeUpdateSafely] 校验失败，拒绝写回:', error)
     if (!options.silent) {
       ElMessage.error(t('node_block.messages.code_update_failed', { error: error?.message || error }))
     }
@@ -1074,13 +982,11 @@ async function applyCodeUpdateSafely(newCode, options = {}) {
   }
 }
 
-// 选择节点
 function selectNode(index) {
   selectedIndex.value = index
   emit('node-selected', nodes.value[index])
 }
 
-// 删除节点
 function deleteNode(index) {
   const removedNode = nodes.value[index]
   nodes.value.splice(index, 1)
@@ -1090,41 +996,34 @@ function deleteNode(index) {
   } else if (selectedIndex.value > index) {
     selectedIndex.value--
   }
-  
-  // 触发代码更新
+
   emitCodeUpdate(removeSingleNodeCode(removedNode?.variable))
 }
 
-// 切换节点禁用状态
 async function toggleNodeDisabled(index) {
   const node = nodes.value[index]
   const targetDisabledState = node.disabled
   const previousDisabledState = !targetDisabledState
-  console.log(`[toggleNodeDisabled] 节点 ${node.variable} 禁用状态: ${targetDisabledState}`)
 
-  // 仅更新当前节点代码块，避免重排整个工作流代码格式
   const applied = await applyCodeUpdateSafely(updateSingleNodeCode(node), { silent: true })
   if (!applied) {
     node.disabled = previousDisabledState
     ElMessage.error(t('node_block.messages.node_status_update_failed'))
     return
   }
-  
+
   const message = targetDisabledState ? t('node_block.messages.node_disabled') : t('node_block.messages.node_enabled')
   ElMessage.success(message)
 }
 
-// 切换异步/同步
 async function toggleAsync(index) {
   const node = nodes.value[index]
   const previousAsyncState = node.isAsync
-  
-  // 切换 isAsync 状态
+
   node.isAsync = !node.isAsync
-  
+
   const targetAsyncState = node.isAsync
 
-  // 仅更新当前节点代码块，避免重排整个工作流代码格式
   const newCode = updateSingleNodeCode(node)
 
   const applied = await applyCodeUpdateSafely(newCode, { silent: true })
@@ -1133,19 +1032,17 @@ async function toggleAsync(index) {
     ElMessage.error(t('node_block.messages.async_status_update_failed'))
     return
   }
-  
+
   const message = targetAsyncState ? t('node_block.messages.switched_to_async') : t('node_block.messages.switched_to_sync')
   ElMessage.success(message)
 }
 
-// 显示添加节点对话框
 function showAddNodeDialog() {
   selectedNodeType.value = ''
   newNodeVariable.value = ''
   addNodeDialogVisible.value = true
 }
 
-// 添加节点
 async function addNode() {
   if (!selectedNodeType.value || !newNodeVariable.value) {
     ElMessage.warning(t('node_block.messages.select_type_and_variable'))
@@ -1153,23 +1050,19 @@ async function addNode() {
   }
 
   try {
-    // 生成注释标记 DSL 节点代码
     const code = `#@node()
 ${newNodeVariable.value} = ${selectedNodeType.value}()
 #</node>`
-    
-    console.log('[addNode] 生成的节点代码:\n', code)
-    
+
+
     const parsed = await parseCodeToNodes(code)
 
     if (parsed && parsed.length > 0) {
-      console.log('[addNode] 解析后的节点:', parsed[0])
-      
+
       nodes.value.push(parsed[0])
-      
+
       const finalCode = appendSingleNodeCode(parsed[0])
-      console.log('[addNode] 最终生成的代码:\n', finalCode)
-      
+
       emitCodeUpdate(finalCode)
       selectedIndex.value = nodes.value.length - 1
       emit('node-selected', nodes.value[selectedIndex.value])
@@ -1178,57 +1071,46 @@ ${newNodeVariable.value} = ${selectedNodeType.value}()
       ElMessage.error(t('node_block.messages.node_add_failed_parse'))
     }
   } catch (error) {
-    console.error('[addNode] 添加节点失败:', error)
     ElMessage.error(t('node_block.messages.node_add_failed', { error: error.message || error }))
   }
 
   addNodeDialogVisible.value = false
 }
 
-// 开始编辑参数
 function startParamEdit(nodeIndex, fieldIndex) {
   const node = nodes.value[nodeIndex]
   const field = node.fields[fieldIndex]
-  
-  console.log('[startParamEdit] 开始编辑:', { nodeIndex, fieldIndex, field })
-  
-  // 获取当前值，去掉引号和 $ 前缀
+
+
   let editValue = field.value
   if (editValue === undefined || editValue === null) {
     editValue = field.default || (field.type === 'boolean' ? false : '')
   }
-  
-  console.log('[startParamEdit] 原始值:', { 
-    fieldName: field.name, 
-    fieldType: field.type, 
-    editValue, 
+
+  console.log('[startParamEdit] raw value:', {
+    fieldName: field.name,
+    fieldType: field.type,
+    editValue,
     isArray: Array.isArray(editValue),
     valueType: typeof editValue
   })
-  
-  // 处理布尔值
+
   if (field.type === 'boolean') {
-    // 将字符串 "True"/"False" 转换为布尔值
     if (typeof editValue === 'string') {
       editValue = editValue === 'True' || editValue === 'true'
     }
   }
-  // 处理数组类型
   else if (field.type === 'array') {
-    // 先去掉外层的引号（如果有）
     if (typeof editValue === 'string') {
-      if ((editValue.startsWith('"') && editValue.endsWith('"')) || 
+      if ((editValue.startsWith('"') && editValue.endsWith('"')) ||
           (editValue.startsWith("'") && editValue.endsWith("'"))) {
         editValue = editValue.substring(1, editValue.length - 1)
-        console.log('[startParamEdit] 去掉外层引号后:', editValue)
       }
     }
-    
-    // 将数组转换为可编辑的数组项
+
     let arrayItems = []
     if (Array.isArray(editValue)) {
       arrayItems = editValue.map(item => {
-        // 去掉字符串的引号
         const str = String(item)
         if ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
           return str.substring(1, str.length - 1)
@@ -1236,25 +1118,20 @@ function startParamEdit(nodeIndex, fieldIndex) {
         return str
       })
     }
-    // 如果是字符串形式的数组 ["A1", "A2"]，解析它
     else if (typeof editValue === 'string' && editValue.startsWith('[') && editValue.endsWith(']')) {
       try {
-        // 先尝试 JSON 解析
         const parsed = JSON.parse(editValue.replace(/'/g, '"'))
         arrayItems = parsed.map(item => {
           const str = String(item)
-          // 去掉引号
           if ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
             return str.substring(1, str.length - 1)
           }
           return str
         })
       } catch (e) {
-        // 解析失败，手动分割
-        const content = editValue.substring(1, editValue.length - 1) // 去掉 [ ]
+        const content = editValue.substring(1, editValue.length - 1)
         arrayItems = content.split(',').map(s => {
           const trimmed = s.trim()
-          // 去掉引号
           if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
             return trimmed.substring(1, trimmed.length - 1)
           }
@@ -1262,75 +1139,65 @@ function startParamEdit(nodeIndex, fieldIndex) {
         }).filter(item => item)
       }
     }
-    // 如果是逗号分隔的字符串
     else if (typeof editValue === 'string' && editValue.includes(',')) {
       arrayItems = editValue.split(',').map(s => s.trim()).filter(item => item)
     }
-    // 单个值
     else if (editValue) {
       arrayItems = [String(editValue)]
     }
-    
-    console.log('[startParamEdit] 数组解析结果:', arrayItems)
-    
-    // 保存到 editingParam
+
+
     editValue = arrayItems
   }
-  // 如果是字符串类型且有引号，去掉引号
   else if (typeof editValue === 'string' && field.type === 'string') {
-    if ((editValue.startsWith('"') && editValue.endsWith('"')) || 
+    if ((editValue.startsWith('"') && editValue.endsWith('"')) ||
         (editValue.startsWith("'") && editValue.endsWith("'"))) {
       editValue = editValue.substring(1, editValue.length - 1)
     }
   }
-  
+
   editingParam.value = {
     nodeIndex,
     fieldIndex,
     fieldName: field.name,
     fieldType: field.type,
-    value: field.type === 'array' ? null : editValue,  // 数组类型不使用 value
-    arrayItems: field.type === 'array' ? editValue : []  // 数组类型使用 arrayItems
+    value: field.type === 'array' ? null : editValue,
+    arrayItems: field.type === 'array' ? editValue : []
   }
-  
-  console.log('[startParamEdit] 编辑状态:', editingParam.value)
+
 }
 
-// 添加数组项
 function addArrayItem() {
   if (!editingParam.value || !editingParam.value.arrayItems) return
   editingParam.value.arrayItems.push('')
 }
 
-// 删除数组项
 function removeArrayItem(index) {
   if (!editingParam.value || !editingParam.value.arrayItems) return
   editingParam.value.arrayItems.splice(index, 1)
 }
 
-// 保存参数编辑
 async function saveParamEdit() {
   if (!editingParam.value) return
-  
+
   const { nodeIndex, fieldIndex, fieldName, value, arrayItems } = editingParam.value
   const node = nodes.value[nodeIndex]
-  
+
   if (!node || !node.fields || !node.fields[fieldIndex]) {
-    console.error('[saveParamEdit] 节点或字段不存在:', { nodeIndex, fieldIndex })
     ElMessage.error(t('node_block.messages.save_failed_invalid_node'))
     editingParam.value = null
     return
   }
-  
+
   const field = node.fields[fieldIndex]
   const fieldType = field.type || editingParam.value.fieldType || 'string'
   const previousFieldValue = field.value
-  
-  console.log('[saveParamEdit] 保存参数:', { 
-    nodeIndex, 
-    fieldIndex, 
-    fieldName, 
-    fieldType, 
+
+  console.log('[saveParamEdit] saving param:', {
+    nodeIndex,
+    fieldIndex,
+    fieldName,
+    fieldType,
     value,
     node: {
       variable: node.variable,
@@ -1338,25 +1205,18 @@ async function saveParamEdit() {
       fieldsCount: node.fields.length
     }
   })
-  
+
   try {
-    // 处理数组类型
     let finalValue = value
     if (fieldType === 'array' && arrayItems) {
-      // 过滤掉空项
       const filteredItems = arrayItems.filter(item => item && item.trim())
       finalValue = filteredItems
-      console.log('[saveParamEdit] 数组项:', filteredItems)
     }
-    
-    // 使用 ParameterFormatter 处理空值
+
     if (ParameterFormatter.isEmpty(finalValue)) {
-      console.log('[saveParamEdit] 值为空，清除字段值')
       field.value = undefined
-      
-      // 重新生成节点代码（不包含该字段）
+
       const allCode = updateSingleNodeCode(node)
-      console.log('[saveParamEdit] 完整代码:\n', allCode)
       const applied = await applyCodeUpdateSafely(allCode, { silent: true })
       if (!applied) {
         field.value = previousFieldValue
@@ -1365,41 +1225,34 @@ async function saveParamEdit() {
         return
       }
       ElMessage.success(t('node_block.messages.param_cleared'))
-      
+
       editingParam.value = null
       return
     }
-    
-    // 使用 ParameterFormatter 格式化值
+
     const formattedValue = ParameterFormatter.format({
       type: fieldType,
       value: finalValue
     })
 
-    console.log('[saveParamEdit] 格式化后的值:', formattedValue)
 
     if (String(formattedValue) === String(field.value ?? '')) {
       editingParam.value = null
       return
     }
 
-    // 更新字段值
     field.value = formattedValue
-    
-    console.log('[saveParamEdit] 当前所有节点:')
+
     nodes.value.forEach((n, idx) => {
       console.log(`  [${idx}] ${n.variable}: fields=`, n.fields?.map(f => `${f.name}=${f.value}`))
     })
-    
-    // 重新生成节点代码
+
     const allCode = updateSingleNodeCode(node)
-    console.log('[saveParamEdit] 完整节点代码:\n', allCode)
-    
-    // 验证生成的代码是否有效
+
     if (!allCode || allCode.trim() === '') {
       throw new Error(t('node_block.messages.generated_code_empty'))
     }
-    
+
     const applied = await applyCodeUpdateSafely(allCode, { silent: true })
     if (!applied) {
       field.value = previousFieldValue
@@ -1408,26 +1261,22 @@ async function saveParamEdit() {
       return
     }
     ElMessage.success(t('node_block.messages.param_updated'))
-    
+
     editingParam.value = null
   } catch (error) {
-    console.error('[saveParamEdit] 保存参数失败:', error)
     ElMessage.error(t('node_block.messages.save_failed_with_error', { error: error.message }))
     editingParam.value = null
   }
 }
 
 
-// 打开文件夹选择对话框
 async function openFolderDialog() {
   try {
     const result = await window.electron.ipcRenderer.invoke('dialog:openDirectory')
     if (result && !result.canceled && result.filePaths.length > 0) {
       if (editingParam.value) {
         const path = result.filePaths[0]
-        // 转义 Windows 路径反斜杠
         editingParam.value.value = path.replace(/\\/g, '\\\\')
-        // 自动保存
         saveParamEdit()
       }
     }
@@ -1436,44 +1285,36 @@ async function openFolderDialog() {
   }
 }
 
-// 显示可用参数（当节点没有参数时）
 function showAvailableParams(nodeIndex) {
   const node = nodes.value[nodeIndex]
   if (!node.fields || node.fields.length === 0) {
     ElMessage.info(t('node_block.messages.no_configurable_params'))
     return
   }
-  
-  // 为所有必填字段添加空值
+
   node.fields.forEach(field => {
     if (field.required && !field.value) {
       field.value = field.default || ''
     }
   })
-  
-  // 触发更新
+
   emitCodeUpdate(updateSingleNodeCode(node))
 }
 
-// 格式化参数值
 function formatParamValue(value) {
-  // 处理空值
   if (value === undefined || value === null || value === '') {
     return t('node_block.messages.not_set')
   }
-  
-  // 转换为字符串
+
   const strValue = String(value)
-  
-  // 截断过长的字符串
+
   if (strValue.length > 50) {
     return strValue.substring(0, 50) + '...'
   }
-  
+
   return strValue
 }
 
-// 获取节点分类颜色
 function getNodeCategoryColor(category) {
   const colors = {
     'Logic': 'primary',
@@ -1485,7 +1326,6 @@ function getNodeCategoryColor(category) {
   return colors[category] || 'info'
 }
 
-// 获取状态文本
 function getStatusText(status) {
   const texts = {
     'running': t('node_block.status.running'),
@@ -1495,57 +1335,43 @@ function getStatusText(status) {
   return texts[status] || ''
 }
 
-// 加载节点类型
 async function loadNodeTypes() {
   try {
     const response = await request.get('/nodes/types', undefined, '/api', { showLoading: false })
     nodeTypes.value = response.node_types || []
   } catch (error) {
-    console.error('加载节点类型失败:', error)
   }
 }
 
-// 监听代码变化
 watch(() => props.modelValue, async (newCode, oldCode) => {
   if (newCode === oldCode) {
     return
   }
 
-  // 如果是内部更新（saveParamEdit/saveVariableEdit 触发），跳过重新解析
   if (isInternalUpdate.value) {
-    console.log('[watch] 内部更新，跳过重新解析')
     isInternalUpdate.value = false
     return
   }
-  
-  console.log('[watch] 外部代码变化，重新解析')
-  console.log('[watch] 新代码长度:', newCode?.length, '旧代码长度:', oldCode?.length)
-  console.log('[watch] 新代码:\n', newCode)
+
 
   const requestSeq = ++parseWatchSeq.value
-  
+
   try {
     const parsedNodes = await parseCodeToNodes(newCode)
     if (requestSeq !== parseWatchSeq.value) {
       return
     }
-    console.log('[watch] 解析成功，节点数:', parsedNodes.length)
     nodes.value = parsedNodes
   } catch (error) {
     if (requestSeq !== parseWatchSeq.value) {
       return
     }
-    console.error('[watch] 代码解析失败:', error)
-    console.error('[watch] 失败的代码:\n', newCode)
-    // 解析失败时保持当前节点列表不变
-    // 只有在非初始化时才显示错误提示（避免组件挂载时的错误提示）
     if (oldCode !== undefined) {
       ElMessage.error(t('node_block.messages.code_parse_failed_with_error', { error: error.message || error }))
     }
   }
 }, { immediate: true })
 
-// 更新变量列表（从现有节点中提取）
 function updateVariableList() {
   const vars = []
   nodes.value.forEach(node => {
@@ -1555,14 +1381,11 @@ function updateVariableList() {
            label: node.variable,
            type: 'variable'
         })
-        // 如果有输出字段，我也加进去? 还是只加根变量?
-        // 暂只加根变量
      }
   })
   variableList.value = vars
 }
 
-// 判断字段是否需要智能选择器（基于 x-component）
 function isSmartSelectorField(field) {
   if (!field || !field.rawSchema) return false
   const xComponent = field.rawSchema['x-component']
@@ -1583,22 +1406,19 @@ function getLlmOptionValue(field, llmConfig) {
   return llmConfig?.id
 }
 
-// 切换节点折叠状态
 function toggleNodeCollapse(index) {
   const node = nodes.value[index]
   node.collapsed = !node.collapsed
 }
 
-// 开始编辑变量名
 function startVariableEdit(nodeIndex, currentVariable) {
-  console.log('[startVariableEdit] 开始编辑变量名:', { nodeIndex, currentVariable })
-  
+
   editingVariable.value = {
     nodeIndex,
     value: currentVariable,
     originalValue: currentVariable
   }
-  
+
   nextTick(() => {
     if (variableInputRef.value) {
       variableInputRef.value.focus()
@@ -1607,124 +1427,98 @@ function startVariableEdit(nodeIndex, currentVariable) {
   })
 }
 
-// 保存变量名编辑
 async function saveVariableEdit() {
-  console.log('[saveVariableEdit] 函数被调用')
   console.log('[saveVariableEdit] editingVariable:', editingVariable.value)
-  
+
   if (!editingVariable.value) {
-    console.log('[saveVariableEdit] editingVariable 为空，退出')
     return
   }
-  
+
   const { nodeIndex, value, originalValue } = editingVariable.value
   const newVariable = value.trim()
-  
-  console.log('[saveVariableEdit] 保存变量名:', { nodeIndex, newVariable, originalValue })
-  
-  // 验证变量名
+
+
   if (!newVariable) {
     ElMessage.error(t('node_block.messages.variable_name_required'))
     editingVariable.value = null
     return
   }
-  
-  // 验证变量名格式
+
   if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(newVariable)) {
     ElMessage.error(t('node_block.messages.invalid_variable_name'))
     editingVariable.value = null
     return
   }
-  
-  // 检查是否与其他节点重名
+
   const isDuplicate = nodes.value.some((n, idx) => idx !== nodeIndex && n.variable === newVariable)
   if (isDuplicate) {
     ElMessage.error(t('node_block.messages.variable_name_used', { name: newVariable }))
     editingVariable.value = null
     return
   }
-  
-  // 如果没有变化，直接返回
+
   if (newVariable === originalValue) {
     editingVariable.value = null
     return
   }
-  
-  console.log('[saveVariableEdit] 开始更新变量名和引用...')
-  
+
+
   const allCode = props.modelValue || nodesToCode()
-  console.log('[saveVariableEdit] 原始代码:\n', allCode)
-  
+
   try {
-    // 调用后端 API 进行变量重命名
-    console.log('[saveVariableEdit] 准备调用后端 API...')
-    console.log('[saveVariableEdit] 请求参数:', {
+    console.log('[saveVariableEdit] request params:', {
       code: allCode,
       old_name: originalValue,
       new_name: newVariable
     })
-    
+
     const response = await request.post('/workflows/rename-variable', {
       code: allCode,
       old_name: originalValue,
       new_name: newVariable
     }, '/api')
-    
-    console.log('[saveVariableEdit] 收到响应:', response)
-    
+
+
     if (response.success && response.new_code) {
-      console.log('[saveVariableEdit] 新代码:\n', response.new_code)
-      
-      // 发送更新事件
+
       emitCodeUpdate(response.new_code)
-      
-      // 强制重新解析代码以更新显示
+
       try {
         nodes.value = await parseCodeToNodes(response.new_code)
-        console.log('[saveVariableEdit] 节点已重新解析')
       } catch (error) {
-        console.error('[saveVariableEdit] 重新解析失败:', error)
       }
-      
+
       ElMessage.success(t('node_block.messages.variable_renamed', { from: originalValue, to: newVariable }))
     } else {
-      console.error('[saveVariableEdit] 重命名失败:', response.error)
       ElMessage.error(t('node_block.messages.rename_failed', { error: response.error || t('common.unknown_error') }))
     }
   } catch (error) {
-    console.error('[saveVariableEdit] 重命名请求失败:', error)
     ElMessage.error(t('node_block.messages.rename_failed', { error: error.message || error }))
   }
-  
+
   editingVariable.value = null
 }
 
-// 取消变量名编辑
 function cancelVariableEdit() {
   editingVariable.value = null
 }
 
-// 格式化显示值（去掉引号和 $ 前缀）
 function formatDisplayValue(field) {
   if (ParameterFormatter.isEmpty(field.value)) {
     return getLocalizedValueLabel(field.default) || t('node_block.messages.not_set')
   }
-  
-  // 使用 ParameterFormatter 解析显示值
+
   let displayValue = getLocalizedValueLabel(ParameterFormatter.parseDisplayValue(field.value))
-  
-  // 对于智能选择器，显示对应的名称而不是 ID
+
   const xComponent = field.rawSchema?.['x-component']
-  
+
   if (xComponent === 'ProjectSelect') {
-    // 显示项目名称
     const projectId = parseInt(displayValue)
     const project = projectList.value.find(p => p.id === projectId)
     if (project) {
       displayValue = project.name
     }
   } else if (xComponent === 'LLMSelect') {
-    // 显示 LLM 配置名称
     const llmConfigId = parseInt(displayValue)
     const llmConfig = llmConfigList.value.find(cfg => cfg.id === llmConfigId)
     if (llmConfig) {
@@ -1744,13 +1538,11 @@ function formatDisplayValue(field) {
     }
   }
 
-  
-  // CodeEditor / Textarea 不截断，保留多行展示
+
   if (xComponent === 'CodeEditor' || xComponent === 'Textarea') {
     return displayValue
   }
 
-  // 其他字段截断过长的值
   return displayValue.length > 50 ? displayValue.substring(0, 50) + '...' : displayValue
 }
 
@@ -1785,23 +1577,20 @@ function resolveFieldType(fieldDef) {
   return 'string'
 }
 
-// 组件挂载时加载节点类型和数据
 onMounted(async () => {
   loadNodeTypes()
 
-  // 使用 stores 加载数据
   try {
     await Promise.all([
       projectListStore.fetchProjects(),
       llmConfigStore.fetchLLMConfigs(),
       promptStore.fetchPrompts(),
-      cardStore.fetchInitialData() // 这会加载 cardTypes
+      cardStore.fetchInitialData()
     ])
 
     try {
       builtinResponseModels.value = await getContentModels()
     } catch (e) {
-      console.warn('[NodeBlockEditor] 加载内置响应模型失败，使用回退列表', e)
       builtinResponseModels.value = [
         'OneSentence',
         'ChapterOutline',
@@ -1814,13 +1603,6 @@ onMounted(async () => {
       ]
     }
 
-    // 调试日志
-    console.log('[NodeBlockEditor] 数据加载完成:')
-    console.log('  - 项目列表:', projectList.value.length, '个')
-    console.log('  - LLM配置:', llmConfigList.value.length, '个')
-    console.log('  - 提示词:', promptList.value.length, '个')
-    console.log('  - 卡片类型:', cardTypeList.value.length, '个')
-    console.log('  - 内置响应模型:', builtinResponseModels.value.length, '个')
   } catch (error) {
     console.error(t('node_block.messages.load_data_failed'), error)
   }
