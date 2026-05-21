@@ -44,9 +44,7 @@ def resolve_transport_settings(
     normalized_protocol = _normalize_protocol(api_protocol)
     normalized_custom_path = _normalize_path(custom_request_path, "") if custom_request_path else None
     normalized_models_path = _normalize_path(models_path, "/models")
-    headers = {}
-    if (user_agent or "").strip():
-        headers["User-Agent"] = user_agent.strip()
+    headers = {"User-Agent": (user_agent or "NovelForge/1.0").strip()}
 
     request_base = normalized_base
     if normalized_base and normalized_custom_path:
