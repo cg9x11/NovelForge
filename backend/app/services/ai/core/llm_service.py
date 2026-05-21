@@ -223,8 +223,12 @@ async def _generate_structured_native(
             raise
         except Exception as e:
             last_exception = e
-            logger.warning(
-                localized_text('hardcoded.backend_app_services_ai_core_llm_service_2cc73331')
+            logger.exception(
+                "[LangChain-Structured] request failed "
+                f"attempt={attempt + 1}/{max_retries} "
+                f"llm_config_id={llm_config_id} "
+                f"output_type={getattr(output_type, '__name__', str(output_type))} "
+                f"error={type(e).__name__}: {e}"
             )
 
             if attempt < max_retries - 1:
@@ -232,10 +236,14 @@ async def _generate_structured_native(
                 await asyncio.sleep(retry_delay)
 
     logger.error(
-        localized_text('hardcoded.backend_app_services_ai_core_llm_service_9a45fc96')
+        "[LangChain-Structured] all retries failed "
+        f"llm_config_id={llm_config_id} "
+        f"output_type={getattr(output_type, '__name__', str(output_type))} "
+        f"last_error={type(last_exception).__name__ if last_exception else 'None'}: {last_exception}"
     )
     raise ValueError(
-        localized_text('hardcoded.backend_app_services_ai_core_llm_service_c024d7f8')
+        f"{localized_text('hardcoded.backend_app_services_ai_core_llm_service_c024d7f8')}: "
+        f"{type(last_exception).__name__ if last_exception else 'UnknownError'}: {last_exception}"
     )
 
 

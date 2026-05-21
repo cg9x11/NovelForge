@@ -171,7 +171,23 @@ async def generate_ai_content(
             deps=deps_str,
         )
     except ValueError as e:
+        logger.exception(
+            "[AI Generate] structured generation failed "
+            f"llm_config_id={request.llm_config_id} "
+            f"prompt_name={request.prompt_name} "
+            f"response_model={getattr(resp_model, '__name__', str(resp_model))} "
+            f"error={type(e).__name__}: {e}"
+        )
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception(
+            "[AI Generate] unexpected structured generation error "
+            f"llm_config_id={request.llm_config_id} "
+            f"prompt_name={request.prompt_name} "
+            f"response_model={getattr(resp_model, '__name__', str(resp_model))} "
+            f"error={type(e).__name__}: {e}"
+        )
+        raise HTTPException(status_code=500, detail=f"Generation failed: {type(e).__name__}: {e}")
     card: Card | None = None
     try:
         card_id = None
