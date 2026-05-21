@@ -1,4 +1,12 @@
 <template>
+  <div class="editor-shell">
+    <div v-if="showProjectTopbar" class="editor-topbar">
+      <div class="editor-topbar__left">
+        <el-button size="small" @click="emit('back-to-dashboard')">{{ t('common.back') }}</el-button>
+        <span class="editor-topbar__title">{{ projectStore.currentProject?.name }}</span>
+      </div>
+    </div>
+
   <div class="editor-layout">
     <el-aside class="sidebar card-navigation-sidebar" :style="{ width: leftSidebarDisplayWidth + 'px' }" @contextmenu.prevent="onSidebarContextMenu">
       <div class="sidebar-header">
@@ -250,6 +258,7 @@
       </button>
     </el-tooltip>
   </div>
+  </div>
 
   <el-dialog v-model="isCreateCardDialogVisible" :title="t('editor.create_dialog.title')" width="500px">
     <el-form :model="newCardForm" label-position="top">
@@ -455,8 +464,14 @@ function openExportDialog() {
  }
 
  // Props
- const props = defineProps<{
+ const props = withDefaults(defineProps<{
    initialProject: Project
+   showProjectTopbar?: boolean
+ }>(), {
+   showProjectTopbar: true
+ })
+ const emit = defineEmits<{
+   (e: 'back-to-dashboard'): void
  }>()
 
  // Store
@@ -467,6 +482,7 @@ function openExportDialog() {
  const projectStore = useProjectStore()
  const assistantStore = useAssistantStore()
  const isFreeProject = computed(() => (projectStore.currentProject?.name || '') === '__free__')
+ const showProjectTopbar = computed(() => props.showProjectTopbar && !isFreeProject.value)
 
  interface TreeNode { id: number | string; title: string; children?: TreeNode[]; card_type?: { name: string; key?: string; output_model_name?: string }; __isGroup?: boolean; __groupType?: string; __groupTypeKey?: string }
 
@@ -1665,9 +1681,41 @@ function onSwitchRightTab(e: CustomEvent) {
 .full-row-dropdown { display: block; width: 100%; }
 .blank-menu-ref { pointer-events: none; }
 
+.editor-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+}
+
+.editor-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--el-border-color-light);
+  background: var(--el-bg-color);
+  flex-shrink: 0;
+}
+
+.editor-topbar__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.editor-topbar__title {
+  color: var(--el-text-color-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .editor-layout {
   display: flex;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   width: 100%;
   position: relative;
   background-color: var(--el-fill-color-lighter);
