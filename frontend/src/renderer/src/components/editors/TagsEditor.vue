@@ -259,14 +259,40 @@ function stripAnnotation(label: string): string {
   return label.replace(/\s*[（(].*[）)]\s*$/, '')
 }
 
+function normalizeSectionTitle(value: string): string {
+  return stripAnnotation(value)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(new RegExp(String.fromCharCode(273), 'g'), 'd')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function detectSection(content: string): 'none' | 'theme' | 'audience' | 'person' | 'category' | 'affection' {
+  if (content.startsWith(LEGACY_SECTION_THEME)) return 'theme'
+  if (content.startsWith(LEGACY_SECTION_AUDIENCE)) return 'audience'
+  if (content.startsWith(LEGACY_SECTION_PERSON)) return 'person'
+  if (content.startsWith(LEGACY_SECTION_CATEGORY)) return 'category'
+  if (content.startsWith(LEGACY_SECTION_AFFECTION)) return 'affection'
+
+  const normalized = normalizeSectionTitle(content)
+  if (['chu de', 'theme', 'theme tags'].includes(normalized)) return 'theme'
+  if (['doc gia muc tieu', 'audience', 'target audience'].includes(normalized)) return 'audience'
+  if (['ngoi ke', 'nguoi ke', 'person', 'narrative person'].includes(normalized)) return 'person'
+  if (['nhom tag', 'the loai', 'the the loai', 'category', 'category tags'].includes(normalized)) return 'category'
+  if (['quan he tinh cam', 'quan he cam xuc', 'affection', 'relationships', 'emotional relationship'].includes(normalized)) return 'affection'
+  return 'none'
+}
+
 function parseKnowledge(text: string) {
   const rawLines = (text || '').split(/\r?\n/)
   const lines: string[] = []
-  for (const l of rawLines) {
-    const t = l.replace(/\t/g, '    ')
-    if (!t.trim().length) continue
-    if (t.trim() === '```') continue
-    lines.push(t)
+  for (const line of rawLines) {
+    const normalizedLine = line.replace(/\t/g, '    ')
+    if (!normalizedLine.trim().length) continue
+    if (normalizedLine.trim() === '```') continue
+    lines.push(normalizedLine)
   }
   type Section = 'none' | 'theme' | 'audience' | 'person' | 'category' | 'affection'
   let section: Section = 'none'
@@ -278,21 +304,20 @@ function parseKnowledge(text: string) {
   const persons: string[] = []
 
   for (const raw of lines) {
-    const m = raw.match(/^(\s*)-\s*(.+)$/)
+    const m = raw.match(/^(\s*)[-*+]\s*(.+)$/)
     if (!m) continue
     const indent = m[1].length
     const content = m[2].trim()
+    const detected = indent <= 2 ? detectSection(content) : 'none'
 
-    if (indent <= 2) {
-      if (content.startsWith(LEGACY_SECTION_THEME)) { section = 'theme'; currentTheme = null; continue }
-      if (content.startsWith(LEGACY_SECTION_AUDIENCE)) { section = 'audience'; continue }
-      if (content.startsWith(LEGACY_SECTION_PERSON)) { section = 'person'; continue }
-      if (content.startsWith(LEGACY_SECTION_CATEGORY)) { section = 'category'; continue }
-      if (content.startsWith(LEGACY_SECTION_AFFECTION)) { section = 'affection'; continue }
+    if (detected !== 'none') {
+      section = detected
+      if (section === 'theme') currentTheme = null
+      continue
     }
 
     if (section === 'theme') {
-      const ROOT_INDENT_MAX = 6
+      const ROOT_INDENT_MAX = 2
       if (indent <= ROOT_INDENT_MAX || !currentTheme) {
         const name = stripAnnotation(content)
         if (!themes[name]) themes[name] = []
@@ -300,9 +325,8 @@ function parseKnowledge(text: string) {
       } else {
         const sub = stripAnnotation(content)
         if (!currentTheme) {
-          const fallback = stripAnnotation(content)
-          themes[fallback] = []
-          currentTheme = fallback
+          themes[sub] = []
+          currentTheme = sub
         } else {
           themes[currentTheme].push(sub)
         }
@@ -331,7 +355,11 @@ function parseKnowledge(text: string) {
     }
   }
 
-  themeOptions.value = Object.keys(themes).map(k => ({ value: k, label: k, children: (themes[k] || []).map(s => ({ value: s, label: s })) }))
+  themeOptions.value = Object.keys(themes).map(k => ({
+    value: k,
+    label: k,
+    children: (themes[k].length ? themes[k] : [k]).map(s => ({ value: s, label: s }))
+  }))
   categoryOptions.value = categories
   relationshipOptions.value = relationships
   audienceOptions.value = audiences.length ? audiences : [t('tags_editor.defaults.audience'), t('tags_editor.defaults.male'), t('tags_editor.defaults.female')]
