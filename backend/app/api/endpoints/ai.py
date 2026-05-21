@@ -307,6 +307,16 @@ async def generate_with_instruction_stream(
                 card_prompt=card_prompt_content
             )
 
+            logger.info(
+                "[CardGeneration] Starting instruction stream "
+                f"llm_config_id={request.llm_config_id} "
+                f"prompt_template={request.prompt_template} "
+                f"schema_keys={list((full_schema.get('properties') or {}).keys())} "
+                f"current_data_keys={list((request.current_data or {}).keys())} "
+                f"context_length={len(request.context_info or '')} "
+                f"user_prompt_length={len(request.user_prompt or '')}"
+            )
+
             async for event in generate_instruction_stream(
                 session=session,
                 llm_config_id=request.llm_config_id,

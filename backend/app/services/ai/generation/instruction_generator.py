@@ -528,11 +528,17 @@ Continue generating missing fields. Output {"op":"done"} when complete.
             attempt_aborted = True
             raise
         except Exception as e:
+            logger.exception(
+                "[InstructionGeneration] LLM stream failed "
+                f"attempt={attempt + 1}/{max_retry} "
+                f"llm_config_id={llm_config_id} "
+                f"error={type(e).__name__}: {e}"
+            )
             yield {
                 "type": "error",
-                "text": f"Generation failed: {str(e)}"
+                "text": f"Generation failed: {type(e).__name__}: {str(e)}"
             }
-            break
+            return
         finally:
             if attempt_started and track_stats:
                 try:
@@ -549,6 +555,12 @@ Continue generating missing fields. Output {"op":"done"} when complete.
 
                     pass
     if not generation_completed:
+        logger.error(
+            "[InstructionGeneration] reached max retry count "
+            f"max_retry={max_retry} "
+            f"llm_config_id={llm_config_id} "
+            f"collected_fields={list(collected_data.keys())}"
+        )
         yield {
             "type": "error",
             "text": f"Generation failed: reached max retry count {max_retry}"
