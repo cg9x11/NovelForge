@@ -21,6 +21,35 @@ from app.services.ai.generation.prompt_builder import build_user_task_prompt
 from app.schemas.instruction import ConversationMessage
 
 
+def _format_provider_error(error: Exception) -> str:
+    parts = [f"{type(error).__name__}: {error}"]
+    for attr in ("status_code", "code", "type", "param", "request_id"):
+        value = getattr(error, attr, None)
+        if value:
+            parts.append(f"{attr}={value}")
+    response = getattr(error, "response", None)
+    if response is not None:
+        status_code = getattr(response, "status_code", None)
+        if status_code:
+            parts.append(f"response_status={status_code}")
+        try:
+            request_id = response.headers.get("x-request-id") or response.headers.get("request-id")
+            if request_id:
+                parts.append(f"response_request_id={request_id}")
+        except Exception:
+            pass
+        try:
+            body = response.json()
+        except Exception:
+            body = getattr(response, "text", None)
+        if body:
+            parts.append(f"response_body={body}")
+    body = getattr(error, "body", None)
+    if body:
+        parts.append(f"error_body={body}")
+    return " | ".join(parts)
+
+
 def _estimate_messages_input_tokens(messages: List[BaseMessage]) -> int:
     parts: List[str] = []
     for msg in messages:
@@ -532,11 +561,11 @@ Continue generating missing fields. Output {"op":"done"} when complete.
                 "[InstructionGeneration] LLM stream failed "
                 f"attempt={attempt + 1}/{max_retry} "
                 f"llm_config_id={llm_config_id} "
-                f"error={type(e).__name__}: {e}"
+                f"error={_format_provider_error(e)}"
             )
             yield {
                 "type": "error",
-                "text": f"Generation failed: {type(e).__name__}: {str(e)}"
+                "text": f"Generation failed: {_format_provider_error(e)}"
             }
             return
         finally:
